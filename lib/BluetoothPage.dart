@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:projects/Application.dart';
 import 'package:projects/BasePackage.dart';
 import 'package:projects/BluSTD.dart';
@@ -35,14 +36,22 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
     if (basePackage.getType() == PacketTypeEnum.VERSION) {
       var package = basePackage as VersionPackage;
       print('dataReceived: ${package.getVersion()}');
+      for (int i = 0; i < global.globalMapMarker.length; i++) {
+        if (global.globalMapMarker[i].markerData.deviceId ==
+            package.getSender()) {
+          global.globalMapMarker[i].markerData.deviceVersion =
+              package.getVersion();
+        }
+      }
       array.add('dataReceived: ${package.getVersion()}');
     }
 
     if (basePackage.getType() == PacketTypeEnum.TIME) {
       var package = basePackage as TimePackage;
       print('dataReceived: ${package.getTime()}');
-      for (int i = 0; i < global.globalMapMarker.length; i++ ){
-        if(global.globalMapMarker[i].markerData.deviceId == package.getSender()){
+      for (int i = 0; i < global.globalMapMarker.length; i++) {
+        if (global.globalMapMarker[i].markerData.deviceId ==
+            package.getSender()) {
           global.globalMapMarker[i].markerData.deviceTime = package.getTime();
         }
       }
@@ -52,10 +61,46 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
     if (basePackage.getType() == PacketTypeEnum.ALL_INFORMATION) {
       print('object');
       var package = basePackage as AllInformationPackage;
-      print('dataReceived: ${package.getLatitude()}');
+      for (int i = 0; i < global.globalMapMarker.length; i++) {
+        if (global.globalMapMarker[i].markerData.deviceId ==
+            package.getSender()) {
+          global.globalMapMarker[i].markerData.deviceCord!.longitude =
+              package.getLongitude();
+          global.globalMapMarker[i].markerData.deviceCord!.latitude =
+              package.getLatitude();
+          global.globalMapMarker[i].markerData.deviceTime = package.getTime();
+          global.globalMapMarker[i].markerData.deviceLastAlarmType =
+              package.getLastAlarmType();
+          global.globalMapMarker[i].markerData.deviceLastAlarmReason =
+              package.getLastAlarmReason();
+          global.globalMapMarker[i].markerData.deviceLastAlarmTime =
+              package.getLastAlarmTime();
+          global.globalMapMarker[i].markerData.deviceStateMask =
+              package.getStateMask();
+          global.globalMapMarker[i].markerData.deviceBattery =
+              package.getBattery();
+
+          print('dataReceived: ${global.globalMapMarker[i].markerData.deviceCord}');
+          print('dataReceived: ${global.globalMapMarker[i].markerData.deviceTime}');
+          print('dataReceived: ${global.globalMapMarker[i].markerData.deviceLastAlarmType}');
+          print('dataReceived: ${global.globalMapMarker[i].markerData.deviceLastAlarmReason}');
+          print('dataReceived: ${global.globalMapMarker[i].markerData.deviceLastAlarmTime}');
+          print('dataReceived: ${global.globalMapMarker[i].markerData.deviceStateMask}');
+          print('dataReceived: ${global.globalMapMarker[i].markerData.deviceBattery}');
+
+          array.add('dataReceived: ${global.globalMapMarker[i].markerData.deviceCord}');
+          array.add('dataReceived: ${global.globalMapMarker[i].markerData.deviceTime}');
+          array.add('dataReceived: ${global.globalMapMarker[i].markerData.deviceLastAlarmType}');
+          array.add('dataReceived: ${global.globalMapMarker[i].markerData.deviceLastAlarmReason}');
+          array.add('dataReceived: ${global.globalMapMarker[i].markerData.deviceLastAlarmTime}');
+          array.add('dataReceived: ${global.globalMapMarker[i].markerData.deviceStateMask}');
+          array.add('dataReceived: ${global.globalMapMarker[i].markerData.deviceBattery}');
+        }
+      }
+      /*print('dataReceived: ${package.getLatitude()}');
       array.add('dataReceived: ${package.getLatitude()}');
       print('dataReceived: ${package.getLongitude()}');
-      array.add('dataReceived: ${package.getLongitude()}');
+      array.add('dataReceived: ${package.getLongitude()}');*/
     }
 
     if (basePackage.getType() == PacketTypeEnum.COORDINATE) {
@@ -110,7 +155,7 @@ class _BluetoothPage extends State<BluetoothPage>
   void checkNewIdDevice() {
     if (dropdownItems.length != global.globalDevicesListFromMap.length) {
       dropdownValue = global.globalDevicesListFromMap.last;
-      if (deviceId == null){
+      if (deviceId == null) {
         setDevId(dropdownValue);
       }
       var newItem = DropdownMenuItem(
@@ -192,8 +237,8 @@ class _BluetoothPage extends State<BluetoothPage>
         appBar: AppBar(
           toolbarHeight: 80,
           title: global.flagConnect
-          ? Text (global.deviceName)
-          : Text ('None device'),
+              ? Text(global.deviceName)
+              : Text('None device'),
           actions: <Widget>[
             DropdownButton<String>(
               icon: const Icon(Icons.keyboard_double_arrow_down),

@@ -6,14 +6,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
+import 'package:projects/NetPackagesDataTypes.dart';
 
 import 'global.dart' as global;
 
 class MarkerData {
-  int? deviceId;
-  int? alarmCounter;
+  int? deviceId, alarmCounter, deviceVersion, deviceStateMask;
   LatLng? deviceCord;
-  DateTime? deviceTime;
+  DateTime? deviceTime, deviceLastAlarmTime;
+  AlarmType? deviceLastAlarmType;
+  AlarmReason? deviceLastAlarmReason;
+  double? deviceBattery;
 }
 
 class MapMarker extends Marker {
@@ -245,7 +248,8 @@ class _mapPage extends State<mapPage>
           height: 200,
           child: Row(
             children: [
-              Text(global.globalMapMarker[markerId!].markerData.deviceTime.toString()),
+              Text(global.globalMapMarker[markerId!].markerData.deviceTime
+                  .toString()),
               IconButton(
                   onPressed: () =>
                       {changeBottomBarWidget(-1, null, null, null)},

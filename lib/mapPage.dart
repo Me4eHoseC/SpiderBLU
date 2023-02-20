@@ -11,12 +11,15 @@ import 'package:projects/NetPackagesDataTypes.dart';
 import 'global.dart' as global;
 
 class MarkerData {
-  int? deviceId, alarmCounter, deviceVersion, deviceStateMask;
+  int? deviceId, alarmCounter, deviceVersion, deviceStateMask, deviceState,
+      deviceRssi;
   LatLng? deviceCord;
   DateTime? deviceTime, deviceLastAlarmTime;
   AlarmType? deviceLastAlarmType;
   AlarmReason? deviceLastAlarmReason;
   double? deviceBattery;
+  List<int>? deviceAllowedHops, deviceUnallowedHops;
+  //var
 }
 
 class MapMarker extends Marker {
@@ -143,10 +146,14 @@ class _mapPage extends State<mapPage>
       } else {
         colorBack = Colors.blue;
       }
-      var localMarker = MapMarker(this, markerIndex, markerData[markerIndex],
-          currentLocation!, id.toString(), colorBack);
+      var localMarker = MapMarker(
+          this,
+          markerIndex,
+          markerData[markerIndex],
+          markerData[markerIndex].deviceCord!,
+          markerData[markerIndex].deviceId.toString(),
+          colorBack);
       global.globalMapMarker.add(localMarker);
-      global.globalDevicesForCheck.add(id);
       global.globalDevicesListFromMap.add(id.toString());
       changeBottomBarWidget(-1, null, null, null);
     });
@@ -187,8 +194,6 @@ class _mapPage extends State<mapPage>
       int id = int.parse(num);
       if (id > 0 && id < 999) {
         if (global.globalMapMarker.isEmpty) {
-          idMarkersForCheck.add(id);
-          checkMarkerColor(id);
           createNewMapMarker(id, flagSenderDevice);
         } else {
           for (int i = 0; i < global.globalMapMarker.length; i++) {
@@ -202,8 +207,6 @@ class _mapPage extends State<mapPage>
             }
           }
           if (flag) {
-            idMarkersForCheck.add(id);
-            checkMarkerColor(id);
             createNewMapMarker(id, flagSenderDevice);
           }
         }

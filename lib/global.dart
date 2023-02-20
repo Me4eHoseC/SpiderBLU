@@ -36,8 +36,7 @@ List<String> globalDevicesListFromMap = [];
 
 bool flagConnect = false;
 
-List<int> globalDevicesForCheck = List<int>.empty(growable: true),
-    globalActiveDevices = List<int>.empty(growable: true),
+List<int> globalActiveDevices = List<int>.empty(growable: true),
     globalAlarmDevices = List<int>.empty(growable: true);
 
 List<MapMarker> globalMapMarker = List<MapMarker>.empty(growable: true);

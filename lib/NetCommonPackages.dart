@@ -17,8 +17,8 @@ class InformationPackage extends BasePackage {
     return _state;
   }
 
-  int getBattery() {
-    return _battery;
+  double getBattery() {
+    return _battery * 0.1;
   }
 
   int getRssi() {

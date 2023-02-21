@@ -75,35 +75,35 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
           global.globalMapMarker[i].markerData.deviceBattery =
               package.getBattery();
 
-          print('dataReceived: ${global.globalMapMarker[i].markerData
-              .deviceCord}');
-          print('dataReceived: ${global.globalMapMarker[i].markerData
-              .deviceTime}');
-          print('dataReceived: ${global.globalMapMarker[i].markerData
-              .deviceLastAlarmType}');
-          print('dataReceived: ${global.globalMapMarker[i].markerData
-              .deviceLastAlarmReason}');
-          print('dataReceived: ${global.globalMapMarker[i].markerData
-              .deviceLastAlarmTime}');
-          print('dataReceived: ${global.globalMapMarker[i].markerData
-              .deviceStateMask}');
-          print('dataReceived: ${global.globalMapMarker[i].markerData
-              .deviceBattery}');
+          print(
+              'dataReceived: ${global.globalMapMarker[i].markerData.deviceCord}');
+          print(
+              'dataReceived: ${global.globalMapMarker[i].markerData.deviceTime}');
+          print(
+              'dataReceived: ${global.globalMapMarker[i].markerData.deviceLastAlarmType}');
+          print(
+              'dataReceived: ${global.globalMapMarker[i].markerData.deviceLastAlarmReason}');
+          print(
+              'dataReceived: ${global.globalMapMarker[i].markerData.deviceLastAlarmTime}');
+          print(
+              'dataReceived: ${global.globalMapMarker[i].markerData.deviceStateMask}');
+          print(
+              'dataReceived: ${global.globalMapMarker[i].markerData.deviceBattery}');
 
-          array.add('dataReceived: ${global.globalMapMarker[i].markerData
-              .deviceCord}');
-          array.add('dataReceived: ${global.globalMapMarker[i].markerData
-              .deviceTime}');
-          array.add('dataReceived: ${global.globalMapMarker[i].markerData
-              .deviceLastAlarmType}');
-          array.add('dataReceived: ${global.globalMapMarker[i].markerData
-              .deviceLastAlarmReason}');
-          array.add('dataReceived: ${global.globalMapMarker[i].markerData
-              .deviceLastAlarmTime}');
-          array.add('dataReceived: ${global.globalMapMarker[i].markerData
-              .deviceStateMask}');
-          array.add('dataReceived: ${global.globalMapMarker[i].markerData
-              .deviceBattery}');
+          array.add(
+              'dataReceived: ${global.globalMapMarker[i].markerData.deviceCord}');
+          array.add(
+              'dataReceived: ${global.globalMapMarker[i].markerData.deviceTime}');
+          array.add(
+              'dataReceived: ${global.globalMapMarker[i].markerData.deviceLastAlarmType}');
+          array.add(
+              'dataReceived: ${global.globalMapMarker[i].markerData.deviceLastAlarmReason}');
+          array.add(
+              'dataReceived: ${global.globalMapMarker[i].markerData.deviceLastAlarmTime}');
+          array.add(
+              'dataReceived: ${global.globalMapMarker[i].markerData.deviceStateMask}');
+          array.add(
+              'dataReceived: ${global.globalMapMarker[i].markerData.deviceBattery}');
         }
       }
       /*print('dataReceived: ${package.getLatitude()}');
@@ -137,12 +137,10 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
       for (int i = 0; i < global.globalMapMarker.length; i++) {
         if (global.globalMapMarker[i].markerData.deviceId ==
             package.getSender()) {
-          global.globalMapMarker[i].markerData.deviceState =
-              package.getState();
+          global.globalMapMarker[i].markerData.deviceState = package.getState();
           global.globalMapMarker[i].markerData.deviceBattery =
               package.getBattery();
-          global.globalMapMarker[i].markerData.deviceRssi =
-              package.getRssi();
+          global.globalMapMarker[i].markerData.deviceRssi = package.getRssi();
         }
       }
 
@@ -248,11 +246,12 @@ class _BluetoothPage extends State<BluetoothPage>
   void setDevId(String string) {
     deviceId = int.parse(string);
   }
+
 // Button's click
   void SetIdClick(int devId, int newId) {
     setState(() {
-      for (int i = 0; i < global.globalMapMarker.length; i++){
-        if (global.globalMapMarker[i].markerData.deviceId == devId){
+      for (int i = 0; i < global.globalMapMarker.length; i++) {
+        if (global.globalMapMarker[i].markerData.deviceId == devId) {
           global.globalMapMarker[i].markerData.deviceId = newId;
         }
       }
@@ -264,7 +263,7 @@ class _BluetoothPage extends State<BluetoothPage>
   void TakeTimeClick(int devId) {
     setState(() {
       BasePackage getInfo =
-      BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_TIME);
+          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_TIME);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -283,7 +282,7 @@ class _BluetoothPage extends State<BluetoothPage>
   void TakeVersionClick(int devId) {
     setState(() {
       BasePackage getInfo =
-      BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_VERSION);
+          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_VERSION);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -292,7 +291,7 @@ class _BluetoothPage extends State<BluetoothPage>
   void TakeCordClick(int devId) {
     setState(() {
       BasePackage getInfo =
-      BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_COORDINATE);
+          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_COORDINATE);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -310,10 +309,10 @@ class _BluetoothPage extends State<BluetoothPage>
     });
   }
 
-  void TakeSignalStrengthClick(int devId){
+  void TakeSignalStrengthClick(int devId) {
     setState(() {
       BasePackage getInfo =
-      BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_INFORMATION);
+          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_INFORMATION);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -328,7 +327,77 @@ class _BluetoothPage extends State<BluetoothPage>
     });
   }
 
+  void TakeStrengthSignalClick(int devId) {
+    setState(() {
+      BasePackage getInfo =
+          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_INFORMATION);
+      var tid = global.postManager.sendPackage(getInfo);
+      widget.tits.add(tid);
+    });
+  }
 
+  void TakeAllowedHopsClick(int devId) {
+    setState(() {
+      BasePackage getInfo =
+          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_ALLOWED_HOPS);
+      var tid = global.postManager.sendPackage(getInfo);
+      widget.tits.add(tid);
+    });
+  }
+
+  void TakeUnallowedHopsClick(int devId) {
+    setState(() {
+      BasePackage getInfo =
+          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_UNALLOWED_HOPS);
+      var tid = global.postManager.sendPackage(getInfo);
+      widget.tits.add(tid);
+    });
+  }
+
+  //todo tid
+  void TakeRetransmissionAllClick(int devId) {
+    setState(() {
+      BasePackage getInfo =
+          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_ALLOWED_HOPS);
+      var tid = global.postManager.sendPackage(getInfo);
+      widget.tits.add(tid);
+    });
+  }
+
+
+
+  void SetRetransmissionAllClick(int devId, bool checked) {
+    setState(() {
+      HopsPackage hopsPackage = HopsPackage();
+      hopsPackage.setReceiver(devId);
+      hopsPackage.setSender(RoutesManager.getLaptopAddress());
+      hopsPackage
+          .addHop(checked ? RoutesManager.getRetransmissionAllAddress() : 0);
+      var tid = global.postManager.sendPackage(hopsPackage);
+      widget.tits.add(tid);
+    });
+  }
+
+  void ButtonResetRetransmissionClick(int devId) {
+    setState(() {
+      BasePackage getInfo =
+      BasePackage.makeBaseRequest(devId, PacketTypeEnum.SET_DEFAULT_NETWORK);
+      var tid = global.postManager.sendPackage(getInfo);
+      widget.tits.add(tid);
+    });
+  }
+
+
+
+
+  /*void TakeRetransmissionAll(int devId){
+    setState(() {
+      BasePackage getInfo = BasePackage.makeBaseRequest(
+          devId, PacketTypeEnum.);
+      var tid = global.postManager.sendPackage(getInfo);
+      widget.tits.add(tid);
+    });
+  }*/
 
   void Disconnect() {
     setState(() {

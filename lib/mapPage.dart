@@ -11,7 +11,11 @@ import 'package:projects/NetPackagesDataTypes.dart';
 import 'global.dart' as global;
 
 class MarkerData {
-  int? deviceId, alarmCounter, deviceVersion, deviceStateMask, deviceState,
+  int? deviceId,
+      alarmCounter,
+      deviceVersion,
+      deviceStateMask,
+      deviceState,
       deviceRssi;
   LatLng? deviceCord;
   DateTime? deviceTime, deviceLastAlarmTime;
@@ -19,6 +23,7 @@ class MarkerData {
   AlarmReason? deviceLastAlarmReason;
   double? deviceBattery;
   List<int>? deviceAllowedHops, deviceUnallowedHops;
+  String? deviceType;
   //var
 }
 
@@ -29,10 +34,10 @@ class MapMarker extends Marker {
   Color colorBack = Colors.blue;
 
   MapMarker(this.parent, this.markerId, this.markerData, LatLng cord,
-      String string, this.colorBack)
+      String string, String deviceType, this.colorBack)
       : super(
-            height: 40,
-            width: 40,
+            height: 50,
+            width: 50,
             point: cord,
             builder: (ctx) => TextButton(
                   style: TextButton.styleFrom(
@@ -41,7 +46,13 @@ class MapMarker extends Marker {
                   ),
                   onPressed: () =>
                       {parent?.selectMapMarker(markerId, cord, string)},
-                  child: Text(string),
+                  child: Text(
+                      string + '\n' + deviceType,
+                    style: TextStyle(
+                      fontSize: 10,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ));
 }
 
@@ -66,12 +77,15 @@ class _mapPage extends State<mapPage>
   List<int> idMarkersForCheck = List<int>.empty(growable: true),
       idMarkersFromBluetooth = List<int>.empty(growable: true),
       alarmList = List<int>.empty(growable: true);
+  List<String> deviceTypeList = ["СППУ", "РТ", "КСД", "КФУ"];
   Widget bottomBarWidget = Container(height: 0);
   bool flagSenderDevice = false;
   MapMarker? bufferMarker;
+  String? chooseDeviceType;
 
   @override
   void initState() {
+    chooseDeviceType = deviceTypeList[0];
     super.initState();
     timer = Timer.periodic(Duration(seconds: 1), (_) {
       setState(() {
@@ -136,10 +150,10 @@ class _mapPage extends State<mapPage>
     });
   }
 
-  void createNewMapMarker(int id, bool flag) {
+  void createNewMapMarker(int id, bool flag, String deviceType) {
     setState(() {
       markerIndex++;
-      createMarkerData(id);
+      createMarkerData(id, deviceType);
       Color colorBack = Colors.blue;
       if (flag) {
         colorBack = Colors.green;
@@ -152,6 +166,7 @@ class _mapPage extends State<mapPage>
           markerData[markerIndex],
           markerData[markerIndex].deviceCord!,
           markerData[markerIndex].deviceId.toString(),
+          markerData[markerIndex].deviceType!,
           colorBack);
       global.globalMapMarker.add(localMarker);
       global.globalDevicesListFromMap.add(id.toString());
@@ -159,12 +174,13 @@ class _mapPage extends State<mapPage>
     });
   }
 
-  void createMarkerData(int id) {
+  void createMarkerData(int id, String deviceType) {
     setState(() {
       MarkerData data = MarkerData();
       markerData.add(data);
       markerData[markerIndex].deviceId = id;
       markerData[markerIndex].deviceCord = currentLocation;
+      markerData[markerIndex].deviceType = deviceType;
     });
   }
 
@@ -194,7 +210,7 @@ class _mapPage extends State<mapPage>
       int id = int.parse(num);
       if (id > 0 && id < 999) {
         if (global.globalMapMarker.isEmpty) {
-          createNewMapMarker(id, flagSenderDevice);
+          createNewMapMarker(id, flagSenderDevice, chooseDeviceType!);
         } else {
           for (int i = 0; i < global.globalMapMarker.length; i++) {
             if (global.globalMapMarker[i].markerData.deviceId == id) {
@@ -207,7 +223,7 @@ class _mapPage extends State<mapPage>
             }
           }
           if (flag) {
-            createNewMapMarker(id, flagSenderDevice);
+            createNewMapMarker(id, flagSenderDevice, chooseDeviceType!);
           }
         }
         //for (int i = 0; i < idMarkersFromBluetooth )
@@ -217,27 +233,54 @@ class _mapPage extends State<mapPage>
     });
   }
 
+  void addNewDeviceOnMap(){
+    setState(() {
+      bottomBarWidget = SizedBox(
+        height: 150,
+        child: Column(children: [
+          SizedBox(
+            height: 100,
+            child: TextField(
+              keyboardType: TextInputType.number,
+              inputFormatters: <TextInputFormatter>[
+                FilteringTextInputFormatter.digitsOnly,
+              ],
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                icon: Icon(Icons.developer_board),
+                labelText: 'Device ID',
+                hintText: '',
+                helperText: 'Input device ID',
+              ),
+              onSubmitted: checkCorrectID,
+            ),
+          ),
+          DropdownButton<String>(
+            icon: const Icon(Icons.keyboard_double_arrow_down),
+            onChanged: (String? value) {
+                chooseDeviceType = value!;
+                print(chooseDeviceType);
+                addNewDeviceOnMap();
+            },
+            value: chooseDeviceType,
+            items:
+            deviceTypeList.map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+          ),
+        ]),
+      );
+    });
+  }
+
   void changeBottomBarWidget(
       int counter, int? markerId, LatLng? cord, String? string) {
     setState(() {
       if (counter == 0) {
-        bottomBarWidget = SizedBox(
-          height: 100,
-          child: TextField(
-            keyboardType: TextInputType.number,
-            inputFormatters: <TextInputFormatter>[
-              FilteringTextInputFormatter.digitsOnly,
-            ],
-            decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              icon: Icon(Icons.developer_board),
-              labelText: 'Device ID',
-              hintText: '',
-              helperText: 'Input device ID',
-            ),
-            onSubmitted: checkCorrectID,
-          ),
-        );
+        addNewDeviceOnMap();
       }
 
       if (counter == -1) {

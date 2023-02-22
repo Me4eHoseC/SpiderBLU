@@ -40,3 +40,4 @@ List<int> globalActiveDevices = List<int>.empty(growable: true),
     globalAlarmDevices = List<int>.empty(growable: true);
 
 List<MapMarker> globalMapMarker = List<MapMarker>.empty(growable: true);
+List<int> retransmissionRequests = List<int>.empty(growable: true);

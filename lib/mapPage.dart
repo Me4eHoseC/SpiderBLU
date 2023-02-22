@@ -16,14 +16,17 @@ class MarkerData {
       deviceVersion,
       deviceStateMask,
       deviceState,
-      deviceRssi;
+      deviceRssi,
+      deviceMask;
   LatLng? deviceCord;
   DateTime? deviceTime, deviceLastAlarmTime;
   AlarmType? deviceLastAlarmType;
   AlarmReason? deviceLastAlarmReason;
   double? deviceBattery;
-  List<int>? deviceAllowedHops, deviceUnallowedHops;
+  List<int>? deviceAllowedHops, deviceRetransmissionToAll, deviceUnallowedHops;
   String? deviceType;
+  bool extDevice1 = false, extDevice2 = false, devicePhototrap = false,
+      deviceGeophone = false, seismicAlarmsMuted = false, firstSeismicAlarmMuted = false;
   //var
 }
 

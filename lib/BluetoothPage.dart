@@ -206,22 +206,22 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
       for (int i = 0; i < global.globalMapMarker.length; i++) {
         if (global.globalMapMarker[i].markerData.deviceId ==
             package.getSender()) {
-          global.globalMapMarker[i].markerData.deviceMask =
+          global.globalMapMarker[i].markerData.deviceMaskExtDevice =
               package.getStateMask();
           global.globalMapMarker[i].markerData.extDevice1 =
-              ((global.globalMapMarker[i].markerData.deviceMask! &
+              ((global.globalMapMarker[i].markerData.deviceMaskExtDevice! &
                       DeviceState.MONITORING_LINE1) !=
                   0);
           global.globalMapMarker[i].markerData.extDevice2 =
-              ((global.globalMapMarker[i].markerData.deviceMask! &
+              ((global.globalMapMarker[i].markerData.deviceMaskExtDevice! &
                       DeviceState.MONITORING_LINE2) !=
                   0);
           global.globalMapMarker[i].markerData.devicePhototrap =
-          ((global.globalMapMarker[i].markerData.deviceMask! &
+          ((global.globalMapMarker[i].markerData.deviceMaskExtDevice! &
           DeviceState.LINES_CAMERA_TRAP) !=
               0);
           global.globalMapMarker[i].markerData.deviceGeophone =
-          ((global.globalMapMarker[i].markerData.deviceMask! &
+          ((global.globalMapMarker[i].markerData.deviceMaskExtDevice! &
           DeviceState.MONITOR_SEISMIC) !=
               0);
         }
@@ -231,7 +231,44 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
       array.add('dataReceived: ${package.getStateMask()}');
     }
 
-    if (basePackage.getType() == PacketTypeEnum.PERIPHERY) {}
+    if (basePackage.getType() == PacketTypeEnum.PERIPHERY) {
+      var package = basePackage as PeripheryMaskPackage;
+      for (int i = 0; i < global.globalMapMarker.length; i++) {
+        if (global.globalMapMarker[i].markerData.deviceId ==
+            package.getSender()) {
+          global.globalMapMarker[i].markerData.deviceMaskPeriphery =
+              package.getPeripheryMask();
+
+          global.globalMapMarker[i].markerData.deviceExtDev1State =
+          ((global.globalMapMarker[i].markerData.deviceMaskPeriphery! &
+          PeripheryMask.LINE1) !=
+              0);
+          global.globalMapMarker[i].markerData.deviceExtDev2State =
+          ((global.globalMapMarker[i].markerData.deviceMaskPeriphery! &
+          PeripheryMask.LINE2) !=
+              0);
+          global.globalMapMarker[i].markerData.deviceExtPhototrapState =
+          ((global.globalMapMarker[i].markerData.deviceMaskPeriphery! &
+          PeripheryMask.CAMERA) !=
+              0);
+        }
+      }
+      print('dataReceived: ${package.getPeripheryMask()}');
+      array.add('dataReceived: ${package.getPeripheryMask()}');
+    }
+
+    if (basePackage.getType() == PacketTypeEnum.EXTERNAL_POWER) {
+      var package = basePackage as ExternalPowerPackage;
+      for (int i = 0; i < global.globalMapMarker.length; i++) {
+        if (global.globalMapMarker[i].markerData.deviceId ==
+            package.getSender()) {
+          global.globalMapMarker[i].markerData.deviceExternalPower =
+              package.getExternalPowerState().index;
+        }
+      }
+      print('dataReceived: ${package.getExternalPowerState()}');
+      array.add('dataReceived: ${package.getExternalPowerState()}');
+    }
 
     //todo
   }
@@ -405,7 +442,6 @@ class _BluetoothPage extends State<BluetoothPage>
     });
   }
 
-
   void TakeRetransmissionAllClick(int devId) {
     setState(() {
       BasePackage getInfo =
@@ -447,7 +483,8 @@ class _BluetoothPage extends State<BluetoothPage>
     });
   }
 
-  void SetInternalDeviceParamClick(int devId, bool dev1, bool dev2) {
+  void SetInternalDeviceParamClick(int devId, bool dev1, bool dev2, bool dev3,
+      bool dev4) {
     setState(() {
       int mask = 0;
       if (dev1) {
@@ -455,6 +492,12 @@ class _BluetoothPage extends State<BluetoothPage>
       }
       if (dev2) {
         mask |= DeviceState.MONITORING_LINE2;
+      }
+      if (dev3) {
+        mask |= DeviceState.MONITOR_SEISMIC;
+      }
+      if (dev4) {
+        mask |= DeviceState.LINES_CAMERA_TRAP;
       }
       StatePackage statePackage = StatePackage();
       statePackage.setReceiver(devId);
@@ -464,6 +507,40 @@ class _BluetoothPage extends State<BluetoothPage>
       widget.tits.add(tid);
     });
   }
+
+  void TakeInternalDeviceStateClick(int devId) {
+    setState(() {
+      BasePackage getInfo =
+      BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_PERIPHERY);
+      var tid = global.postManager.sendPackage(getInfo);
+      widget.tits.add(tid);
+    });
+  }
+
+  void TakeExternalPowerClick(int devId) {
+    setState(() {
+      BasePackage getInfo =
+      BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_EXTERNAL_POWER);
+      var tid = global.postManager.sendPackage(getInfo);
+      widget.tits.add(tid);
+    });
+  }
+
+  void SetExternalPowerClick(int devId, bool extFlag) {
+    setState(() {
+      int value = 0;
+      if (extFlag) {
+        value = ExternalPower.ON.index;
+      } else {value = ExternalPower.OFF.index;}
+      ExternalPowerPackage externalPowerPackage = ExternalPowerPackage();
+      externalPowerPackage.setReceiver(devId);
+      externalPowerPackage.setSender(RoutesManager.getLaptopAddress());
+      externalPowerPackage.setExternalPowerState(ExternalPower.values[value]);
+      var tid = global.postManager.sendPackage(externalPowerPackage);
+      widget.tits.add(tid);
+    });
+  }
+
 
   //todo tid
 

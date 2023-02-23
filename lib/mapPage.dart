@@ -17,7 +17,9 @@ class MarkerData {
       deviceStateMask,
       deviceState,
       deviceRssi,
-      deviceMask;
+      deviceMaskExtDevice,
+      deviceMaskPeriphery,
+      deviceExternalPower;
   LatLng? deviceCord;
   DateTime? deviceTime, deviceLastAlarmTime;
   AlarmType? deviceLastAlarmType;
@@ -26,7 +28,9 @@ class MarkerData {
   List<int>? deviceAllowedHops, deviceRetransmissionToAll, deviceUnallowedHops;
   String? deviceType;
   bool extDevice1 = false, extDevice2 = false, devicePhototrap = false,
-      deviceGeophone = false, seismicAlarmsMuted = false, firstSeismicAlarmMuted = false;
+      deviceGeophone = false, seismicAlarmsMuted = false,
+      firstSeismicAlarmMuted = false, deviceExtDev1State = false,
+      deviceExtDev2State = false, deviceExtPhototrapState = false ;
   //var
 }
 

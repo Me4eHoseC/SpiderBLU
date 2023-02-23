@@ -53,9 +53,9 @@ enum BatteryState{
 
 class PeripheryMask{
   static const int LINE1 = 1 << 0;
-  static const int LINE2 = 1 << 0;
-  static const int AUDIO = 1 << 0;
-  static const int CAMERA = 1 << 0;
+  static const int LINE2 = 1 << 1;
+  static const int AUDIO = 1 << 2;
+  static const int CAMERA = 1 << 3;
 }
 
 class YellowAlarm{

@@ -416,6 +416,10 @@ class ExternalPowerPackage extends BasePackage {
     _state = state.index;
   }
 
+  ExternalPower getExternalPowerState() {
+    return ExternalPower.values[_state];
+  }
+
   @override
   Uint8List toBytesArray() {
     bool success = true;

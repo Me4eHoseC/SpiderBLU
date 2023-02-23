@@ -24,13 +24,21 @@ class MarkerData {
   DateTime? deviceTime, deviceLastAlarmTime;
   AlarmType? deviceLastAlarmType;
   AlarmReason? deviceLastAlarmReason;
-  double? deviceBattery;
+  double? deviceVoltage, deviceTemperature, deviceBattery;
   List<int>? deviceAllowedHops, deviceRetransmissionToAll, deviceUnallowedHops;
   String? deviceType;
-  bool extDevice1 = false, extDevice2 = false, devicePhototrap = false,
-      deviceGeophone = false, seismicAlarmsMuted = false,
-      firstSeismicAlarmMuted = false, deviceExtDev1State = false,
-      deviceExtDev2State = false, deviceExtPhototrapState = false ;
+  bool extDevice1 = false,
+      extDevice2 = false,
+      devicePhototrap = false,
+      deviceGeophone = false,
+      seismicAlarmsMuted = false,
+      firstSeismicAlarmMuted = false,
+      deviceExtDev1State = false,
+      deviceExtDev2State = false,
+      deviceExtPhototrapState = false,
+      deviceAvailable = false;
+  Color backColor = Colors.blue;
+  Timer? timer;
   //var
 }
 
@@ -49,12 +57,12 @@ class MapMarker extends Marker {
             builder: (ctx) => TextButton(
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.black,
-                    backgroundColor: colorBack,
+                    backgroundColor: markerData.backColor,
                   ),
                   onPressed: () =>
                       {parent?.selectMapMarker(markerId, cord, string)},
                   child: Text(
-                      string + '\n' + deviceType,
+                    string + '\n' + deviceType,
                     style: TextStyle(
                       fontSize: 10,
                     ),
@@ -96,6 +104,12 @@ class _mapPage extends State<mapPage>
     super.initState();
     timer = Timer.periodic(Duration(seconds: 1), (_) {
       setState(() {
+        for (int i = 0; i < global.globalMapMarker.length; i++) {
+          if (global.globalMapMarker[i].markerData.deviceAvailable) {
+            global.globalMapMarker[i].markerData.backColor = Colors.green;
+            startTimer(i);
+          }
+        }
         location.getLocation().then((p) {
           myCoords = LatLng(p.latitude!, p.longitude!);
         });
@@ -105,6 +119,17 @@ class _mapPage extends State<mapPage>
 
   void dispose() {
     timer!.cancel();
+  }
+
+  void startTimer(int id){
+    if (global.globalMapMarker[id].markerData.timer == null){
+      global.globalMapMarker[id].markerData.timer =
+          Timer(Duration(seconds: 10), () {
+            global.globalMapMarker[id].markerData.backColor = Colors.blue;
+            global.globalMapMarker[id].markerData.deviceAvailable = false;
+            global.globalMapMarker[id].markerData.timer = null;
+          });
+    }
   }
 
   /*void checkAlarm() {
@@ -240,7 +265,7 @@ class _mapPage extends State<mapPage>
     });
   }
 
-  void addNewDeviceOnMap(){
+  void addNewDeviceOnMap() {
     setState(() {
       bottomBarWidget = SizedBox(
         height: 150,
@@ -265,13 +290,12 @@ class _mapPage extends State<mapPage>
           DropdownButton<String>(
             icon: const Icon(Icons.keyboard_double_arrow_down),
             onChanged: (String? value) {
-                chooseDeviceType = value!;
-                print(chooseDeviceType);
-                addNewDeviceOnMap();
+              chooseDeviceType = value!;
+              print(chooseDeviceType);
+              addNewDeviceOnMap();
             },
             value: chooseDeviceType,
-            items:
-            deviceTypeList.map<DropdownMenuItem<String>>((String value) {
+            items: deviceTypeList.map<DropdownMenuItem<String>>((String value) {
               return DropdownMenuItem<String>(
                 value: value,
                 child: Text(value),
@@ -304,8 +328,15 @@ class _mapPage extends State<mapPage>
               Text(global.globalMapMarker[markerId!].markerData.deviceTime
                   .toString()),
               IconButton(
-                  onPressed: () =>
-                      {changeBottomBarWidget(-1, null, null, null)},
+                  onPressed: () => {
+                        changeBottomBarWidget(-1, null, null, null),
+                        if (global.globalMapMarker[markerId].markerData
+                            .deviceAvailable)
+                          {
+                            global.globalMapMarker[markerId].markerData
+                                .backColor = Colors.green
+                          }
+                      },
                   icon: Icon(Icons.power_settings_new))
             ],
           ),

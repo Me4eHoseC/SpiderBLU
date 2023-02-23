@@ -70,6 +70,7 @@ class Application {
   }
 
   static void ranOutOfSendAttempts(BasePackage? pb, int transactionId) {
+    //global.globalMapMarker[id].markerData.deviceAvailable = false;
     print('RanOutOfSendAttempts');
   }
 

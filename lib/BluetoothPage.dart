@@ -50,6 +50,7 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
         if (global.globalMapMarker[i].markerData.deviceId ==
             package.getSender()) {
           global.globalMapMarker[i].markerData.deviceTime = package.getTime();
+          global.globalMapMarker[i].markerData.deviceAvailable = true;
         }
       }
       array.add('dataReceived: ${package.getTime()}');
@@ -270,8 +271,26 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
       array.add('dataReceived: ${package.getExternalPowerState()}');
     }
 
+    if (basePackage.getType() == PacketTypeEnum.BATTERY_MONITOR){
+      var package = basePackage as BatteryMonitorPackage;
+      for (int i = 0; i < global.globalMapMarker.length; i++) {
+        if (global.globalMapMarker[i].markerData.deviceId ==
+            package.getSender()) {
+          global.globalMapMarker[i].markerData.deviceVoltage =
+              package.getVoltage();
+          global.globalMapMarker[i].markerData.deviceTemperature =
+              package.getTemperature();
+        }
+      }
+      print('dataReceived: ${package.getTemperature()}');
+      array.add('dataReceived: ${package.getTemperature()}');
+      print('dataReceived: ${package.getVoltage()}');
+      array.add('dataReceived: ${package.getVoltage()}');
+    }
+
     //todo
   }
+
 
   @override
   void ranOutOfSendAttempts(int tid, BasePackage? pb) {
@@ -537,6 +556,15 @@ class _BluetoothPage extends State<BluetoothPage>
       externalPowerPackage.setSender(RoutesManager.getLaptopAddress());
       externalPowerPackage.setExternalPowerState(ExternalPower.values[value]);
       var tid = global.postManager.sendPackage(externalPowerPackage);
+      widget.tits.add(tid);
+    });
+  }
+
+  void TakeBatteryMonitorClick(int devId) {
+    setState(() {
+      BasePackage getInfo =
+      BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_BATTERY_MONITOR);
+      var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
   }

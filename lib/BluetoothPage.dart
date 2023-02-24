@@ -291,6 +291,22 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
     //todo
   }
 
+  @override
+  void alarmReceived(BasePackage basePackage){
+    if (basePackage.getType() == PacketTypeEnum.ALARM){
+      var package = basePackage as AlarmPackage;
+      for (int i = 0; i < global.globalMapMarker.length; i++) {
+        if (global.globalMapMarker[i].markerData.deviceId ==
+            package.getSender()) {
+          global.globalMapMarker[i].markerData.deviceAlarm = true;
+          print('dataReceived: ${package.getAlarmType()}');
+        }
+      }
+
+
+    }
+  }
+
 
   @override
   void ranOutOfSendAttempts(int tid, BasePackage? pb) {

@@ -49,6 +49,11 @@ class Application {
     if (global.bluetoothPage.isMyTransaction(tid)) {
       global.bluetoothPage.dataReceived(tid, basePackage);
     }
+
+    if (tid == -1){
+      global.bluetoothPage.alarmReceived(basePackage);
+    }
+
   }
 
   static void acknowledgeReceived(BasePackage basePackage) {

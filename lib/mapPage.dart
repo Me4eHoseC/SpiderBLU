@@ -36,7 +36,8 @@ class MarkerData {
       deviceExtDev1State = false,
       deviceExtDev2State = false,
       deviceExtPhototrapState = false,
-      deviceAvailable = false;
+      deviceAvailable = false,
+      deviceAlarm = false;
   Color backColor = Colors.blue;
   Timer? timer;
   //var
@@ -105,7 +106,13 @@ class _mapPage extends State<mapPage>
     timer = Timer.periodic(Duration(seconds: 1), (_) {
       setState(() {
         for (int i = 0; i < global.globalMapMarker.length; i++) {
-          if (global.globalMapMarker[i].markerData.deviceAvailable) {
+          if (global.globalMapMarker[i].markerData.deviceAlarm){
+            global.globalMapMarker[i].markerData.backColor = Colors.red;
+            global.globalMapMarker[i].markerData.deviceAvailable = true;
+            global.globalMapMarker[i].markerData.timer = null;
+          }
+          if (global.globalMapMarker[i].markerData.deviceAvailable &&
+              global.globalMapMarker[i].markerData.deviceAlarm == false) {
             global.globalMapMarker[i].markerData.backColor = Colors.green;
             startTimer(i);
           }
@@ -121,14 +128,15 @@ class _mapPage extends State<mapPage>
     timer!.cancel();
   }
 
-  void startTimer(int id){
-    if (global.globalMapMarker[id].markerData.timer == null){
-      global.globalMapMarker[id].markerData.timer =
-          Timer(Duration(seconds: 10), () {
-            global.globalMapMarker[id].markerData.backColor = Colors.blue;
-            global.globalMapMarker[id].markerData.deviceAvailable = false;
-            global.globalMapMarker[id].markerData.timer = null;
-          });
+  void startTimer(int id) {
+    if (global.globalMapMarker[id].markerData.timer == null &&
+        global.globalMapMarker[id].markerData.deviceAlarm == false) {
+        global.globalMapMarker[id].markerData.timer =
+          Timer(Duration(seconds: 20), () {
+        global.globalMapMarker[id].markerData.backColor = Colors.blue;
+        global.globalMapMarker[id].markerData.deviceAvailable = false;
+        global.globalMapMarker[id].markerData.timer = null;
+      });
     }
   }
 
@@ -330,6 +338,8 @@ class _mapPage extends State<mapPage>
               IconButton(
                   onPressed: () => {
                         changeBottomBarWidget(-1, null, null, null),
+                        global.globalMapMarker[markerId].markerData
+                            .deviceAlarm = false,
                         if (global.globalMapMarker[markerId].markerData
                             .deviceAvailable)
                           {

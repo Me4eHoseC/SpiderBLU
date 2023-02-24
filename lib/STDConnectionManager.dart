@@ -44,6 +44,9 @@ class STDConnectionManager {
   void onConnected() {
     Timer(Duration.zero, setStateOnDone!);
     print('Connected');
+    if (global.std == null){
+      print('notConnect');
+    }
     global.flagConnect = true;
   }
 

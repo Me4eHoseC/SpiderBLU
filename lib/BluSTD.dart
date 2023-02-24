@@ -27,7 +27,7 @@ class BluSTD extends ISTD {
     _connection = await BluetoothConnection.toAddress(_deviceAddress);
 
     if (_connection == null) {
-      return false;
+      return connect();
     }
 
     _connection!.input?.listen(onData);

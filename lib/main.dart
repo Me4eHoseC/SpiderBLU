@@ -39,7 +39,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-        length: 2,
+        length: 3,
         child: Scaffold(
           appBar: AppBar(
             toolbarHeight: 0,
@@ -51,6 +51,9 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 Tab(
                   text: 'Map',
                 ),
+                Tab(
+                  text: 'Test',
+                ),
               ],
             ),
           ),
@@ -59,6 +62,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             children: <Widget>[
               global.bluetoothPage,
               global.mapClass,
+              global.testPage,
             ],
           ),
         ));

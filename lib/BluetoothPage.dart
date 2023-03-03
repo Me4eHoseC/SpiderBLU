@@ -302,8 +302,6 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
           print('dataReceived: ${package.getAlarmType()}');
         }
       }
-
-
     }
   }
 
@@ -584,7 +582,6 @@ class _BluetoothPage extends State<BluetoothPage>
       widget.tits.add(tid);
     });
   }
-
 
   //todo tid
 

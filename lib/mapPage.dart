@@ -79,8 +79,8 @@ class mapPage extends StatefulWidget {
 
 class _mapPage extends State<mapPage>
     with AutomaticKeepAliveClientMixin<mapPage> {
+
   @override
-  // TODO: implement wantKeepAlive
   bool get wantKeepAlive => true;
 
   int markerIndex = -1, alarmMarkerIndex = -1;
@@ -98,6 +98,7 @@ class _mapPage extends State<mapPage>
   bool flagSenderDevice = false;
   MapMarker? bufferMarker;
   String? chooseDeviceType;
+
 
   @override
   void initState() {
@@ -122,10 +123,6 @@ class _mapPage extends State<mapPage>
         });
       });
     });
-  }
-
-  void dispose() {
-    timer!.cancel();
   }
 
   void startTimer(int id) {
@@ -389,25 +386,36 @@ class _mapPage extends State<mapPage>
           MarkerLayerOptions(markers: global.globalMapMarker),
         ],
       ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            onPressed: changeMapRotation,
-            child: const Icon(
-              Icons.arrow_upward,
-              color: Colors.red,
+      floatingActionButton: Builder(builder: (context) {
+        return Column(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            FloatingActionButton(
+              onPressed: () => Scaffold.of(context).openDrawer(),
+              child: const Icon(
+                Icons.menu,
+                color: Colors.red,
+              ),
             ),
-          ),
-          FloatingActionButton(
-            onPressed: findMyPosition,
-            child: const Icon(
-              Icons.location_searching,
-              color: Colors.red,
+            FloatingActionButton(
+              onPressed: findMyPosition,
+              child: const Icon(
+                Icons.location_searching,
+                color: Colors.red,
+              ),
             ),
-          ),
-        ],
-      ),
+            FloatingActionButton(
+              onPressed: changeMapRotation,
+              child: const Icon(
+                Icons.arrow_upward,
+                color: Colors.red,
+              ),
+            ),
+          ],
+        );
+      }),
       bottomNavigationBar: BottomAppBar(
         child: bottomBarWidget,
       ),

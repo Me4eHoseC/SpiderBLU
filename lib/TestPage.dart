@@ -30,6 +30,7 @@ class _TestPage extends State<TestPage>
     return Scaffold(
       body: checked
           ? Column(
+              //verticalDirection: VerticalDirection.up,
               children: [
                 TextButton(
                   onPressed: () {
@@ -39,22 +40,26 @@ class _TestPage extends State<TestPage>
                     } else {
                       checked = true;
                     }
-                    Navigator.push(context, CupertinoPageRoute(builder: (context) => global.bluetoothPage));
+                    //Navigator.push(context, CupertinoPageRoute(builder: (context) => global.bluetoothPage));
 
                   },
                   child: Text('test'),
                 ),
-                TextButton(
-                  onPressed: () {
-                    print(checked);
-                    if (checked) {
-                      checked = false;
-                    } else {
-                      checked = true;
-                    }
-                  },
-                  child: Text('test'),
-                ),
+               TextButton(
+                 onPressed: (){
+                   print(showDatePicker(
+                       context: context,
+                       initialDate: DateTime.now(),
+                       firstDate: DateTime(2023),
+                       lastDate: DateTime(2024)
+                   ));
+                   print(showTimePicker(
+                       context: context,
+                       initialTime: TimeOfDay.now(),
+                   ));
+                 },
+                 child: Text('test2'),
+               )
               ],
             )
           : Column(

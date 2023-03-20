@@ -1,10 +1,9 @@
-import 'package:projects/NetNetworkPackages.dart';
+import 'dart:async';
+
 import 'package:projects/PostManager.dart';
 
 import 'global.dart' as global;
 import 'package:projects/BasePackage.dart';
-import 'AllEnum.dart';
-import 'NetCommonPackages.dart';
 
 abstract class TIDManagement {
   final List<int> tits = List.empty(growable: true);
@@ -37,7 +36,7 @@ class Application {
       global.postManager.responseReceived(basePackage);
     }
 
-    /*var pages = [global.bluetoothPage, *//**//*];
+    /*var pages = [global.bluetoothPage, */ /**/ /*];
 
     for (TIDManagement page in pages) {
       if (page.isMyTransaction(tid)) {
@@ -50,10 +49,9 @@ class Application {
       global.bluetoothPage.dataReceived(tid, basePackage);
     }
 
-    if (tid == -1){
+    if (tid == -1) {
       global.bluetoothPage.alarmReceived(basePackage);
     }
-
   }
 
   static void acknowledgeReceived(BasePackage basePackage) {
@@ -82,5 +80,24 @@ class Application {
   static void packageSendingAttempt(PackageSendingStatus sendingStatus) {
     print("#${sendingStatus.transactionId}: ${sendingStatus.attemptNumber}/"
         "${sendingStatus.totalAttemptNumber} -> #${sendingStatus.receiver}");
+    global.statusBarString =
+        ("#${sendingStatus.transactionId}: ${sendingStatus.attemptNumber}/"
+            "${sendingStatus.totalAttemptNumber} -> #${sendingStatus.receiver}");
+    timerClearStatusBar();
+  }
+
+  static void timerClearStatusBar(){
+    if (global.timer != null){
+      print(global.timer);
+      global.timer!.cancel();
+      global.timer = Timer(Duration(seconds: 5), () {
+        global.statusBarString = " ";
+      });
+    }
+    else{
+      global.timer = Timer(Duration(seconds: 5), () {
+        global.statusBarString = " ";
+      });
+    }
   }
 }

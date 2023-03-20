@@ -1,4 +1,6 @@
 library projects.globals;
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:projects/BluetoothPage.dart';
@@ -11,12 +13,15 @@ import 'package:projects/STDConnectionManager.dart';
 
 
 const String deviceName = 'HC-05-DMRS1';
+String selectedPage = '', statusBarString = '';
 
-BluetoothPage bluetoothPage = BluetoothPage();
-mapPage mapClass = mapPage();
-TestPage testPage = TestPage();
+Timer? timer;
 
-List<StatefulWidget> pages = [
+final BluetoothPage bluetoothPage = BluetoothPage();
+final mapPage mapClass = mapPage();
+final TestPage testPage = TestPage();
+
+final List<StatefulWidget> pages = [
   bluetoothPage,
   mapClass,
   testPage

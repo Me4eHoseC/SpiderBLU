@@ -37,11 +37,17 @@ class HomePageState extends State<MyHomePage>
   bool get wantKeepAlive => true;
   Timer? timer;
   String statusBarString = '';
+  Widget list = Container();
 
   int selectedBodyWidget = 0;
 
   void initState() {
     super.initState();
+    Timer.periodic(Duration.zero, (_) {
+      setState(() {
+        list = global.list;
+      });
+    });
     timer = Timer.periodic(Duration(seconds: 1), (_) {
       changeStatusBarString();
     });
@@ -53,7 +59,7 @@ class HomePageState extends State<MyHomePage>
     });
   }
 
-  void changeStatusBarString(){
+  void changeStatusBarString() {
     setState(() {
       statusBarString = global.statusBarString;
     });
@@ -64,16 +70,21 @@ class HomePageState extends State<MyHomePage>
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 30,
-        title: SizedBox(
-          width: 400,
-          height: 30,
-          child: Text(
-            statusBarString,
-            textAlign: TextAlign.end,
-          ),
-        )
+        toolbarHeight: 130,
+        title: Column(
+          children: [
+            SizedBox(
+              height: 30,
+              child: Text(
+                statusBarString,
+                textAlign: TextAlign.end,
+              ),
+            ),
+            SizedBox(height: 100, child: list),
+          ],
+        ),
       ),
+
       //drawerEnableOpenDragGesture: true,
       drawerEdgeDragWidth: 0,
       drawer: Drawer(
@@ -114,15 +125,36 @@ class HomePageState extends State<MyHomePage>
         index: selectedBodyWidget,
         children: global.pages,
       ),
-      floatingActionButton: Builder(builder: (context) {
-        return FloatingActionButton(
-          onPressed: () => Scaffold.of(context).openDrawer(),
-          child: const Icon(
-            Icons.menu,
-            color: Colors.red,
+      bottomNavigationBar: BottomAppBar(
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Builder(builder: (context) {
+                return FloatingActionButton(
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                  child: const Icon(
+                    Icons.menu,
+                    color: Colors.red,
+                  ),
+                );
+              }),
+              Builder(builder: (context) {
+                return FloatingActionButton(
+                  onPressed: () => {
+                    changePage(1),
+                  },
+                  child: const Icon(
+                    Icons.map,
+                    color: Colors.red,
+                  ),
+                );
+              }),
+            ],
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
 }

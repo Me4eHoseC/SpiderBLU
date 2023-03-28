@@ -37,6 +37,7 @@ class MarkerData {
       deviceExtDev2State = false,
       deviceExtPhototrapState = false,
       deviceAvailable = false,
+      deviceReturnCheck = false,
       deviceAlarm = false;
   Color backColor = Colors.blue;
   Timer? timer;
@@ -110,11 +111,20 @@ class _mapPage extends State<mapPage>
           if (global.globalMapMarker[i].markerData.deviceAlarm){
             global.globalMapMarker[i].markerData.backColor = Colors.red;
             global.globalMapMarker[i].markerData.deviceAvailable = true;
-            global.globalMapMarker[i].markerData.timer = null;
+            global.globalMapMarker[i].markerData.timer!.cancel();
           }
           if (global.globalMapMarker[i].markerData.deviceAvailable &&
-              global.globalMapMarker[i].markerData.deviceAlarm == false) {
+              global.globalMapMarker[i].markerData.deviceAlarm == false &&
+              global.globalMapMarker[i].markerData.timer == null) {
             global.globalMapMarker[i].markerData.backColor = Colors.green;
+            startTimer(i);
+          }
+          if (global.globalMapMarker[i].markerData.deviceAvailable &&
+              global.globalMapMarker[i].markerData.deviceAlarm == false &&
+              global.globalMapMarker[i].markerData.timer != null &&
+              global.globalMapMarker[i].markerData.deviceReturnCheck == true) {
+            global.globalMapMarker[i].markerData.backColor = Colors.green;
+            global.globalMapMarker[i].markerData.timer!.cancel();
             startTimer(i);
           }
         }
@@ -126,43 +136,17 @@ class _mapPage extends State<mapPage>
   }
 
   void startTimer(int id) {
-    if (global.globalMapMarker[id].markerData.timer == null &&
-        global.globalMapMarker[id].markerData.deviceAlarm == false) {
-        global.globalMapMarker[id].markerData.timer =
-          Timer(Duration(seconds: 20), () {
-        global.globalMapMarker[id].markerData.backColor = Colors.blue;
-        global.globalMapMarker[id].markerData.deviceAvailable = false;
-        global.globalMapMarker[id].markerData.timer = null;
-      });
-    }
-  }
-
-  /*void checkAlarm() {
     setState(() {
-      if (alarmList.isNotEmpty) {
-        for (int i = 0; i < alarmList.length; i++) {
-          for (int j = 0; j < marker.length; j++) {
-            if (marker[j].markerData.deviceId == alarmList[i]) {
-              alarmLocation = marker[j].markerData.deviceCord;
-              alarmMarkerIndex = marker[j].markerId;
-              marker.removeAt(alarmMarkerIndex);
-              marker.insert(
-                  alarmMarkerIndex,
-                  MapMarker(
-                      this,
-                      alarmMarkerIndex,
-                      markerData[alarmMarkerIndex],
-                      alarmLocation!,
-                      markerData[alarmMarkerIndex].deviceId.toString(),
-                      Colors.red));
-              alarmList.remove(alarmList[i]);
-              break;
-            }
-          }
-        }
-      }
+      global.globalMapMarker[id].markerData.deviceReturnCheck = false;
+        global.globalMapMarker[id].markerData.timer =
+            Timer(Duration(seconds: 10), () {
+              global.globalMapMarker[id].markerData.backColor = Colors.blue;
+              global.globalMapMarker[id].markerData.deviceAvailable = false;
+              global.globalMapMarker[id].markerData.deviceReturnCheck = false;
+              global.globalMapMarker[id].markerData.timer = null;
+            });
     });
-  }*/
+  }
 
   void changeMapRotation() {
     setState(() {
@@ -327,22 +311,18 @@ class _mapPage extends State<mapPage>
 
       if (counter == 1) {
         bottomBarWidget = Container(
-          height: 200,
+          height: 80,
           child: Row(
             children: [
               Text(global.globalMapMarker[markerId!].markerData.deviceTime
+                  .toString()),
+              Text(global.globalMapMarker[markerId].markerData.deviceType
                   .toString()),
               IconButton(
                   onPressed: () => {
                         changeBottomBarWidget(-1, null, null, null),
                         global.globalMapMarker[markerId].markerData
                             .deviceAlarm = false,
-                        if (global.globalMapMarker[markerId].markerData
-                            .deviceAvailable)
-                          {
-                            global.globalMapMarker[markerId].markerData
-                                .backColor = Colors.green
-                          }
                       },
                   icon: Icon(Icons.power_settings_new))
             ],
@@ -350,18 +330,6 @@ class _mapPage extends State<mapPage>
         );
       }
     });
-  }
-
-  void checkMarkerColor(int id) {
-    for (int i = 0; i < idMarkersFromBluetooth.length; i++) {
-      if (idMarkersFromBluetooth[i] == id) {
-        flagSenderDevice = true;
-        break;
-      }
-      if (i + 1 == idMarkersFromBluetooth.length) {
-        flagSenderDevice = false;
-      }
-    }
   }
 
   Widget build(BuildContext context) {
@@ -375,7 +343,7 @@ class _mapPage extends State<mapPage>
           center: myCoords,
           zoom: 17.0,
           maxZoom: 18.0,
-          minZoom: 5.0,
+          minZoom: 1.0,
           onLongPress: openBottomMenu,
         ),
         mapController: mapController,

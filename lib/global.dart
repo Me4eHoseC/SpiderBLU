@@ -17,6 +17,8 @@ String selectedPage = '', statusBarString = '';
 
 Timer? timer;
 
+Widget list = Container();
+
 final BluetoothPage bluetoothPage = BluetoothPage();
 final mapPage mapClass = mapPage();
 final TestPage testPage = TestPage();
@@ -42,7 +44,7 @@ class Pair<T1, T2> {
 
 List<String> globalDevicesListFromMap = [];
 
-bool flagConnect = false;
+bool flagConnect = false, dataComeFlag = false;
 
 List<int> globalActiveDevices = List<int>.empty(growable: true),
     globalAlarmDevices = List<int>.empty(growable: true);

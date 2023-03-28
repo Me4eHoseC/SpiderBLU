@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:projects/Application.dart';
 import 'package:projects/BasePackage.dart';
 import 'package:projects/NetCommonPackages.dart';
@@ -29,6 +31,7 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
 
   @override
   void dataReceived(int tid, BasePackage basePackage) {
+    global.dataComeFlag = true;
     tits.remove(tid);
     if (basePackage.getType() == PacketTypeEnum.VERSION) {
       var package = basePackage as VersionPackage;
@@ -51,6 +54,7 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
             package.getSender()) {
           global.globalMapMarker[i].markerData.deviceTime = package.getTime();
           global.globalMapMarker[i].markerData.deviceAvailable = true;
+          global.globalMapMarker[i].markerData.deviceReturnCheck = true;
         }
       }
       array.add('dataReceived: ${package.getTime()}');
@@ -61,6 +65,8 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
       for (int i = 0; i < global.globalMapMarker.length; i++) {
         if (global.globalMapMarker[i].markerData.deviceId ==
             package.getSender()) {
+          global.globalMapMarker[i].markerData.deviceAvailable = true;
+          global.globalMapMarker[i].markerData.deviceReturnCheck = true;
           global.globalMapMarker[i].markerData.deviceCord!.longitude =
               package.getLongitude();
           global.globalMapMarker[i].markerData.deviceCord!.latitude =
@@ -120,6 +126,8 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
       for (int i = 0; i < global.globalMapMarker.length; i++) {
         if (global.globalMapMarker[i].markerData.deviceId ==
             package.getSender()) {
+          global.globalMapMarker[i].markerData.deviceAvailable = true;
+          global.globalMapMarker[i].markerData.deviceReturnCheck = true;
           global.globalMapMarker[i].markerData.deviceCord!.longitude =
               package.getLongitude();
           global.globalMapMarker[i].markerData.deviceCord!.latitude =
@@ -218,13 +226,13 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
                       DeviceState.MONITORING_LINE2) !=
                   0);
           global.globalMapMarker[i].markerData.devicePhototrap =
-          ((global.globalMapMarker[i].markerData.deviceMaskExtDevice! &
-          DeviceState.LINES_CAMERA_TRAP) !=
-              0);
+              ((global.globalMapMarker[i].markerData.deviceMaskExtDevice! &
+                      DeviceState.LINES_CAMERA_TRAP) !=
+                  0);
           global.globalMapMarker[i].markerData.deviceGeophone =
-          ((global.globalMapMarker[i].markerData.deviceMaskExtDevice! &
-          DeviceState.MONITOR_SEISMIC) !=
-              0);
+              ((global.globalMapMarker[i].markerData.deviceMaskExtDevice! &
+                      DeviceState.MONITOR_SEISMIC) !=
+                  0);
         }
       }
 
@@ -241,17 +249,17 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
               package.getPeripheryMask();
 
           global.globalMapMarker[i].markerData.deviceExtDev1State =
-          ((global.globalMapMarker[i].markerData.deviceMaskPeriphery! &
-          PeripheryMask.LINE1) !=
-              0);
+              ((global.globalMapMarker[i].markerData.deviceMaskPeriphery! &
+                      PeripheryMask.LINE1) !=
+                  0);
           global.globalMapMarker[i].markerData.deviceExtDev2State =
-          ((global.globalMapMarker[i].markerData.deviceMaskPeriphery! &
-          PeripheryMask.LINE2) !=
-              0);
+              ((global.globalMapMarker[i].markerData.deviceMaskPeriphery! &
+                      PeripheryMask.LINE2) !=
+                  0);
           global.globalMapMarker[i].markerData.deviceExtPhototrapState =
-          ((global.globalMapMarker[i].markerData.deviceMaskPeriphery! &
-          PeripheryMask.CAMERA) !=
-              0);
+              ((global.globalMapMarker[i].markerData.deviceMaskPeriphery! &
+                      PeripheryMask.CAMERA) !=
+                  0);
         }
       }
       print('dataReceived: ${package.getPeripheryMask()}');
@@ -271,7 +279,7 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
       array.add('dataReceived: ${package.getExternalPowerState()}');
     }
 
-    if (basePackage.getType() == PacketTypeEnum.BATTERY_MONITOR){
+    if (basePackage.getType() == PacketTypeEnum.BATTERY_MONITOR) {
       var package = basePackage as BatteryMonitorPackage;
       for (int i = 0; i < global.globalMapMarker.length; i++) {
         if (global.globalMapMarker[i].markerData.deviceId ==
@@ -292,8 +300,8 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
   }
 
   @override
-  void alarmReceived(BasePackage basePackage){
-    if (basePackage.getType() == PacketTypeEnum.ALARM){
+  void alarmReceived(BasePackage basePackage) {
+    if (basePackage.getType() == PacketTypeEnum.ALARM) {
       var package = basePackage as AlarmPackage;
       for (int i = 0; i < global.globalMapMarker.length; i++) {
         if (global.globalMapMarker[i].markerData.deviceId ==
@@ -305,11 +313,18 @@ class BluetoothPage extends StatefulWidget with TIDManagement {
     }
   }
 
-
   @override
   void ranOutOfSendAttempts(int tid, BasePackage? pb) {
     tits.remove(tid);
     array.add('RanOutOfSendAttempts');
+    for (int i = 0; i < global.globalMapMarker.length; i++) {
+      if (global.globalMapMarker[i].markerData.deviceId ==
+          pb!.getReceiver()) {
+        global.globalMapMarker[i].markerData.backColor = Colors.blue;
+        global.globalMapMarker[i].markerData.deviceAvailable = false;
+        global.globalMapMarker[i].markerData.deviceReturnCheck = false;
+        global.globalMapMarker[i].markerData.timer!.cancel();
+      }}
   }
 }
 
@@ -318,9 +333,9 @@ class _BluetoothPage extends State<BluetoothPage>
   @override
   bool get wantKeepAlive => true;
   int? deviceId;
-  Widget list = Container();
   String dropdownValue = '';
   List<DropdownMenuItem<String>> dropdownItems = [];
+  ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -330,16 +345,17 @@ class _BluetoothPage extends State<BluetoothPage>
     Timer.periodic(Duration.zero, (_) {
       setState(() {
         checkNewIdDevice();
-        list = ListView.builder(itemBuilder: (context, i) {
-          if (i < widget.array.length) {
-            return new Text(widget.array[i]);
-          } else {
-            return new Text('');
-          }
-        });
       });
     });
   }
+
+   void _scrollDown(int i) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent + i,
+        duration: Duration(seconds: 1),
+        curve: Curves.fastOutSlowIn,
+      );
+ }
 
   void checkNewIdDevice() {
     if (dropdownItems.length != global.globalDevicesListFromMap.length) {
@@ -352,6 +368,29 @@ class _BluetoothPage extends State<BluetoothPage>
         value: dropdownValue,
       );
       dropdownItems.add(newItem);
+    }
+    if(global.dataComeFlag) {
+      global.list =
+          ListView.builder(
+          reverse: true,
+          controller: _scrollController,
+          itemCount: widget.array.length,
+          itemBuilder: (context, i) {
+            /*print(i);
+            print(widget.array.length);
+            if (i < widget.array.length) {
+              if (widget.array.length > 5) {
+                _scrollDown(widget.array.length - i);
+              }*/
+              return new Text(
+                widget.array[i],
+                textScaleFactor: 0.85,
+              );
+            /*} else {
+              return new Text('');
+            }*/
+          });
+      global.dataComeFlag = false;
     }
   }
 
@@ -516,8 +555,8 @@ class _BluetoothPage extends State<BluetoothPage>
     });
   }
 
-  void SetInternalDeviceParamClick(int devId, bool dev1, bool dev2, bool dev3,
-      bool dev4) {
+  void SetInternalDeviceParamClick(
+      int devId, bool dev1, bool dev2, bool dev3, bool dev4) {
     setState(() {
       int mask = 0;
       if (dev1) {
@@ -544,7 +583,7 @@ class _BluetoothPage extends State<BluetoothPage>
   void TakeInternalDeviceStateClick(int devId) {
     setState(() {
       BasePackage getInfo =
-      BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_PERIPHERY);
+          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_PERIPHERY);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -553,7 +592,7 @@ class _BluetoothPage extends State<BluetoothPage>
   void TakeExternalPowerClick(int devId) {
     setState(() {
       BasePackage getInfo =
-      BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_EXTERNAL_POWER);
+          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_EXTERNAL_POWER);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -564,7 +603,9 @@ class _BluetoothPage extends State<BluetoothPage>
       int value = 0;
       if (extFlag) {
         value = ExternalPower.ON.index;
-      } else {value = ExternalPower.OFF.index;}
+      } else {
+        value = ExternalPower.OFF.index;
+      }
       ExternalPowerPackage externalPowerPackage = ExternalPowerPackage();
       externalPowerPackage.setReceiver(devId);
       externalPowerPackage.setSender(RoutesManager.getLaptopAddress());
@@ -576,8 +617,8 @@ class _BluetoothPage extends State<BluetoothPage>
 
   void TakeBatteryMonitorClick(int devId) {
     setState(() {
-      BasePackage getInfo =
-      BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_BATTERY_MONITOR);
+      BasePackage getInfo = BasePackage.makeBaseRequest(
+          devId, PacketTypeEnum.GET_BATTERY_MONITOR);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -677,7 +718,7 @@ class _BluetoothPage extends State<BluetoothPage>
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [],
                   ),
-                  Container(width: 200, height: 500, child: list),
+                  Container(width: 200, height: 500),
                 ])));
   }
 }

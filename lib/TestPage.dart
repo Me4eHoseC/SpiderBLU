@@ -18,11 +18,6 @@ class _TestPage extends State<TestPage>
   @override
   void initState() {
     super.initState();
-    Timer.periodic(Duration.zero, (_) {
-      setState(() {
-
-      });
-    });
   }
 
   @override

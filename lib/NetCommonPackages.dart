@@ -90,7 +90,6 @@ class AllInformationPackage extends BasePackage {
 
   @override
   bool tryParse(Uint8List rawData) {
-    print("object");
     bool success = true;
     UnpackMan unpackMan = UnpackMan(rawData);
 

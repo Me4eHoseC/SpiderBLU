@@ -45,12 +45,12 @@ class Application {
       }
     }*/
 
-    if (global.bluetoothPage.isMyTransaction(tid)) {
-      global.bluetoothPage.dataReceived(tid, basePackage);
+    if (global.testPage.isMyTransaction(tid)) {
+      global.testPage.dataReceived(tid, basePackage);
     }
 
     if (tid == -1) {
-      global.bluetoothPage.alarmReceived(basePackage);
+      global.testPage.alarmReceived(basePackage);
     }
   }
 
@@ -59,8 +59,8 @@ class Application {
         global.postManager.getRequestTransactionId(basePackage.getInvId());
     global.postManager.responseReceived(basePackage);
 
-    if (global.bluetoothPage.isMyTransaction(tid)) {
-      global.bluetoothPage.acknowledgeReceived(tid, basePackage);
+    if (global.testPage.isMyTransaction(tid)) {
+      global.testPage.acknowledgeReceived(tid, basePackage);
     }
   }
 
@@ -75,7 +75,7 @@ class Application {
   static void ranOutOfSendAttempts(BasePackage? pb, int transactionId) {
     //global.globalMapMarker[id].markerData.deviceAvailable = false;
     print('RanOutOfSendAttempts');
-    global.bluetoothPage.ranOutOfSendAttempts(transactionId, pb);
+    global.testPage.ranOutOfSendAttempts(transactionId, pb);
   }
 
   static void packageSendingAttempt(PackageSendingStatus sendingStatus) {

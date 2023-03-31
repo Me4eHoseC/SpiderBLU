@@ -100,6 +100,7 @@ class HomePageState extends State<MyHomePage>
             ListTile(
               title: const Text('bluetooth page'),
               onTap: () {
+                global.flagMapPage = false;
                 changePage(0);
                 Navigator.pop(context);
               },
@@ -107,6 +108,7 @@ class HomePageState extends State<MyHomePage>
             ListTile(
               title: const Text('map page'),
               onTap: () {
+                global.flagMapPage = true;
                 changePage(1);
                 Navigator.pop(context);
               },
@@ -114,6 +116,7 @@ class HomePageState extends State<MyHomePage>
             ListTile(
               title: const Text('test page'),
               onTap: () {
+                global.flagMapPage = false;
                 changePage(2);
                 Navigator.pop(context);
               },
@@ -140,17 +143,32 @@ class HomePageState extends State<MyHomePage>
                   ),
                 );
               }),
-              Builder(builder: (context) {
-                return FloatingActionButton(
-                  onPressed: () => {
-                    changePage(1),
-                  },
-                  child: const Icon(
-                    Icons.map,
-                    color: Colors.red,
-                  ),
-                );
-              }),
+              global.mainBottomSelectedDev,
+              global.flagMapPage
+                  ? Builder(builder: (context) {
+                      return FloatingActionButton(
+                        onPressed: () => {
+                          changePage(2),
+                          global.flagMapPage = false,
+                        },
+                        child: const Icon(
+                          Icons.settings,
+                          color: Colors.red,
+                        ),
+                      );
+                    })
+                  : Builder(builder: (context) {
+                      return FloatingActionButton(
+                        onPressed: () => {
+                          changePage(1),
+                          global.flagMapPage = true,
+                        },
+                        child: const Icon(
+                          Icons.map,
+                          color: Colors.red,
+                        ),
+                      );
+                    }),
             ],
           ),
         ),

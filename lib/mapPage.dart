@@ -53,6 +53,7 @@ class MapMarker extends Marker {
   MapMarker(this.parent, this.markerId, this.markerData, LatLng cord,
       String string, String deviceType, this.colorBack)
       : super(
+    rotate: true,
             height: 50,
             width: 50,
             point: cord,
@@ -61,8 +62,9 @@ class MapMarker extends Marker {
                     foregroundColor: Colors.black,
                     backgroundColor: markerData.backColor,
                   ),
-                  onPressed: () =>
-                      {parent?.selectMapMarker(markerId, cord, string)},
+                  onPressed: () => {
+                    parent?.selectMapMarker(markerId, cord, string, deviceType)
+                  },
                   child: Text(
                     string + '\n' + deviceType,
                     style: TextStyle(
@@ -80,11 +82,10 @@ class mapPage extends StatefulWidget {
 
 class _mapPage extends State<mapPage>
     with AutomaticKeepAliveClientMixin<mapPage> {
-
   @override
   bool get wantKeepAlive => true;
 
-  int markerIndex = -1, alarmMarkerIndex = -1;
+  int markerIndex = -1, alarmMarkerIndex = -1, markerIdForCheck = -1;
 
   Location location = Location();
   LatLng? myCoords, currentLocation, alarmLocation;
@@ -96,10 +97,9 @@ class _mapPage extends State<mapPage>
       alarmList = List<int>.empty(growable: true);
   List<String> deviceTypeList = ["СППУ", "РТ", "КСД", "КФУ"];
   Widget bottomBarWidget = Container(height: 0);
-  bool flagSenderDevice = false;
+  bool flagSenderDevice = false, flagAddMarkerCheck = false, flagCheckSPPU = false;
   MapMarker? bufferMarker;
   String? chooseDeviceType;
-
 
   @override
   void initState() {
@@ -108,7 +108,7 @@ class _mapPage extends State<mapPage>
     timer = Timer.periodic(Duration(seconds: 1), (_) {
       setState(() {
         for (int i = 0; i < global.globalMapMarker.length; i++) {
-          if (global.globalMapMarker[i].markerData.deviceAlarm){
+          if (global.globalMapMarker[i].markerData.deviceAlarm) {
             global.globalMapMarker[i].markerData.backColor = Colors.red;
             global.globalMapMarker[i].markerData.deviceAvailable = true;
             global.globalMapMarker[i].markerData.timer!.cancel();
@@ -138,13 +138,13 @@ class _mapPage extends State<mapPage>
   void startTimer(int id) {
     setState(() {
       global.globalMapMarker[id].markerData.deviceReturnCheck = false;
-        global.globalMapMarker[id].markerData.timer =
-            Timer(Duration(seconds: 10), () {
-              global.globalMapMarker[id].markerData.backColor = Colors.blue;
-              global.globalMapMarker[id].markerData.deviceAvailable = false;
-              global.globalMapMarker[id].markerData.deviceReturnCheck = false;
-              global.globalMapMarker[id].markerData.timer = null;
-            });
+      global.globalMapMarker[id].markerData.timer =
+          Timer(Duration(seconds: 10), () {
+        global.globalMapMarker[id].markerData.backColor = Colors.blue;
+        global.globalMapMarker[id].markerData.deviceAvailable = false;
+        global.globalMapMarker[id].markerData.deviceReturnCheck = false;
+        global.globalMapMarker[id].markerData.timer = null;
+      });
     });
   }
 
@@ -160,27 +160,23 @@ class _mapPage extends State<mapPage>
     });
   }
 
-  void selectMapMarker(int markerId, LatLng cord, String string) {
-    changeBottomBarWidget(1, markerId, cord, string);
+  void selectMapMarker(
+      int markerId, LatLng cord, String string, String deviceType) {
+    changeBottomBarWidget(1, markerId, cord, string, deviceType);
   }
 
   void openBottomMenu(var tap, LatLng cord) {
     setState(() {
-      changeBottomBarWidget(0, null, null, null);
+      changeBottomBarWidget(0, null, null, null, null);
       currentLocation = cord;
     });
   }
 
-  void createNewMapMarker(int id, bool flag, String deviceType) {
+  void createNewMapMarker(int id, String deviceType) {
     setState(() {
       markerIndex++;
       createMarkerData(id, deviceType);
       Color colorBack = Colors.blue;
-      if (flag) {
-        colorBack = Colors.green;
-      } else {
-        colorBack = Colors.blue;
-      }
       var localMarker = MapMarker(
           this,
           markerIndex,
@@ -191,7 +187,7 @@ class _mapPage extends State<mapPage>
           colorBack);
       global.globalMapMarker.add(localMarker);
       global.globalDevicesListFromMap.add(id.toString());
-      changeBottomBarWidget(-1, null, null, null);
+      changeBottomBarWidget(-1, null, null, null, null);
     });
   }
 
@@ -205,12 +201,12 @@ class _mapPage extends State<mapPage>
     });
   }
 
-  void showError() {
+  void showError(String? string) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Incorrect id'),
+          title: Text(string!),
           actions: [
             TextButton(
                 onPressed: () {
@@ -221,35 +217,50 @@ class _mapPage extends State<mapPage>
         );
       },
     );
-    changeBottomBarWidget(-1, null, null, null);
+    //changeBottomBarWidget(-1, null, null, null, null);
   }
 
-  void checkCorrectID(String num) {
+  void checkCorrectID(int num) {
     setState(() {
-      flagSenderDevice = false;
       bool flag = false;
-      int id = int.parse(num);
-      if (id > 0 && id < 999) {
+      flagAddMarkerCheck = false;
+      if (markerIdForCheck > 0 && markerIdForCheck < 256) {
         if (global.globalMapMarker.isEmpty) {
-          createNewMapMarker(id, flagSenderDevice, chooseDeviceType!);
+          createNewMapMarker(markerIdForCheck, chooseDeviceType!);
+          global.mainBottomSelectedDev = Text('${chooseDeviceType!} #$markerIdForCheck', textScaleFactor: 1.4,);
+          global.selectedDeviceID = 0;
+          if (chooseDeviceType == deviceTypeList[0]){
+            flagCheckSPPU = true;
+          }
         } else {
           for (int i = 0; i < global.globalMapMarker.length; i++) {
-            if (global.globalMapMarker[i].markerData.deviceId == id) {
+            if (global.globalMapMarker[i].markerData.deviceId ==
+                markerIdForCheck) {
               flag = false;
-              showError();
+              showError('Такой ИД уже существует');
               break;
+            }
+            if (chooseDeviceType == deviceTypeList[0]){
+              if (flagCheckSPPU == true){
+                flag = false;
+                showError("СППУ уже нанесен на карту");
+                break;
+              }
+              flagCheckSPPU = true;
             }
             if (i + 1 == global.globalMapMarker.length) {
               flag = true;
+              global.selectedDeviceID = i;
             }
           }
           if (flag) {
-            createNewMapMarker(id, flagSenderDevice, chooseDeviceType!);
+            createNewMapMarker(markerIdForCheck, chooseDeviceType!);
+            global.mainBottomSelectedDev = Text('${chooseDeviceType!} #$markerIdForCheck', textScaleFactor: 1.4,);
           }
         }
-        //for (int i = 0; i < idMarkersFromBluetooth )
       } else {
-        showError();
+        showError("Неверный ИД \n"
+            "ИД может быть от 1 до 255");
       }
     });
   }
@@ -257,15 +268,17 @@ class _mapPage extends State<mapPage>
   void addNewDeviceOnMap() {
     setState(() {
       bottomBarWidget = SizedBox(
-        height: 150,
-        child: Column(children: [
+        height: 100,
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
           SizedBox(
             height: 100,
+            width: 200,
             child: TextField(
               keyboardType: TextInputType.number,
               inputFormatters: <TextInputFormatter>[
                 FilteringTextInputFormatter.digitsOnly,
               ],
+              maxLength: 3,
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
                 icon: Icon(Icons.developer_board),
@@ -273,14 +286,14 @@ class _mapPage extends State<mapPage>
                 hintText: '',
                 helperText: 'Input device ID',
               ),
-              onSubmitted: checkCorrectID,
+              onChanged: (num) => markerIdForCheck = int.parse(num),
+              onSubmitted: (num) => markerIdForCheck = int.parse(num),
             ),
           ),
           DropdownButton<String>(
             icon: const Icon(Icons.keyboard_double_arrow_down),
             onChanged: (String? value) {
               chooseDeviceType = value!;
-              print(chooseDeviceType);
               addNewDeviceOnMap();
             },
             value: chooseDeviceType,
@@ -291,43 +304,50 @@ class _mapPage extends State<mapPage>
               );
             }).toList(),
           ),
+          TextButton(
+              onPressed: () => checkCorrectID(markerIdForCheck),
+              child: const Text('Add device'))
         ]),
       );
     });
   }
 
-  void changeBottomBarWidget(
-      int counter, int? markerId, LatLng? cord, String? string) {
+  void changeBottomBarWidget(int counter, int? markerId, LatLng? cord,
+      String? string, String? deviceType) {
     setState(() {
       if (counter == 0) {
         addNewDeviceOnMap();
       }
-
       if (counter == -1) {
         bottomBarWidget = Container(
           height: 0.0,
         );
       }
-
       if (counter == 1) {
-        bottomBarWidget = Container(
-          height: 80,
-          child: Row(
-            children: [
-              Text(global.globalMapMarker[markerId!].markerData.deviceTime
-                  .toString()),
-              Text(global.globalMapMarker[markerId].markerData.deviceType
-                  .toString()),
-              IconButton(
-                  onPressed: () => {
-                        changeBottomBarWidget(-1, null, null, null),
-                        global.globalMapMarker[markerId].markerData
-                            .deviceAlarm = false,
-                      },
-                  icon: Icon(Icons.power_settings_new))
-            ],
-          ),
-        );
+        global.selectedDevice = string!;
+        global.selectedDeviceID = markerId!;
+        global.mainBottomSelectedDev = Text('${deviceType!} #$string', textScaleFactor: 1.4,);
+        if (deviceType == deviceTypeList[0]) {
+          bottomBarWidget = Container(
+            height: 80,
+            child: Row(
+              children: [
+                Text(global.globalMapMarker[markerId].markerData.deviceTime
+                    .toString()),
+                Text(global.globalMapMarker[markerId].markerData.deviceType
+                    .toString()),
+                IconButton(
+                    onPressed: () =>
+                    {
+                      changeBottomBarWidget(-1, null, null, null, null),
+                      global.globalMapMarker[markerId].markerData
+                          .deviceAlarm = false,
+                    },
+                    icon: Icon(Icons.power_settings_new))
+              ],
+            ),
+          );
+        }
       }
     });
   }

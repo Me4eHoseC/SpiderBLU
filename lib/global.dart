@@ -13,8 +13,10 @@ import 'package:projects/STDConnectionManager.dart';
 
 
 const String deviceName = 'HC-05-DMRS1';
-String selectedPage = '', statusBarString = '';
+String selectedPage = '', statusBarString = '', selectedDevice = '';
+int selectedDeviceID = -1;
 
+Text mainBottomSelectedDev = Text('');
 Timer? timer;
 
 Widget list = Container();
@@ -44,7 +46,7 @@ class Pair<T1, T2> {
 
 List<String> globalDevicesListFromMap = [];
 
-bool flagConnect = false, dataComeFlag = false;
+bool flagConnect = false, dataComeFlag = false, flagMapPage = false;
 
 List<int> globalActiveDevices = List<int>.empty(growable: true),
     globalAlarmDevices = List<int>.empty(growable: true);

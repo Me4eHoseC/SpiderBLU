@@ -22,7 +22,7 @@ class BluetoothPage extends StatefulWidget{
 }
 
 class _BluetoothPage extends State<BluetoothPage>
-    with AutomaticKeepAliveClientMixin<BluetoothPage> {
+    with TickerProviderStateMixin {
   @override
   bool get wantKeepAlive => true;
 
@@ -78,7 +78,9 @@ class _BluetoothPage extends State<BluetoothPage>
                       )),
           ],
         ),
-        body: Visibility(
+        body:
+
+      Visibility(
             visible: global.std != null,
             child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,

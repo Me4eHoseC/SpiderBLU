@@ -15,7 +15,6 @@ class STDConnectionManager {
 
   void searchAndConnect() {
     isDiscovering = true;
-    timer = Timer(Duration(seconds: 14), () {isDiscovering = false;});
     FlutterBluetoothSerial.instance.startDiscovery().listen((r) {
       if (r.device.name == _stdName) {
         _stdAddress = r.device.address.toString();
@@ -32,7 +31,7 @@ class STDConnectionManager {
         isDiscovering = false;
       }
     });
-
+    timer = Timer(Duration(seconds: 14), () {isDiscovering = false;});
   }
 
   void Disconnect(){
@@ -46,10 +45,13 @@ class STDConnectionManager {
 
   void onConnected() {
     Timer(Duration.zero, setStateOnDone!);
-    print('Connected');
-    /*if (global.std == null){
-      print('notConnect');
+   /* if (BluSTD.){
+
     }*/
+    print('Connected');
+    if (global.std == null){
+      print('notConnect');
+    }
     global.flagConnect = true;
   }
 

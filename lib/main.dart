@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:flutter_gif/flutter_gif.dart';
 
 import 'global.dart' as global;
 
@@ -17,7 +18,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.grey,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'БРСК "Паук"'),
     );
   }
 }
@@ -32,16 +33,19 @@ class MyHomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<MyHomePage>
-    with AutomaticKeepAliveClientMixin<MyHomePage> {
+    with TickerProviderStateMixin {
   @override
   bool get wantKeepAlive => true;
   Timer? timer;
   String statusBarString = '';
   Widget list = Container();
+  late FlutterGifController controller;
 
   int selectedBodyWidget = 0;
 
   void initState() {
+    controller = FlutterGifController(vsync: this);
+    repeatAnim();
     super.initState();
     Timer.periodic(Duration.zero, (_) {
       setState(() {
@@ -51,6 +55,10 @@ class HomePageState extends State<MyHomePage>
     timer = Timer.periodic(Duration(seconds: 1), (_) {
       changeStatusBarString();
     });
+  }
+
+  void repeatAnim(){
+    controller.repeat(min:0, max: 50, period: Duration(seconds: 2));
   }
 
   void changePage(int selectedPage) {
@@ -73,30 +81,34 @@ class HomePageState extends State<MyHomePage>
         toolbarHeight: 130,
         title: Column(
           children: [
-            SizedBox(
-              height: 30,
-              child: Text(
-                statusBarString,
-                textAlign: TextAlign.end,
-              ),
+            Row(
+              children: [
+                SizedBox(
+                  height: 30,
+                  width: 30,
+                  child: GifImage(
+                    image: const AssetImage("assets/gifs/spider.gif"),
+                    controller: controller,
+                  ),
+                ),
+                SizedBox(
+                  height: 30,
+                  child: Text(
+                    statusBarString,
+                    textAlign: TextAlign.end,
+                  ),
+                ),
+              ],
             ),
             SizedBox(height: 100, child: list),
           ],
         ),
       ),
-
-      //drawerEnableOpenDragGesture: true,
       drawerEdgeDragWidth: 0,
       drawer: Drawer(
         width: 200,
         child: ListView(
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-              child: Text('Drawer Header'),
-            ),
             ListTile(
               title: const Text('bluetooth page'),
               onTap: () {

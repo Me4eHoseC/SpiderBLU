@@ -13,8 +13,8 @@ import 'package:projects/STDConnectionManager.dart';
 
 
 const String deviceName = 'HC-05-DMRS1';
-String selectedPage = '', statusBarString = '', selectedDevice = '';
-int selectedDeviceID = -1;
+String selectedPage = '', statusBarString = '', selectedDevice = '', deleteStr = '';
+int selectedDeviceID = -1, deviceIDChanged = -1, deleteId = -1;
 
 Text mainBottomSelectedDev = Text('');
 Timer? timer;
@@ -46,10 +46,12 @@ class Pair<T1, T2> {
 
 List<String> globalDevicesListFromMap = [];
 
-bool flagConnect = false, dataComeFlag = false, flagMapPage = false;
+bool flagConnect = false, dataComeFlag = false, flagMapPage = false,
+    flagCheckSPPU = false, allowedHopsCame = false, flagDeleteMarker = false;
 
 List<int> globalActiveDevices = List<int>.empty(growable: true),
     globalAlarmDevices = List<int>.empty(growable: true);
 
 List<MapMarker> globalMapMarker = List<MapMarker>.empty(growable: true);
 List<int> retransmissionRequests = List<int>.empty(growable: true);
+List<String> deviceTypeList = ["СППУ", "РТ", "КСД", "КФУ"];

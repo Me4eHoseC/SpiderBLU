@@ -53,7 +53,7 @@ class MapMarker extends Marker {
   MapMarker(this.parent, this.markerId, this.markerData, LatLng cord,
       String string, String deviceType, this.colorBack)
       : super(
-    rotate: true,
+            rotate: true,
             height: 50,
             width: 50,
             point: cord,
@@ -65,6 +65,7 @@ class MapMarker extends Marker {
                   onPressed: () => {
                     parent?.selectMapMarker(markerId, cord, string, deviceType)
                   },
+              onLongPress: () =>{parent?.deleteMapMarker(markerId, cord)},
                   child: Text(
                     string + '\n' + deviceType,
                     style: TextStyle(
@@ -95,18 +96,24 @@ class _mapPage extends State<mapPage>
   List<int> idMarkersForCheck = List<int>.empty(growable: true),
       idMarkersFromBluetooth = List<int>.empty(growable: true),
       alarmList = List<int>.empty(growable: true);
-  List<String> deviceTypeList = ["СППУ", "РТ", "КСД", "КФУ"];
   Widget bottomBarWidget = Container(height: 0);
-  bool flagSenderDevice = false, flagAddMarkerCheck = false, flagCheckSPPU = false;
+  bool flagSenderDevice = false, flagAddMarkerCheck = false;
   MapMarker? bufferMarker;
   String? chooseDeviceType;
 
   @override
   void initState() {
-    chooseDeviceType = deviceTypeList[0];
+    chooseDeviceType = global.deviceTypeList[0];
     super.initState();
     timer = Timer.periodic(Duration(seconds: 1), (_) {
       setState(() {
+        if (global.deviceIDChanged != -1) {
+          global.selectedDeviceID;
+          changeMapMarker(global.deviceIDChanged,
+              global.globalMapMarker[global.deviceIDChanged].markerData);
+
+          global.deviceIDChanged = -1;
+        }
         for (int i = 0; i < global.globalMapMarker.length; i++) {
           if (global.globalMapMarker[i].markerData.deviceAlarm) {
             global.globalMapMarker[i].markerData.backColor = Colors.red;
@@ -160,15 +167,55 @@ class _mapPage extends State<mapPage>
     });
   }
 
+  void findMarkerPosition() {
+    setState(() {
+      print(global.selectedDeviceID);
+      if (global.selectedDeviceID > -1) {
+        mapController.moveAndRotate(
+            global.globalMapMarker[global.selectedDeviceID].point, 17, 0.0);
+      }
+    });
+  }
+
   void selectMapMarker(
       int markerId, LatLng cord, String string, String deviceType) {
     changeBottomBarWidget(1, markerId, cord, string, deviceType);
+  }
+
+  void deleteMapMarker(int markerId, LatLng cord){
+    print ('Marker deleted');
   }
 
   void openBottomMenu(var tap, LatLng cord) {
     setState(() {
       changeBottomBarWidget(0, null, null, null, null);
       currentLocation = cord;
+    });
+  }
+
+  void clearBottomMenu(var tap, LatLng cord){
+    setState(() {
+      changeBottomBarWidget(-1, null, null, null, null);
+    });
+  }
+
+  void changeMapMarker(int id, MarkerData _markerData) {
+    setState(() {
+      global.mainBottomSelectedDev = Text(
+        '${_markerData.deviceType!} #${_markerData.deviceId}',
+        textScaleFactor: 1.4,
+      );
+      global.globalMapMarker.removeAt(id);
+      Color colorBack = Colors.blue;
+      var localMarker = MapMarker(
+          this,
+          id,
+          _markerData,
+          _markerData.deviceCord!,
+          _markerData.deviceId.toString(),
+          _markerData.deviceType!,
+          colorBack);
+      global.globalMapMarker.insert(id, localMarker);
     });
   }
 
@@ -217,7 +264,6 @@ class _mapPage extends State<mapPage>
         );
       },
     );
-    //changeBottomBarWidget(-1, null, null, null, null);
   }
 
   void checkCorrectID(int num) {
@@ -227,10 +273,13 @@ class _mapPage extends State<mapPage>
       if (markerIdForCheck > 0 && markerIdForCheck < 256) {
         if (global.globalMapMarker.isEmpty) {
           createNewMapMarker(markerIdForCheck, chooseDeviceType!);
-          global.mainBottomSelectedDev = Text('${chooseDeviceType!} #$markerIdForCheck', textScaleFactor: 1.4,);
+          global.mainBottomSelectedDev = Text(
+            '${chooseDeviceType!} #$markerIdForCheck',
+            textScaleFactor: 1.4,
+          );
           global.selectedDeviceID = 0;
-          if (chooseDeviceType == deviceTypeList[0]){
-            flagCheckSPPU = true;
+          if (chooseDeviceType == global.deviceTypeList[0]) {
+            global.flagCheckSPPU = true;
           }
         } else {
           for (int i = 0; i < global.globalMapMarker.length; i++) {
@@ -240,22 +289,25 @@ class _mapPage extends State<mapPage>
               showError('Такой ИД уже существует');
               break;
             }
-            if (chooseDeviceType == deviceTypeList[0]){
-              if (flagCheckSPPU == true){
+            if (chooseDeviceType == global.deviceTypeList[0]) {
+              if (global.flagCheckSPPU == true) {
                 flag = false;
                 showError("СППУ уже нанесен на карту");
                 break;
               }
-              flagCheckSPPU = true;
+              global.flagCheckSPPU = true;
             }
             if (i + 1 == global.globalMapMarker.length) {
               flag = true;
-              global.selectedDeviceID = i;
+              global.selectedDeviceID = i + 1;
             }
           }
           if (flag) {
             createNewMapMarker(markerIdForCheck, chooseDeviceType!);
-            global.mainBottomSelectedDev = Text('${chooseDeviceType!} #$markerIdForCheck', textScaleFactor: 1.4,);
+            global.mainBottomSelectedDev = Text(
+              '${chooseDeviceType!} #$markerIdForCheck',
+              textScaleFactor: 1.4,
+            );
           }
         }
       } else {
@@ -281,7 +333,7 @@ class _mapPage extends State<mapPage>
               maxLength: 3,
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
-                icon: Icon(Icons.developer_board),
+                icon:  Icon(Icons.developer_board),
                 labelText: 'Device ID',
                 hintText: '',
                 helperText: 'Input device ID',
@@ -297,7 +349,8 @@ class _mapPage extends State<mapPage>
               addNewDeviceOnMap();
             },
             value: chooseDeviceType,
-            items: deviceTypeList.map<DropdownMenuItem<String>>((String value) {
+            items: global.deviceTypeList
+                .map<DropdownMenuItem<String>>((String value) {
               return DropdownMenuItem<String>(
                 value: value,
                 child: Text(value),
@@ -326,24 +379,208 @@ class _mapPage extends State<mapPage>
       if (counter == 1) {
         global.selectedDevice = string!;
         global.selectedDeviceID = markerId!;
-        global.mainBottomSelectedDev = Text('${deviceType!} #$string', textScaleFactor: 1.4,);
-        if (deviceType == deviceTypeList[0]) {
-          bottomBarWidget = Container(
-            height: 80,
+        global.mainBottomSelectedDev = Text(
+          '${deviceType!} #$string',
+          textScaleFactor: 1.4,
+        );
+        if (deviceType == global.deviceTypeList[0]) {
+          bottomBarWidget = SizedBox(
+                height: 70,
+                child: Row(
+                  children: [
+                    Text(global.globalMapMarker[markerId].markerData.deviceTime
+                        .toString()),
+                    Text(global.globalMapMarker[markerId].markerData.deviceType
+                        .toString()),
+                    IconButton(
+                        onPressed: () => {
+                              changeBottomBarWidget(-1, null, null, null, null),
+                              global.globalMapMarker[markerId].markerData
+                                  .deviceAlarm = false,
+                            },
+                        icon: const Icon(Icons.power_settings_new))
+                  ],
+                ),
+              );
+        }
+        if (deviceType == global.deviceTypeList[1]) {}
+        if (deviceType == global.deviceTypeList[2]) {
+          bottomBarWidget = SizedBox(
+            height: 70,
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Text(global.globalMapMarker[markerId].markerData.deviceTime
-                    .toString()),
-                Text(global.globalMapMarker[markerId].markerData.deviceType
-                    .toString()),
                 IconButton(
-                    onPressed: () =>
-                    {
-                      changeBottomBarWidget(-1, null, null, null, null),
-                      global.globalMapMarker[markerId].markerData
-                          .deviceAlarm = false,
-                    },
-                    icon: Icon(Icons.power_settings_new))
+                  onPressed: () => {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text("Сейсмограмма"),
+                          actions: [
+                            TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Ok'))
+                          ],
+                        );
+                      },
+                    )
+                  },
+                  icon: const Icon(Icons.show_chart),
+                ),
+                IconButton(
+                  onPressed: () => {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text("Сейсмограмма"),
+                          actions: [
+                            TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Ok'))
+                          ],
+                        );
+                      },
+                    )
+                  },
+                  icon: const Icon(
+                    Icons.show_chart,
+                    color: Colors.red,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text("Список сейсмограмм"),
+                          actions: [
+                            TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Ok'))
+                          ],
+                        );
+                      },
+                    )
+                  },
+                  icon: const Icon(Icons.file_download),
+                ),
+                IconButton(
+                  onPressed: () => {
+                    changeBottomBarWidget(-1, null, null, null, null),
+                    global.globalMapMarker[markerId].markerData.deviceAlarm =
+                        false,
+                  },
+                  icon: const Icon(Icons.power_settings_new),
+                ),
+              ],
+            ),
+          );
+        }
+        if (deviceType == global.deviceTypeList[3]) {
+          bottomBarWidget = SizedBox(
+            height: 70,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                IconButton(
+                  onPressed: () => {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text("Малое фото"),
+                          actions: [
+                            TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Ok'))
+                          ],
+                        );
+                      },
+                    )
+                  },
+                  icon: const Icon(Icons.photo_size_select_small),
+                ),
+                IconButton(
+                  onPressed: () => {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text("Среднее фото"),
+                          actions: [
+                            TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Ok'))
+                          ],
+                        );
+                      },
+                    )
+                  },
+                  icon: const Icon(Icons.photo_size_select_large),
+                ),
+                IconButton(
+                  onPressed: () => {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text("Большое фото"),
+                          actions: [
+                            TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Ok'))
+                          ],
+                        );
+                      },
+                    )
+                  },
+                  icon: const Icon(Icons.photo_size_select_actual),
+                ),
+                IconButton(
+                  onPressed: () => {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text("Список фото"),
+                          actions: [
+                            TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Ok'))
+                          ],
+                        );
+                      },
+                    )
+                  },
+                  icon: const Icon(Icons.photo_album_outlined),
+                ),
+                IconButton(
+                  onPressed: () => {
+                    changeBottomBarWidget(-1, null, null, null, null),
+                    global.globalMapMarker[markerId].markerData.deviceAlarm =
+                        false,
+                  },
+                  icon: const Icon(Icons.power_settings_new),
+                ),
               ],
             ),
           );
@@ -365,6 +602,7 @@ class _mapPage extends State<mapPage>
           maxZoom: 18.0,
           minZoom: 1.0,
           onLongPress: openBottomMenu,
+          onTap: clearBottomMenu,
         ),
         mapController: mapController,
         layers: [
@@ -380,25 +618,43 @@ class _mapPage extends State<mapPage>
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            FloatingActionButton(
-              onPressed: () => Scaffold.of(context).openDrawer(),
-              child: const Icon(
-                Icons.menu,
-                color: Colors.red,
+            SizedBox(
+              height: 60,
+              child: Opacity(
+                opacity: 0.8,
+                child: IconButton(
+                  onPressed: findMarkerPosition,
+                  icon: const Icon(
+                    Icons.crop_free,
+                    color: Colors.red,
+                  ),
+                ),
               ),
             ),
-            FloatingActionButton(
-              onPressed: findMyPosition,
-              child: const Icon(
-                Icons.location_searching,
-                color: Colors.red,
+            SizedBox(
+              height: 60,
+              child: Opacity(
+                opacity: 0.8,
+                child: IconButton(
+                  onPressed: changeMapRotation,
+                  icon: const Icon(
+                    Icons.arrow_upward,
+                    color: Colors.red,
+                  ),
+                ),
               ),
             ),
-            FloatingActionButton(
-              onPressed: changeMapRotation,
-              child: const Icon(
-                Icons.arrow_upward,
-                color: Colors.red,
+            SizedBox(
+              height: 60,
+              child: Opacity(
+                opacity: 0.8,
+                child: IconButton(
+                  onPressed: findMyPosition,
+                  icon: const Icon(
+                    Icons.location_searching,
+                    color: Colors.red,
+                  ),
+                ),
               ),
             ),
           ],

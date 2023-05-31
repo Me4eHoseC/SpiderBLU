@@ -6,6 +6,7 @@ import 'package:projects/Application.dart';
 import 'package:projects/BasePackage.dart';
 import 'package:projects/NetCommonPackages.dart';
 import 'package:projects/NetPackagesDataTypes.dart';
+import 'package:flutter/services.dart';
 
 import 'AllEnum.dart';
 import 'NetNetworkPackages.dart';
@@ -171,6 +172,7 @@ class TestPage extends StatefulWidget with TIDManagement {
 
       print('dataReceived: ${package.getHops()}');
       array.add('dataReceived: ${package.getHops()}');
+      global.allowedHopsCame = true;
     }
 
     if (basePackage.getType() == PacketTypeEnum.ALLOWED_HOPS &&
@@ -187,6 +189,7 @@ class TestPage extends StatefulWidget with TIDManagement {
       }
       print('dataReceived: ${package.getHops()}');
       array.add('dataReceived: ${package.getHops()}');
+      //global.allowedHopsCame = true;
     }
 
     if (basePackage.getType() == PacketTypeEnum.UNALLOWED_HOPS) {
@@ -294,6 +297,36 @@ class TestPage extends StatefulWidget with TIDManagement {
     //todo
   }
 
+  Future<void> dialogBuilder(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Разрешенные хопы'),
+          content: global.globalMapMarker[global.selectedDeviceID].markerData
+              .deviceAllowedHops ==
+              null
+              ? Text(
+              global.globalMapMarker[global.selectedDeviceID].markerData
+                  .deviceVersion
+                  .toString(),
+              textAlign: TextAlign.center)
+              : Text(
+            'null',
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('Ok'))
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void alarmReceived(BasePackage basePackage) {
     if (basePackage.getType() == PacketTypeEnum.ALARM) {
@@ -328,9 +361,16 @@ class _TestPage extends State<TestPage>
   bool get wantKeepAlive => true;
   bool checked = false;
   int? deviceId;
-  String dropdownValue = '';
+  String dropdownValue = '', bufferSelectedDevice = '';
   List<DropdownMenuItem<String>> dropdownItems = [];
   ScrollController _scrollController = ScrollController();
+
+  String stringId = '';
+  String? chooseDeviceType;
+  String deviceLat = '',
+      deviceLon = '',
+      bufferDeviceLon = '',
+      bufferDeviceLat = '';
 
   @override
   void initState() {
@@ -347,7 +387,7 @@ class _TestPage extends State<TestPage>
   }
 
   void checkNewIdDevice() {
-    if (dropdownItems.length != global.globalDevicesListFromMap.length) {
+    if (dropdownItems.length < global.globalDevicesListFromMap.length) {
       dropdownValue =
           global.globalMapMarker.last.markerData.deviceId.toString();
       if (deviceId == null) {
@@ -377,6 +417,10 @@ class _TestPage extends State<TestPage>
     if (global.selectedDevice != '') {
       dropdownValue = global.selectedDevice;
       global.selectedDevice = '';
+    }
+    if (global.allowedHopsCame == true){
+      dialogBuilder();
+      global.allowedHopsCame = false;
     }
   }
 
@@ -423,10 +467,17 @@ class _TestPage extends State<TestPage>
 
   void TakeCordClick(int devId) {
     setState(() {
+      Timer? timer;
       BasePackage getInfo =
           BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_COORDINATE);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      timer = Timer.periodic(Duration(milliseconds: 50), (_) {
+        if (!widget.tits.contains(tid)) {
+          checkDevCord();
+          timer!.cancel();
+        }
+      });
     });
   }
 
@@ -436,7 +487,7 @@ class _TestPage extends State<TestPage>
       coordinatesPackage.setReceiver(devId);
       coordinatesPackage.setSender(RoutesManager.getLaptopAddress());
       coordinatesPackage.setLatitude(latitude);
-      coordinatesPackage.setLatitude(longitude);
+      coordinatesPackage.setLongitude(longitude);
       var tid = global.postManager.sendPackage(coordinatesPackage);
       widget.tits.add(tid);
     });
@@ -476,6 +527,26 @@ class _TestPage extends State<TestPage>
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
+  }
+
+  void dialogBuilder(){
+    print('object');
+    showDialog(
+        context: context,
+        builder: (BuildContext context){
+          return AlertDialog(
+            title: const Text('Разрешенные хопы'),
+            content: Text(global.globalMapMarker[global.selectedDeviceID].markerData.deviceAllowedHops.toString()),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Ok'))
+            ],
+          );
+        }
+    );
   }
 
   void TakeUnallowedHopsClick(int devId) {
@@ -608,24 +679,688 @@ class _TestPage extends State<TestPage>
     });
   }*/
 
-  Widget buildMainSettings(BuildContext context) {
-    setState(() {});
-    String string = 'xxxx';
-    if(global.selectedDeviceID > -1){
-      string = global.globalMapMarker[global.selectedDeviceID].markerData.deviceType!;
-    }
-      return Row(
-        children: [Text('ID '), Text(string),],
-      );
-  }
-
-  Widget buildCoordSettings(BuildContext context) {
-    return Row(
-
+  void showError(String? string) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(string!),
+          actions: [
+            TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('Ok'))
+          ],
+        );
+      },
     );
   }
 
-  List<bool> _isOpen = List.filled(8, false);
+  void checkDevID(int markerIdForCheck) {
+    setState(() {
+      bool _flag = false;
+      if (markerIdForCheck > 0 && markerIdForCheck < 256) {
+        for (int i = 0; i < global.globalMapMarker.length; i++) {
+          if (global.globalMapMarker[i].markerData.deviceId ==
+              markerIdForCheck) {
+            showError('Такой ИД уже существует');
+            break;
+          }
+          if (i == global.globalMapMarker.length - 1) {
+            _flag = true;
+            if (_flag) {
+              for (int j = 0; j < dropdownItems.length; j++) {
+                if (dropdownItems[j].value ==
+                    global.globalMapMarker[global.selectedDeviceID].markerData
+                        .deviceId
+                        .toString()) {
+                  global.globalMapMarker[global.selectedDeviceID].markerData
+                      .deviceId = markerIdForCheck;
+                  dropdownItems.removeAt(j);
+                  dropdownValue = markerIdForCheck.toString();
+                  var newItem = DropdownMenuItem(
+                    value: dropdownValue,
+                    child: Text(
+                        '${global.globalMapMarker[global.selectedDeviceID].markerData.deviceType} '
+                        '#${global.globalMapMarker[global.selectedDeviceID].markerData.deviceId}'),
+                  );
+                  dropdownItems.add(newItem);
+
+                  global.deviceIDChanged = global.selectedDeviceID;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      } else {
+        showError("Неверный ИД \n"
+            "ИД может быть от 1 до 255");
+      }
+    });
+  }
+
+  void checkDevType(String devType) {
+    setState(() {
+      bool _flag = false;
+      if (global
+              .globalMapMarker[global.selectedDeviceID].markerData.deviceType !=
+          devType) {
+        if (global.flagCheckSPPU &&
+            global.globalMapMarker[global.selectedDeviceID].markerData
+                    .deviceType ==
+                global.deviceTypeList[0] &&
+            devType != global.deviceTypeList[0]) {
+          global.flagCheckSPPU = false;
+          _flag = true;
+        } else if (!global.flagCheckSPPU &&
+            devType == global.deviceTypeList[0]) {
+          global.flagCheckSPPU = true;
+          _flag = true;
+        } else if (global.globalMapMarker[global.selectedDeviceID].markerData
+                    .deviceType !=
+                global.deviceTypeList[0] &&
+            devType != global.deviceTypeList[0]) {
+          _flag = true;
+        } else {
+          showError('СППУ уже существует');
+        }
+
+        if (_flag) {
+          for (int j = 0; j < dropdownItems.length; j++) {
+            if (dropdownItems[j].value ==
+                global.globalMapMarker[global.selectedDeviceID].markerData
+                    .deviceId
+                    .toString()) {
+              global.globalMapMarker[global.selectedDeviceID].markerData
+                  .deviceType = devType;
+              dropdownItems.removeAt(j);
+
+              dropdownValue = global
+                  .globalMapMarker[global.selectedDeviceID].markerData.deviceId
+                  .toString();
+              var newItem = DropdownMenuItem(
+                value: dropdownValue,
+                child: Text(
+                    '${global.globalMapMarker[global.selectedDeviceID].markerData.deviceType} '
+                    '#${global.globalMapMarker[global.selectedDeviceID].markerData.deviceId}'),
+              );
+              dropdownItems.add(newItem);
+
+              global.deviceIDChanged = global.selectedDeviceID;
+              break;
+            }
+          }
+        }
+      }
+    });
+  }
+
+  void checkDevCord() {
+    setState(() {
+      if (global.globalMapMarker[global.selectedDeviceID].markerData.deviceCord!
+              .latitude
+              .toString()
+              .length >
+          9) {
+        deviceLat = global.globalMapMarker[global.selectedDeviceID].markerData
+            .deviceCord!.latitude
+            .toString()
+            .substring(0, 9);
+      } else {
+        deviceLat = global.globalMapMarker[global.selectedDeviceID].markerData
+            .deviceCord!.latitude
+            .toString();
+      }
+      if (global.globalMapMarker[global.selectedDeviceID].markerData.deviceCord!
+              .longitude
+              .toString()
+              .length >
+          9) {
+        deviceLon = global.globalMapMarker[global.selectedDeviceID].markerData
+            .deviceCord!.longitude
+            .toString()
+            .substring(0, 9);
+      } else {
+        deviceLon = global.globalMapMarker[global.selectedDeviceID].markerData
+            .deviceCord!.longitude
+            .toString();
+      }
+    });
+  }
+
+
+
+  bool checkTypeForMainSet() {
+    bool flag = false;
+    if (global.selectedDeviceID > -1) {
+      if (global.deviceTypeList.contains(global
+          .globalMapMarker[global.selectedDeviceID].markerData.deviceType)) {
+        flag = true;
+      }
+    }
+    return flag;
+  }
+
+  Widget buildMainSettings(BuildContext context) {
+    setState(() {
+      if (global.selectedDeviceID > -1 &&
+          bufferSelectedDevice != global.selectedDeviceID.toString()) {
+        stringId = global
+            .globalMapMarker[global.selectedDeviceID].markerData.deviceId!
+            .toString();
+        chooseDeviceType = global
+            .globalMapMarker[global.selectedDeviceID].markerData.deviceType!
+            .toString();
+        deviceLat = global.globalMapMarker[global.selectedDeviceID].markerData
+            .deviceCord!.latitude
+            .toString()
+            .substring(0, 9);
+        bufferDeviceLat = deviceLat;
+        deviceLon = global.globalMapMarker[global.selectedDeviceID].markerData
+            .deviceCord!.longitude
+            .toString()
+            .substring(0, 9);
+        bufferDeviceLon = deviceLon;
+        bufferSelectedDevice = global.selectedDeviceID.toString();
+      }
+    });
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+                flex: 2,
+                child: SizedBox(
+                  width: 100,
+                  child: Text('ИД:'),
+                )),
+            Flexible(
+              flex: 3,
+              child: SizedBox(
+                width: 200,
+                child: TextFormField(
+                  key: Key(stringId),
+                  textAlign: TextAlign.center,
+                  initialValue: stringId,
+                  decoration: InputDecoration(helperText: stringId),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: <TextInputFormatter>[
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  maxLength: 3,
+                  onChanged: (string) => stringId = string,
+                ),
+              ),
+            ),
+            Flexible(
+                flex: 1,
+                child: SizedBox(
+                  width: 100,
+                  child: IconButton(
+                    onPressed: () => checkDevID(int.parse(stringId)),
+                    icon: Icon(Icons.check),
+                  ),
+                )),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+                flex: 2,
+                child: SizedBox(
+                  width: 100,
+                  child: Text('Тип:'),
+                )),
+            Flexible(
+              flex: 3,
+              child: SizedBox(
+                width: 200,
+                child: DropdownButton<String>(
+                  selectedItemBuilder: (BuildContext context) {
+                    return global.deviceTypeList.map((String value) {
+                      return Align(
+                        alignment: Alignment.center,
+                        child: Text(
+                          value,
+                          style: const TextStyle(color: Colors.black),
+                        ),
+                      );
+                    }).toList();
+                  },
+                  isExpanded: true,
+                  items: global.deviceTypeList
+                      .map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (String? value) {
+                    chooseDeviceType = value!;
+                  },
+                  value: chooseDeviceType,
+                  icon: const Icon(Icons.keyboard_double_arrow_down),
+                ),
+              ),
+            ),
+            Flexible(
+              flex: 1,
+              child: SizedBox(
+                width: 100,
+                child: IconButton(
+                  onPressed: () => checkDevType(chooseDeviceType!),
+                  icon: Icon(Icons.check),
+                ),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+                flex: 2,
+                child: SizedBox(
+                  child: Text('Время дата:'),
+                  width: 100,
+                )),
+            Flexible(
+              flex: 3,
+              child: SizedBox(
+                width: 200,
+                child: global.selectedDeviceID > -1 &&
+                        global.globalMapMarker[global.selectedDeviceID]
+                                .markerData.deviceTime !=
+                            null
+                    ? Text(
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.deviceTime!
+                            .toString()
+                            .substring(0, 19),
+                        textAlign: TextAlign.center)
+                    : Text(
+                        'null',
+                        textAlign: TextAlign.center,
+                      ),
+              ),
+            ),
+            Flexible(
+                flex: 2,
+                child: SizedBox(
+                  width: 100,
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => TakeTimeClick(global
+                            .globalMapMarker[global.selectedDeviceID]
+                            .markerData
+                            .deviceId!),
+                        icon: Icon(
+                          Icons.refresh,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => SetTimeClick(global
+                            .globalMapMarker[global.selectedDeviceID]
+                            .markerData
+                            .deviceId!),
+                        icon: Icon(
+                          Icons.access_time,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Text('Версия прошивки:'),
+              ),
+            ),
+            Flexible(
+              flex: 3,
+              child: SizedBox(
+                width: 200,
+                child: global.selectedDeviceID > -1 &&
+                        global.globalMapMarker[global.selectedDeviceID]
+                                .markerData.deviceVersion !=
+                            null
+                    ? Text(
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.deviceVersion!
+                            .toString(),
+                        textAlign: TextAlign.center)
+                    : Text(
+                        'null',
+                        textAlign: TextAlign.center,
+                      ),
+              ),
+            ),
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    IconButton(
+                      onPressed: () => TakeVersionClick(global
+                          .globalMapMarker[global.selectedDeviceID]
+                          .markerData
+                          .deviceId!),
+                      icon: Icon(
+                        Icons.refresh,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget buildCoordSettings(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+                flex: 2,
+                child: SizedBox(
+                  width: 100,
+                  child: Text('Широта:'),
+                )),
+            Flexible(
+              flex: 3,
+              child: SizedBox(
+                width: 200,
+                child: TextFormField(
+                  //autocorrect: false,
+                  key: Key(deviceLat),
+                  textAlign: TextAlign.center,
+                  initialValue: deviceLat,
+                  keyboardType: TextInputType.number,
+                  maxLength: 9,
+                  onChanged: (string) => {
+                    bufferDeviceLat = string,
+                  },
+                ),
+              ),
+            ),
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+                flex: 2,
+                child: SizedBox(
+                  width: 100,
+                  child: Text('Долгота:'),
+                )),
+            Flexible(
+              flex: 3,
+              child: SizedBox(
+                width: 200,
+                child: TextFormField(
+                  key: Key(deviceLon),
+                  textAlign: TextAlign.center,
+                  initialValue: deviceLon,
+                  keyboardType: TextInputType.number,
+                  maxLength: 9,
+                  onChanged: (string) => {
+                    bufferDeviceLon = string,
+                  },
+                ),
+              ),
+            ),
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      onPressed: () => {
+                        TakeCordClick(global
+                            .globalMapMarker[global.selectedDeviceID]
+                            .markerData
+                            .deviceId!),
+                      },
+                      icon: Icon(
+                        Icons.refresh,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => {
+                        SetCoordClick(
+                            global.globalMapMarker[global.selectedDeviceID]
+                                .markerData.deviceId!,
+                            double.parse(bufferDeviceLat),
+                            double.parse(bufferDeviceLon)),
+                      },
+                      icon: Icon(
+                        Icons.check,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget buildRadioSettings(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 150,
+                child: Text('Мощность сигнала:'),
+              ),
+            ),
+            Flexible(
+              flex: 3,
+              child: SizedBox(
+                width: 200,
+                child: global.selectedDeviceID > -1 &&
+                        global.globalMapMarker[global.selectedDeviceID]
+                                .markerData.deviceRssi !=
+                            null
+                    ? Text(
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.deviceRssi!
+                            .toString(),
+                        textAlign: TextAlign.center)
+                    : Text(
+                        'null',
+                        textAlign: TextAlign.center,
+                      ),
+              ),
+            ),
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    IconButton(
+                      onPressed: () => TakeSignalStrengthClick(global
+                          .globalMapMarker[global.selectedDeviceID]
+                          .markerData
+                          .deviceId!),
+                      icon: Icon(
+                        Icons.refresh,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 150,
+                child: Text('Разрешенные хопы:'),
+              ),
+            ),
+            Flexible(
+              flex: 3,
+                child: SizedBox(
+                  width: 200,
+                )
+            ),
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    IconButton(
+                      onPressed: () => TakeAllowedHopsClick(global
+                          .globalMapMarker[global.selectedDeviceID]
+                          .markerData
+                          .deviceId!),
+                      icon: Icon(
+                        Icons.refresh,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 150,
+                child: Text('Запрещенные хопы:'),
+              ),
+            ),
+            Flexible(
+                flex: 3,
+                child: SizedBox(
+                  width: 200,
+                )
+            ),
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    IconButton(
+                      onPressed: () => TakeUnallowedHopsClick(global
+                          .globalMapMarker[global.selectedDeviceID]
+                          .markerData
+                          .deviceId!),
+                      icon: Icon(
+                        Icons.refresh,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 150,
+                child:
+                    Text("Ретранслировать всем:"),
+              ),
+            ),
+            Flexible(
+                flex: 3,
+                child: SizedBox(
+                  width: 200,
+                )
+            ),
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    IconButton(
+                      onPressed: () => TakeSignalStrengthClick(global
+                          .globalMapMarker[global.selectedDeviceID]
+                          .markerData
+                          .deviceId!),
+                      icon: Icon(
+                        Icons.refresh,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget buildDeviceSettings(BuildContext context) {
+    return Column();
+  }
+
+  List<bool> _isOpenMain = List.filled(8, false);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -655,38 +1390,64 @@ class _TestPage extends State<TestPage>
           ),
         ],
       ),
-      body: Column(
-        children: [
-          ExpansionPanelList(
-            expansionCallback: (int index, bool isExpanded) {
-              setState(() {
-                _isOpen[index] = !isExpanded;
-              });
-            },
-            children: [
-              ExpansionPanel(
-                headerBuilder: (context, isExpanded) {
-                  return ListTile(
-                    title: Text('Основные'),
-                  );
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Visibility(
+              visible: checkTypeForMainSet(),
+              child: ExpansionPanelList(
+                elevation: 2,
+                expansionCallback: (int index, bool isExpanded) {
+                  setState(() {
+                    _isOpenMain[index] = !isExpanded;
+                  });
                 },
-                body: buildMainSettings(context),
-                isExpanded: _isOpen[0],
-                canTapOnHeader: true,
+                children: [
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Основные'),
+                      );
+                    },
+                    body: buildMainSettings(context),
+                    isExpanded: _isOpenMain[0],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Координаты'),
+                      );
+                    },
+                    body: buildCoordSettings(context),
+                    isExpanded: _isOpenMain[1],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Радиосеть'),
+                      );
+                    },
+                    body: buildRadioSettings(context),
+                    isExpanded: _isOpenMain[2],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Сохранение/Сброс настроек'),
+                      );
+                    },
+                    body: buildDeviceSettings(context),
+                    isExpanded: _isOpenMain[3],
+                    canTapOnHeader: true,
+                  ),
+                ],
               ),
-              ExpansionPanel(
-                headerBuilder: (context, isExpanded) {
-                  return ListTile(
-                    title: Text('Координаты'),
-                  );
-                },
-                body: buildCoordSettings(context),
-                isExpanded: _isOpen[1],
-                canTapOnHeader: true,
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

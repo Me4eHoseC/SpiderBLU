@@ -19,7 +19,7 @@
         android:required="true"/>
 
    <application
-        android:label="projects"
+        android:label="БРСК"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

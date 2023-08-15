@@ -1,7 +1,14 @@
 import 'dart:async';
+import 'dart:typed_data';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
+import 'package:projects/NetCommonPackages.dart';
 import 'package:projects/PostManager.dart';
-
+import 'package:path_provider/path_provider.dart';
+import 'package:projects/core/Uint8Vector.dart';
+import 'AllEnum.dart';
 import 'global.dart' as global;
 import 'package:projects/BasePackage.dart';
 
@@ -18,14 +25,27 @@ abstract class TIDManagement {
 }
 
 class Application {
-  static void init() {
+  static void init() async {
     global.packagesParser.dataReceived = dataReceived;
     global.packagesParser.acknowledgeReceived = acknowledgeReceived;
-    global.packagesParser.filePartReceived = filePartReceived;
     global.packagesParser.requestReceived = requestReceived;
+    global.packagesParser.filePartReceived = global.fileManager.addFilePart;
+
+    global.fileManager.fileDownloaded = fileDownloaded;
+    global.fileManager.filePartReceived = filePartReceived;
+    global.fileManager.fileDownloadStarted = fileDownloadStarted;
+    global.fileManager.messageReceived = messageReceived;
+
 
     global.postManager.packageSendingAttempt = packageSendingAttempt;
     global.postManager.ranOutOfSendAttempts = ranOutOfSendAttempts;
+  }
+
+  static Uint8List _readFileByteSync(String filePath){
+    Uint8List bytes;
+    var file = File(filePath);
+    bytes = file.readAsBytesSync();
+    return bytes;
   }
 
   static void dataReceived(BasePackage basePackage) {
@@ -64,8 +84,26 @@ class Application {
     }
   }
 
-  static void filePartReceived(BasePackage basePackage) {
-    print('filePartReceived');
+  static void fileDownloadStarted(int sender){
+    global.photoTest.clear();
+  }
+
+  static void filePartReceived(FilePartPackage filePartPackage) {
+
+    var fp = filePartPackage;
+    if (fp.getType() == PackageType.PHOTO) {
+      if (global.photoTest.isEmpty) {
+        global.photoTest = Uint8Vector(fp.getFileSize());
+      }
+
+      global.photoTest.add(fp.getPartData());
+
+      global.mapClass.fuck();
+    }
+  }
+
+  static void fileDownloaded(int sender) {
+    global.mapClass.fuck();
   }
 
   static void requestReceived(BasePackage basePackage) {
@@ -85,6 +123,10 @@ class Application {
         ("#${sendingStatus.transactionId}: ${sendingStatus.attemptNumber}/"
             "${sendingStatus.totalAttemptNumber} -> #${sendingStatus.receiver}");
     timerClearStatusBar();
+  }
+
+  static void messageReceived(FilePartPackage filePartPackage){
+    print (filePartPackage.getPartData());
   }
 
   static void timerClearStatusBar(){

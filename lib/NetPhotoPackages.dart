@@ -5,22 +5,35 @@ import 'AllEnum.dart';
 import 'NetCommonFunctions.dart';
 import 'NetPackagesDataTypes.dart';
 
+/// Can be used as camera parameters package or as new photo request package
 class PhotoParametersPackage extends BasePackage {
   int _compressRatio = 0, _imageSize = 0, _photocellLevel = 0;
 
   PhotoParametersPackage() {
-    setType(PacketTypeEnum.SET_PHOTO_PARAMETERS);
+    setType(PackageType.SET_PHOTO_PARAMETERS);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is PhotoParametersPackage) {
+      _compressRatio = other._compressRatio;
+      _imageSize = other._imageSize;
+      _photocellLevel = other._photocellLevel;
+    }
   }
 
   void setParameters(
-      int compressionRatio, PhotoImageSize imageSize, int invLightSensitivity) {
-    _compressRatio = compressionRatio;
-    _imageSize = imageSize.index;
+      int invLightSensitivity, PhotoImageCompression compressionRatio,
+      [PhotoImageSize imageSize = PhotoImageSize.IMAGE_160X120]) {
     _photocellLevel = invLightSensitivity;
+    _compressRatio = castFromCompression(compressionRatio, imageSize);
+    _imageSize = imageSize.index;
   }
 
-  int getCompressRatio() {
-    return _compressRatio;
+  PhotoImageCompression getCompressRatio() {
+    return PhotoImageCompression.values[_compressRatio];
   }
 
   PhotoImageSize getImageSize() {
@@ -29,6 +42,10 @@ class PhotoParametersPackage extends BasePackage {
 
   int getInvLightSensitivity() {
     return _photocellLevel;
+  }
+
+  void setBlackAndWhite(bool isBlackAndWhite) {
+    if (isBlackAndWhite) _imageSize |= 0x00010000;
   }
 
   @override
@@ -72,51 +89,25 @@ class PhotoParametersPackage extends BasePackage {
   }
 }
 
-class PhotoRequestPackage extends BasePackage {
-  int _compressRatio = 0, _imageSize = 0, _photocellLevel = 0;
-
-  PhotoRequestPackage() {
-    setType(PacketTypeEnum.GET_NEW_PHOTO);
-  }
-
-  void setParameters(
-      int compressionRatio, PhotoImageSize imageSize, int invLightSensitivity) {
-    _compressRatio = compressionRatio;
-    _imageSize = imageSize.index;
-    _photocellLevel = invLightSensitivity;
-  }
-
-  void setBlackAndWhite(bool isBlackAndWhite) {
-    if (isBlackAndWhite) _imageSize |= 0x00010000;
-  }
-
-  @override
-  Uint8List toBytesArray() {
-    bool success = true;
-    PackMan packMan = PackMan();
-
-    success &= super.packHeader(packMan);
-
-    success &= packMan.pack(_compressRatio, 1);
-    success &= packMan.pack(_imageSize, 1);
-    success &= packMan.pack(_photocellLevel, 1);
-
-    if (!success) return Uint8List(0);
-
-    var rawData = packMan.getRawData();
-
-    fillSizeAndCrc(rawData!);
-
-    return rawData;
-  }
-}
+/// To request a new photo set type to PackageType::GET_NEW_PHOTO
+typedef PhotoRequestPackage = PhotoParametersPackage;
 
 class LastPhotoRequestPackage extends BasePackage {
   DateTime? _fileTime;
   int _imageSize = 0;
 
   LastPhotoRequestPackage() {
-    setType(PacketTypeEnum.GET_LAST_PHOTO);
+    setType(PackageType.GET_LAST_PHOTO);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is LastPhotoRequestPackage) {
+      _fileTime = other._fileTime;
+      _imageSize = other._imageSize;
+    }
   }
 
   void setFileTime(DateTime dateTime) {
@@ -157,7 +148,17 @@ class PhototrapPackage extends BasePackage {
   List<int> _crossDevicesIds = List<int>.empty(growable: true);
 
   PhototrapPackage() {
-    setType(PacketTypeEnum.SET_TRAP_ADDRESS);
+    setType(PackageType.SET_TRAP_ADDRESS);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is PhototrapPackage) {
+      _master = other._master;
+      _crossDevicesIds = List<int>.from(other._crossDevicesIds);
+    }
   }
 
   List<int> getCrossDevicesList() {
@@ -185,7 +186,7 @@ class PhototrapPackage extends BasePackage {
 
     if (count < 0) count = 0;
 
-    for(int i = 0; i < count; ++i){
+    for (int i = 0; i < count; ++i) {
       int crossDevice = 0;
       var value = unpackMan.unpack<int>(2);
       success &= (value != null);
@@ -223,11 +224,20 @@ class PhototrapPackage extends BasePackage {
 class PhototrapFilesPackage extends BasePackage {
   List<DateTime> _files = List<DateTime>.empty(growable: true);
 
-  PhototrapFilesPackage(){
-    setType(PacketTypeEnum.TRAP_PHOTO_LIST);
+  PhototrapFilesPackage() {
+    setType(PackageType.TRAP_PHOTO_LIST);
   }
 
-  List<DateTime> getPhototrapFiles(){
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is PhototrapFilesPackage) {
+      _files = List<DateTime>.from(other._files);
+    }
+  }
+
+  List<DateTime> getPhototrapFiles() {
     return _files;
   }
 
@@ -243,7 +253,7 @@ class PhototrapFilesPackage extends BasePackage {
 
     if (count < 0) count = 0;
 
-    for(int i = 0; i < count; ++i){
+    for (int i = 0; i < count; ++i) {
       DateTime file;
       var value = unpackMan.unpack<DateTime>(4);
       success &= (value != null);

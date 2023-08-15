@@ -11,7 +11,18 @@ class SeismicRequestPackage extends BasePackage{
   int _arg2 = 0xFF;
 
   SeismicRequestPackage(){
-    setType(PacketTypeEnum.GET_SEISMIC_WAVE);
+    setType(PackageType.GET_SEISMIC_WAVE);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is SeismicRequestPackage) {
+       _isZipped = other._isZipped;
+       _arg1 = other._arg1;
+       _arg2 = other._arg2;
+    }
   }
 
   void setZippedFlag(bool isZipped){
@@ -43,7 +54,16 @@ class HumanSensitivityPackage extends BasePackage{
   int _sensitivity = 0;
 
   HumanSensitivityPackage(){
-    setType(PacketTypeEnum.SET_HUMAN_SENSETIVITY);
+    setType(PackageType.SET_HUMAN_SENSETIVITY);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is HumanSensitivityPackage) {
+      _sensitivity = other._sensitivity;
+    }
   }
 
   int getHumanSensitivity(){
@@ -89,7 +109,16 @@ class TransportSensitivityPackage extends BasePackage{
   int _sensitivity = 0;
 
   TransportSensitivityPackage(){
-    setType(PacketTypeEnum.SET_TRANSPORT_SENSETIVITY);
+    setType(PackageType.SET_TRANSPORT_SENSETIVITY);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is TransportSensitivityPackage) {
+      _sensitivity = other._sensitivity;
+    }
   }
 
   int getTransportSensitivity(){
@@ -135,7 +164,16 @@ class CriterionFilterPackage extends BasePackage{
   int _criterion = 0;
 
   CriterionFilterPackage(){
-    setType(PacketTypeEnum.SET_CRITERION_FILTER);
+    setType(PackageType.SET_CRITERION_FILTER);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is CriterionFilterPackage) {
+      _criterion = other._criterion;
+    }
   }
 
   CriterionFilter getCriterionFilter(){
@@ -181,7 +219,16 @@ class CriterionRecognitionPackage extends BasePackage{
   List<int> _criteria = List.empty(growable: true);
 
   CriterionRecognitionPackage() {
-    setType(PacketTypeEnum.SET_CRITERION_RECOGNITION);
+    setType(PackageType.SET_CRITERION_RECOGNITION);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is CriterionRecognitionPackage) {
+      _criteria = List<int>.from(other._criteria);
+    }
   }
 
   int getCriteriaCount(){
@@ -248,7 +295,16 @@ class SignalToNoiseRatioPackage extends BasePackage{
   int _snr = 0;
 
   SignalToNoiseRatioPackage(){
-    setType(PacketTypeEnum.SET_SIGNAL_TO_NOISE_RATIO);
+    setType(PackageType.SET_SIGNAL_TO_NOISE_RATIO);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is SignalToNoiseRatioPackage) {
+      _snr = other._snr;
+    }
   }
 
   int getSignalToNoiseRatio(){
@@ -295,7 +351,16 @@ class SeismicSignalSwingPackage extends BasePackage{
   double _swing = 0;
 
   SeismicSignalSwingPackage(){
-    setType(PacketTypeEnum.SIGNAL_SWING);
+    setType(PackageType.SIGNAL_SWING);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is SeismicSignalSwingPackage) {
+      _swing = other._swing;
+    }
   }
 
   double getSignalSwing(){

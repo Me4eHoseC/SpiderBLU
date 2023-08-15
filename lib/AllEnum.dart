@@ -14,7 +14,7 @@ enum ePacketStates {
   PACKET_TIMEOUT;
 }
 
-enum PacketTypeEnum {
+enum PackageType {
   INFORMATION, //00
   GET_INFORMATION,
 
@@ -192,16 +192,19 @@ enum PacketTypeEnum {
 
   TRAP_PHOTO_LIST,
   GET_TRAP_PHOTO_LIST,
-  SET_TRAP_PHOTO_LIST,
+  ERASE_TRAP_PHOTO_LIST,
 
-  EMPTY88,
+  ERROR_STAT,//88
+
   ADPCM_SEISMIC_WAVE,
-  EMPTY8A,
-  EMPTY8B,
-  EMPTY8C,
-  EMPTY8D,
-  EMPTY8E,
-  EMPTY8F,
+
+  SAFETY_CATCH,
+  GET_SAFETY_CATCH,
+  SET_SAFETY_CATCH,
+
+  AUTO_EXT_POWER,
+  GET_AUTO_EXT_POWER,
+  SET_AUTO_EXT_POWER,
 
   SET_DEFAULT_NETWORK, //90
 
@@ -328,10 +331,10 @@ enum PacketTypeEnum {
   VERSION,
   GET_VERSION;//FF
 
-  const PacketTypeEnum();
+  const PackageType();
   //final num value;
 }
-
+//TODO: Move to dev class
 enum ObjState {
   ACTIVE,
   SEISMO,

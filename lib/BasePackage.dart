@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:projects/RoutesManager.dart';
-import 'dart:math';
 
 import 'AllEnum.dart';
 
@@ -18,7 +17,6 @@ const int PACKAGE_HEAD_SIZE = 2;
 const int PACKAGE_HEAD_CODE = 0xDEAD;
 
 class BasePackage {
-  static Random random = Random();
   static const int minExpectedSize = 20;
   int _head_code = PACKAGE_HEAD_CODE; // 2
   int _id = 0; // 2
@@ -28,6 +26,17 @@ class BasePackage {
   int _sender = 0; // 2
   List<int> _hops = List<int>.filled(MAX_HOPS_NUM, 0); // 8
   int _crc16 = 0; // 2
+
+  copyWith(BasePackage other) {
+    _head_code = other._head_code;
+    _id = other._id;
+    _size = other._size;
+    _type = other._type;
+    _receiver = other._receiver;
+    _sender = other._sender;
+    _crc16 = other._crc16;
+    _hops = List<int>.from(other._hops);
+  }
 
   int getHeadCode() {
     return PACKAGE_HEAD_CODE;
@@ -43,10 +52,6 @@ class BasePackage {
 
   void setId(int newId) {
     _id = newId;
-  }
-
-  void setUniqueId() {
-    _id = random.nextInt(32767) + 1;
   }
 
   void setResponseId(BasePackage request) {
@@ -77,20 +82,20 @@ class BasePackage {
     return rawData[sizePos];
   }
 
-  PacketTypeEnum getType() {
-    return PacketTypeEnum.values[_type];
+  PackageType getType() {
+    return PackageType.values[_type];
   }
 
-  void setType(PacketTypeEnum type) {
+  void setType(PackageType type) {
     _type = type.index;
   }
 
-  static PacketTypeEnum extractType(Uint8List rawData) {
+  static PackageType extractType(Uint8List rawData) {
     int typePos = 5; // 6th byte
     if (rawData.length < typePos + 1) {
-      return PacketTypeEnum.NICE_ERROR_CODE;
+      return PackageType.NICE_ERROR_CODE;
     }
-    return PacketTypeEnum.values[rawData[typePos]];
+    return PackageType.values[rawData[typePos]];
   }
 
   int getReceiver() {
@@ -242,9 +247,8 @@ class BasePackage {
     return acknowledge;
   }
 
-  static BasePackage makeBaseRequest(int receiver, PacketTypeEnum type){
+  static BasePackage makeBaseRequest(int receiver, PackageType type){
     BasePackage req = BasePackage();
-    req.setUniqueId();
     req._size = BasePackage.minExpectedSize;
     req.setType(type);
     req.setReceiver(receiver);

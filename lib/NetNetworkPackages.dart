@@ -9,7 +9,16 @@ class HopsPackage extends BasePackage{
   List<int> _hops = List<int>.empty(growable: true);
 
   HopsPackage(){
-    setType(PacketTypeEnum.SET_ALLOWED_HOPS);
+    setType(PackageType.SET_ALLOWED_HOPS);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is HopsPackage) {
+      _hops = List<int>.from(other._hops);
+    }
   }
 
   List<int> getHops(){
@@ -67,7 +76,16 @@ class ModemFrequencyPackage extends BasePackage {
   int _frequency = 0;
   
   ModemFrequencyPackage(){
-    setType(PacketTypeEnum.SET_MODEM_FREQUENCY);
+    setType(PackageType.SET_MODEM_FREQUENCY);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is ModemFrequencyPackage) {
+      _frequency = other._frequency;
+    }
   }
 
   int getModemFrequency(){
@@ -113,7 +131,16 @@ class ModemNetworkNumberPackage extends BasePackage {
   int _number = 0;
 
   ModemNetworkNumberPackage(){
-    setType(PacketTypeEnum.SET_MODEM_NETWORK_NUM);
+    setType(PackageType.SET_MODEM_NETWORK_NUM);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is ModemNetworkNumberPackage) {
+      _number = other._number;
+    }
   }
 
   int getModemNumber(){

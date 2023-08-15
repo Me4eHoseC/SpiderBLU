@@ -29,7 +29,7 @@ class TestPage extends StatefulWidget with TIDManagement {
   void dataReceived(int tid, BasePackage basePackage) {
     global.dataComeFlag = true;
     tits.remove(tid);
-    if (basePackage.getType() == PacketTypeEnum.VERSION) {
+    if (basePackage.getType() == PackageType.VERSION) {
       var package = basePackage as VersionPackage;
       print('dataReceived: ${package.getVersion()}');
       for (int i = 0; i < global.globalMapMarker.length; i++) {
@@ -42,7 +42,7 @@ class TestPage extends StatefulWidget with TIDManagement {
       array.add('dataReceived: ${package.getVersion()}');
     }
 
-    if (basePackage.getType() == PacketTypeEnum.TIME) {
+    if (basePackage.getType() == PackageType.TIME) {
       var package = basePackage as TimePackage;
       print('dataReceived: ${package.getTime()}');
       for (int i = 0; i < global.globalMapMarker.length; i++) {
@@ -56,7 +56,7 @@ class TestPage extends StatefulWidget with TIDManagement {
       array.add('dataReceived: ${package.getTime()}');
     }
 
-    if (basePackage.getType() == PacketTypeEnum.ALL_INFORMATION) {
+    if (basePackage.getType() == PackageType.ALL_INFORMATION) {
       var package = basePackage as AllInformationPackage;
       for (int i = 0; i < global.globalMapMarker.length; i++) {
         if (global.globalMapMarker[i].markerData.deviceId ==
@@ -116,7 +116,7 @@ class TestPage extends StatefulWidget with TIDManagement {
       array.add('dataReceived: ${package.getLongitude()}');*/
     }
 
-    if (basePackage.getType() == PacketTypeEnum.COORDINATE) {
+    if (basePackage.getType() == PackageType.COORDINATE) {
       var package = basePackage as CoordinatesPackage;
 
       for (int i = 0; i < global.globalMapMarker.length; i++) {
@@ -137,7 +137,7 @@ class TestPage extends StatefulWidget with TIDManagement {
       array.add('dataReceived: ${package.getLongitude()}');
     }
 
-    if (basePackage.getType() == PacketTypeEnum.INFORMATION) {
+    if (basePackage.getType() == PackageType.INFORMATION) {
       var package = basePackage as InformationPackage;
 
       for (int i = 0; i < global.globalMapMarker.length; i++) {
@@ -158,7 +158,7 @@ class TestPage extends StatefulWidget with TIDManagement {
       array.add('dataReceived: ${package.getRssi()}');
     }
 
-    if (basePackage.getType() == PacketTypeEnum.ALLOWED_HOPS &&
+    if (basePackage.getType() == PackageType.ALLOWED_HOPS &&
         !global.retransmissionRequests.contains(tid)) {
       var package = basePackage as HopsPackage;
 
@@ -175,7 +175,7 @@ class TestPage extends StatefulWidget with TIDManagement {
       global.allowedHopsCame = true;
     }
 
-    if (basePackage.getType() == PacketTypeEnum.ALLOWED_HOPS &&
+    if (basePackage.getType() == PackageType.ALLOWED_HOPS &&
         global.retransmissionRequests.contains(tid)) {
       global.retransmissionRequests.remove(tid);
       var package = basePackage as HopsPackage;
@@ -192,7 +192,7 @@ class TestPage extends StatefulWidget with TIDManagement {
       //global.allowedHopsCame = true;
     }
 
-    if (basePackage.getType() == PacketTypeEnum.UNALLOWED_HOPS) {
+    if (basePackage.getType() == PackageType.UNALLOWED_HOPS) {
       var package = basePackage as HopsPackage;
 
       for (int i = 0; i < global.globalMapMarker.length; i++) {
@@ -207,7 +207,7 @@ class TestPage extends StatefulWidget with TIDManagement {
       }
     }
 
-    if (basePackage.getType() == PacketTypeEnum.STATE) {
+    if (basePackage.getType() == PackageType.STATE) {
       var package = basePackage as StatePackage;
 
       for (int i = 0; i < global.globalMapMarker.length; i++) {
@@ -238,7 +238,7 @@ class TestPage extends StatefulWidget with TIDManagement {
       array.add('dataReceived: ${package.getStateMask()}');
     }
 
-    if (basePackage.getType() == PacketTypeEnum.PERIPHERY) {
+    if (basePackage.getType() == PackageType.PERIPHERY) {
       var package = basePackage as PeripheryMaskPackage;
       for (int i = 0; i < global.globalMapMarker.length; i++) {
         if (global.globalMapMarker[i].markerData.deviceId ==
@@ -264,7 +264,7 @@ class TestPage extends StatefulWidget with TIDManagement {
       array.add('dataReceived: ${package.getPeripheryMask()}');
     }
 
-    if (basePackage.getType() == PacketTypeEnum.EXTERNAL_POWER) {
+    if (basePackage.getType() == PackageType.EXTERNAL_POWER) {
       var package = basePackage as ExternalPowerPackage;
       for (int i = 0; i < global.globalMapMarker.length; i++) {
         if (global.globalMapMarker[i].markerData.deviceId ==
@@ -277,7 +277,7 @@ class TestPage extends StatefulWidget with TIDManagement {
       array.add('dataReceived: ${package.getExternalPowerState()}');
     }
 
-    if (basePackage.getType() == PacketTypeEnum.BATTERY_MONITOR) {
+    if (basePackage.getType() == PackageType.BATTERY_MONITOR) {
       var package = basePackage as BatteryMonitorPackage;
       for (int i = 0; i < global.globalMapMarker.length; i++) {
         if (global.globalMapMarker[i].markerData.deviceId ==
@@ -304,17 +304,17 @@ class TestPage extends StatefulWidget with TIDManagement {
         return AlertDialog(
           title: const Text('Разрешенные хопы'),
           content: global.globalMapMarker[global.selectedDeviceID].markerData
-              .deviceAllowedHops ==
-              null
+                      .deviceAllowedHops ==
+                  null
               ? Text(
-              global.globalMapMarker[global.selectedDeviceID].markerData
-                  .deviceVersion
-                  .toString(),
-              textAlign: TextAlign.center)
+                  global.globalMapMarker[global.selectedDeviceID].markerData
+                      .deviceVersion
+                      .toString(),
+                  textAlign: TextAlign.center)
               : Text(
-            'null',
-            textAlign: TextAlign.center,
-          ),
+                  'null',
+                  textAlign: TextAlign.center,
+                ),
           actions: [
             TextButton(
                 onPressed: () {
@@ -329,7 +329,7 @@ class TestPage extends StatefulWidget with TIDManagement {
 
   @override
   void alarmReceived(BasePackage basePackage) {
-    if (basePackage.getType() == PacketTypeEnum.ALARM) {
+    if (basePackage.getType() == PackageType.ALARM) {
       var package = basePackage as AlarmPackage;
       for (int i = 0; i < global.globalMapMarker.length; i++) {
         if (global.globalMapMarker[i].markerData.deviceId ==
@@ -400,6 +400,18 @@ class _TestPage extends State<TestPage>
       );
       dropdownItems.add(newItem);
     }
+    if (dropdownItems.length > global.globalDevicesListFromMap.length) {
+      for (int i = 0; i < dropdownItems.length; i++) {
+        if (dropdownItems[i]
+                .value
+                ?.contains(global.globalDevicesListFromMap[i].toString()) ==
+            false) {
+          dropdownValue = dropdownItems[i - 1].value!;
+          dropdownItems.removeAt(i);
+          break;
+        }
+      }
+    }
     if (global.dataComeFlag) {
       global.list = ListView.builder(
           reverse: true,
@@ -418,7 +430,7 @@ class _TestPage extends State<TestPage>
       dropdownValue = global.selectedDevice;
       global.selectedDevice = '';
     }
-    if (global.allowedHopsCame == true){
+    if (global.allowedHopsCame == true) {
       dialogBuilder();
       global.allowedHopsCame = false;
     }
@@ -440,7 +452,7 @@ class _TestPage extends State<TestPage>
   void TakeTimeClick(int devId) {
     setState(() {
       BasePackage getInfo =
-          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_TIME);
+          BasePackage.makeBaseRequest(devId, PackageType.GET_TIME);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -459,7 +471,7 @@ class _TestPage extends State<TestPage>
   void TakeVersionClick(int devId) {
     setState(() {
       BasePackage getInfo =
-          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_VERSION);
+          BasePackage.makeBaseRequest(devId, PackageType.GET_VERSION);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -469,7 +481,7 @@ class _TestPage extends State<TestPage>
     setState(() {
       Timer? timer;
       BasePackage getInfo =
-          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_COORDINATE);
+          BasePackage.makeBaseRequest(devId, PackageType.GET_COORDINATE);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
       timer = Timer.periodic(Duration(milliseconds: 50), (_) {
@@ -496,7 +508,7 @@ class _TestPage extends State<TestPage>
   void TakeSignalStrengthClick(int devId) {
     setState(() {
       BasePackage getInfo =
-          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_INFORMATION);
+          BasePackage.makeBaseRequest(devId, PackageType.GET_INFORMATION);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -505,7 +517,7 @@ class _TestPage extends State<TestPage>
   void TakeAllInfoClick(int devId) {
     setState(() {
       BasePackage getInfo = BasePackage.makeBaseRequest(
-          devId, PacketTypeEnum.GET_ALL_INFORMATION);
+          devId, PackageType.GET_ALL_INFORMATION);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -514,7 +526,7 @@ class _TestPage extends State<TestPage>
   void TakeStrengthSignalClick(int devId) {
     setState(() {
       BasePackage getInfo =
-          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_INFORMATION);
+          BasePackage.makeBaseRequest(devId, PackageType.GET_INFORMATION);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -523,20 +535,22 @@ class _TestPage extends State<TestPage>
   void TakeAllowedHopsClick(int devId) {
     setState(() {
       BasePackage getInfo =
-          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_ALLOWED_HOPS);
+          BasePackage.makeBaseRequest(devId, PackageType.GET_ALLOWED_HOPS);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
   }
 
-  void dialogBuilder(){
+  void dialogBuilder() {
     print('object');
     showDialog(
         context: context,
-        builder: (BuildContext context){
+        builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Разрешенные хопы'),
-            content: Text(global.globalMapMarker[global.selectedDeviceID].markerData.deviceAllowedHops.toString()),
+            content: Text(global.globalMapMarker[global.selectedDeviceID]
+                .markerData.deviceAllowedHops
+                .toString()),
             actions: [
               TextButton(
                   onPressed: () {
@@ -545,14 +559,13 @@ class _TestPage extends State<TestPage>
                   child: const Text('Ok'))
             ],
           );
-        }
-    );
+        });
   }
 
   void TakeUnallowedHopsClick(int devId) {
     setState(() {
       BasePackage getInfo =
-          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_UNALLOWED_HOPS);
+          BasePackage.makeBaseRequest(devId, PackageType.GET_UNALLOWED_HOPS);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -561,7 +574,7 @@ class _TestPage extends State<TestPage>
   void TakeRetransmissionAllClick(int devId) {
     setState(() {
       BasePackage getInfo =
-          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_ALLOWED_HOPS);
+          BasePackage.makeBaseRequest(devId, PackageType.GET_ALLOWED_HOPS);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
       global.retransmissionRequests.add(tid);
@@ -574,7 +587,7 @@ class _TestPage extends State<TestPage>
       hopsPackage.setReceiver(devId);
       hopsPackage.setSender(RoutesManager.getLaptopAddress());
       hopsPackage
-          .addHop(checked ? RoutesManager.getRetransmissionAllAddress() : 0);
+          .addHop(checked ? RoutesManager.getRtAllHop() : 0);
       var tid = global.postManager.sendPackage(hopsPackage);
       widget.tits.add(tid);
       global.retransmissionRequests.add(tid);
@@ -584,7 +597,7 @@ class _TestPage extends State<TestPage>
   void ButtonResetRetransmissionClick(int devId) {
     setState(() {
       BasePackage getInfo = BasePackage.makeBaseRequest(
-          devId, PacketTypeEnum.SET_DEFAULT_NETWORK);
+          devId, PackageType.SET_DEFAULT_NETWORK);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -593,7 +606,7 @@ class _TestPage extends State<TestPage>
   void TakeInternalDeviceParamClick(int devId) {
     setState(() {
       BasePackage getInfo =
-          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_STATE);
+          BasePackage.makeBaseRequest(devId, PackageType.GET_STATE);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -627,7 +640,7 @@ class _TestPage extends State<TestPage>
   void TakeInternalDeviceStateClick(int devId) {
     setState(() {
       BasePackage getInfo =
-          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_PERIPHERY);
+          BasePackage.makeBaseRequest(devId, PackageType.GET_PERIPHERY);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -636,7 +649,7 @@ class _TestPage extends State<TestPage>
   void TakeExternalPowerClick(int devId) {
     setState(() {
       BasePackage getInfo =
-          BasePackage.makeBaseRequest(devId, PacketTypeEnum.GET_EXTERNAL_POWER);
+          BasePackage.makeBaseRequest(devId, PackageType.GET_EXTERNAL_POWER);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -662,7 +675,7 @@ class _TestPage extends State<TestPage>
   void TakeBatteryMonitorClick(int devId) {
     setState(() {
       BasePackage getInfo = BasePackage.makeBaseRequest(
-          devId, PacketTypeEnum.GET_BATTERY_MONITOR);
+          devId, PackageType.GET_BATTERY_MONITOR);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
     });
@@ -678,6 +691,45 @@ class _TestPage extends State<TestPage>
       widget.tits.add(tid);
     });
   }*/
+
+  void TakeStateHumanTransportSensitivityClick(int devId) {}
+
+  void SetStateHumanTransportSensitivityClick(
+      int devId, bool human, bool transport) {}
+
+  void TakeDifSignalClick(int devId) {}
+
+  void TakeHumanSensitivityClick(int devId) {}
+
+  void SetHumanSensitivityClick(int devId, int sensitivity) {}
+
+  void TakeTransportSensitivityClick(int devId) {}
+
+  void SetTransportSensitivityClick(int devId, int sensitivity) {}
+
+  void TakeTransportFilterClick(int devId) {}
+
+  void SetTransportFilterClick(int devId, int filter) {}
+
+  void TakeRatioTransportNoiseClick(int devId) {}
+
+  void SetRatioTransportNoiseClick(int devId, int ratio) {}
+
+  void TakeRecognitionParamClick(int devId) {}
+
+  void SetRecognitionParamClick(
+      int devId, int hindranceHuman, int humanTransport) {}
+
+  void TakeAlarmFilterClick(int devId) {}
+
+  void SetAlarmFilterClick(int devId, int singleHuman, int singleTransport,
+      int seriesHuman, int seriesTransport) {}
+
+  void restartDevice() {}
+
+  void saveDeviceParam() {}
+
+  void returnDeviceToDefaultParam() {}
 
   void showError(String? string) {
     showDialog(
@@ -725,7 +777,7 @@ class _TestPage extends State<TestPage>
                         '${global.globalMapMarker[global.selectedDeviceID].markerData.deviceType} '
                         '#${global.globalMapMarker[global.selectedDeviceID].markerData.deviceId}'),
                   );
-                  dropdownItems.add(newItem);
+                  dropdownItems.insert(j, newItem);
 
                   global.deviceIDChanged = global.selectedDeviceID;
                   break;
@@ -786,7 +838,7 @@ class _TestPage extends State<TestPage>
                     '${global.globalMapMarker[global.selectedDeviceID].markerData.deviceType} '
                     '#${global.globalMapMarker[global.selectedDeviceID].markerData.deviceId}'),
               );
-              dropdownItems.add(newItem);
+              dropdownItems.insert(j, newItem);
 
               global.deviceIDChanged = global.selectedDeviceID;
               break;
@@ -830,16 +882,19 @@ class _TestPage extends State<TestPage>
     });
   }
 
-
-
   bool checkTypeForMainSet() {
     bool flag = false;
     if (global.selectedDeviceID > -1) {
+      flag = true;
+    }
+    /*for (int i = 0; i < global.globalMapMarker.length; i++){
+
+      }
       if (global.deviceTypeList.contains(global
           .globalMapMarker[global.selectedDeviceID].markerData.deviceType)) {
         flag = true;
       }
-    }
+    }*/
     return flag;
   }
 
@@ -902,6 +957,7 @@ class _TestPage extends State<TestPage>
                   child: IconButton(
                     onPressed: () => checkDevID(int.parse(stringId)),
                     icon: Icon(Icons.check),
+                    color: Colors.green,
                   ),
                 )),
           ],
@@ -954,6 +1010,7 @@ class _TestPage extends State<TestPage>
                 child: IconButton(
                   onPressed: () => checkDevType(chooseDeviceType!),
                   icon: Icon(Icons.check),
+                  color: Colors.green,
                 ),
               ),
             ),
@@ -1181,6 +1238,8 @@ class _TestPage extends State<TestPage>
 
   Widget buildRadioSettings(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -1245,11 +1304,10 @@ class _TestPage extends State<TestPage>
               ),
             ),
             Flexible(
-              flex: 3,
+                flex: 3,
                 child: SizedBox(
                   width: 200,
-                )
-            ),
+                )),
             Flexible(
               flex: 2,
               child: SizedBox(
@@ -1287,8 +1345,7 @@ class _TestPage extends State<TestPage>
                 flex: 3,
                 child: SizedBox(
                   width: 200,
-                )
-            ),
+                )),
             Flexible(
               flex: 2,
               child: SizedBox(
@@ -1319,15 +1376,322 @@ class _TestPage extends State<TestPage>
               flex: 2,
               child: SizedBox(
                 width: 150,
-                child:
-                    Text("Ретранслировать всем:"),
+                child: Text("Ретранслировать всем:"),
               ),
             ),
             Flexible(
                 flex: 3,
                 child: SizedBox(
                   width: 200,
-                )
+                  child: Checkbox(
+                      value: global.selectedDeviceID > -1 &&
+                              global.globalMapMarker[global.selectedDeviceID]
+                                      .markerData.deviceRetransmissionToAll !=
+                                  null
+                          ? global.globalMapMarker[global.selectedDeviceID]
+                                  .markerData.deviceRetransmissionToAll![0] ==
+                              65535
+                          : false,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          if (value! == true) {
+                            global
+                                .globalMapMarker[global.selectedDeviceID]
+                                .markerData
+                                .deviceRetransmissionToAll![0] = 65535;
+                          } else {
+                            global.globalMapMarker[global.selectedDeviceID]
+                                .markerData.deviceRetransmissionToAll![0] = 0;
+                          }
+                        });
+                      }),
+                )),
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    IconButton(
+                      onPressed: () => TakeRetransmissionAllClick(global
+                          .globalMapMarker[global.selectedDeviceID]
+                          .markerData
+                          .deviceId!),
+                      icon: Icon(
+                        Icons.refresh,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => SetRetransmissionAllClick(
+                          global.globalMapMarker[global.selectedDeviceID]
+                              .markerData.deviceId!,
+                          global.globalMapMarker[global.selectedDeviceID]
+                                  .markerData.deviceRetransmissionToAll![0] ==
+                              65535),
+                      icon: Icon(Icons.check),
+                      color: Colors.green,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            SizedBox(
+              height: 40,
+              child: OutlinedButton(
+                onPressed: () => ButtonResetRetransmissionClick(global
+                    .globalMapMarker[global.selectedDeviceID]
+                    .markerData
+                    .deviceId!),
+                child: Text('Сброс ретрансляции'),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(
+          height: 10,
+        ),
+      ],
+    );
+  }
+
+  Widget buildDeviceSettings(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        OutlinedButton(
+          onPressed: restartDevice,
+          child: Row(
+            children: [
+              Icon(Icons.restart_alt),
+              Text('Перезагрузить устройство'),
+            ],
+          ),
+        ),
+        OutlinedButton(
+          onPressed: saveDeviceParam,
+          child: Row(
+            children: [
+              Icon(Icons.save),
+              Text('Сохранить настройки'),
+            ],
+          ),
+        ),
+        OutlinedButton(
+          onPressed: restartDevice,
+          child: Row(
+            children: [
+              Icon(Icons.restore),
+              Text('Сбросить к заводским'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildConnectedDevicesRT(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        const Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 150,
+                child: Text("Вкл./Выкл. устройств:"),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            const Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Text("Вн. устр. 1:"),
+              ),
+            ),
+            Flexible(
+              flex: 3,
+              child: SizedBox(
+                width: 200,
+                child: Checkbox(
+                    value: global.selectedDeviceID > -1
+                        ? global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice1
+                        : false,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice1 = value!;
+                      });
+                    }),
+              ),
+            ),
+            const Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            const Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Text("Вн. устр. 2:"),
+              ),
+            ),
+            Flexible(
+                flex: 3,
+                child: SizedBox(
+                  width: 200,
+                  child: Checkbox(
+                      value: global.selectedDeviceID > -1
+                          ? global.globalMapMarker[global.selectedDeviceID]
+                              .markerData.extDevice2
+                          : false,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          global.globalMapMarker[global.selectedDeviceID]
+                              .markerData.extDevice2 = value!;
+                        });
+                      }),
+                )),
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    IconButton(
+                      onPressed: () => TakeInternalDeviceParamClick(global
+                          .globalMapMarker[global.selectedDeviceID]
+                          .markerData
+                          .deviceId!),
+                      icon: const Icon(
+                        Icons.refresh,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => SetInternalDeviceParamClick(
+                          global.globalMapMarker[global.selectedDeviceID]
+                              .markerData.deviceId!,
+                          global.globalMapMarker[global.selectedDeviceID]
+                              .markerData.extDevice1,
+                          global.globalMapMarker[global.selectedDeviceID]
+                              .markerData.extDevice2,
+                          false,
+                          false),
+                      icon: const Icon(Icons.check),
+                      color: Colors.green,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 150,
+                child: Text("Состояние устройств:"),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            const Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Text("Вн. устр. 1:"),
+              ),
+            ),
+            Visibility(
+              visible: global.selectedDeviceID>-1 &&
+              global.globalMapMarker[global.selectedDeviceID]
+                  .markerData.extDevice1 ,
+              child: Flexible(
+                flex: 3,
+                child: SizedBox(
+                  width: 200,
+                  child: Checkbox(
+                      value: global.selectedDeviceID > -1
+                          ? global.globalMapMarker[global.selectedDeviceID]
+                              .markerData.deviceExtDev1State
+                          : false,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          global.globalMapMarker[global.selectedDeviceID]
+                              .markerData.deviceExtDev1State = value!;
+                        });
+                      }),
+                ),
+              ),
+            ),
+            const Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            const Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Text("Вн. устр. 2:"),
+              ),
+            ),
+            Visibility(
+              visible: global.selectedDeviceID>-1 &&
+                  global.globalMapMarker[global.selectedDeviceID]
+                  .markerData.extDevice2,
+              child: Flexible(
+                  flex: 3,
+                  child: SizedBox(
+                    width: 200,
+                    child: Checkbox(
+                        value: global.selectedDeviceID > -1
+                            ? global.globalMapMarker[global.selectedDeviceID]
+                                .markerData.deviceExtDev2State
+                            : false,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            global.globalMapMarker[global.selectedDeviceID]
+                                .markerData.deviceExtDev2State = value!;
+                          });
+                        }),
+                  )),
             ),
             Flexible(
               flex: 2,
@@ -1337,7 +1701,664 @@ class _TestPage extends State<TestPage>
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconButton(
-                      onPressed: () => TakeSignalStrengthClick(global
+                      onPressed: () => TakeInternalDeviceStateClick(global
+                          .globalMapMarker[global.selectedDeviceID]
+                          .markerData
+                          .deviceId!),
+                      icon: const Icon(
+                        Icons.refresh,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget buildConnectedDevicesCSD(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        const Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 150,
+                child: Text("Вкл./Выкл. устройств:"),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            const Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Text("Вн. устр. 1:"),
+              ),
+            ),
+            Flexible(
+              flex: 3,
+              child: SizedBox(
+                width: 200,
+                child: Checkbox(
+                    value: global.selectedDeviceID > -1
+                        ? global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice1
+                        : false,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice1 = value!;
+                      });
+                    }),
+              ),
+            ),
+            const Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            const Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Text("Вн. устр. 2:"),
+              ),
+            ),
+            Flexible(
+              flex: 3,
+              child: SizedBox(
+                width: 200,
+                child: Checkbox(
+                    value: global.selectedDeviceID > -1
+                        ? global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice2
+                        : false,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice2 = value!;
+                      });
+                    }),
+              ),
+            ),
+            const Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            const Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Text("Геофон:"),
+              ),
+            ),
+            Flexible(
+                flex: 3,
+                child: SizedBox(
+                  width: 200,
+                  child: Checkbox(
+                      value: global.selectedDeviceID > -1
+                          ? global.globalMapMarker[global.selectedDeviceID]
+                              .markerData.deviceGeophone
+                          : false,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          global.globalMapMarker[global.selectedDeviceID]
+                              .markerData.deviceGeophone = value!;
+                        });
+                      }),
+                )),
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    IconButton(
+                      onPressed: () => TakeInternalDeviceParamClick(global
+                          .globalMapMarker[global.selectedDeviceID]
+                          .markerData
+                          .deviceId!),
+                      icon: const Icon(
+                        Icons.refresh,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => SetInternalDeviceParamClick(
+                          global.globalMapMarker[global.selectedDeviceID]
+                              .markerData.deviceId!,
+                          global.globalMapMarker[global.selectedDeviceID]
+                              .markerData.extDevice1,
+                          global.globalMapMarker[global.selectedDeviceID]
+                              .markerData.extDevice2,
+                          global.globalMapMarker[global.selectedDeviceID]
+                              .markerData.deviceGeophone,
+                          false),
+                      icon: const Icon(Icons.check),
+                      color: Colors.green,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 150,
+                child: Text("Состояние устройств:"),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            const Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Text("Вн. устр. 1:"),
+              ),
+            ),
+            Visibility(
+              visible:global.selectedDeviceID>-1 &&
+              global.globalMapMarker[global.selectedDeviceID]
+                  .markerData.extDevice1,
+              child: Flexible(
+                flex: 3,
+                child: SizedBox(
+                  width: 200,
+                  child: Checkbox(
+                      value: global.selectedDeviceID > -1
+                          ? global.globalMapMarker[global.selectedDeviceID]
+                              .markerData.deviceExtDev1State
+                          : false,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          global.globalMapMarker[global.selectedDeviceID]
+                              .markerData.deviceExtDev1State = value!;
+                        });
+                      }),
+                ),
+              ),
+            ),
+            const Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            const Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Text("Вн. устр. 2:"),
+              ),
+            ),
+            Visibility(
+              visible:global.selectedDeviceID>-1 &&
+                  global.globalMapMarker[global.selectedDeviceID]
+                  .markerData.extDevice2,
+              child: Flexible(
+                  flex: 3,
+                  child: SizedBox(
+                    width: 200,
+                    child: Checkbox(
+                        value: global.selectedDeviceID > -1
+                            ? global.globalMapMarker[global.selectedDeviceID]
+                                .markerData.deviceExtDev2State
+                            : false,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            global.globalMapMarker[global.selectedDeviceID]
+                                .markerData.deviceExtDev2State = value!;
+                          });
+                        }),
+                  )),
+            ),
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    IconButton(
+                      onPressed: () => TakeInternalDeviceStateClick(global
+                          .globalMapMarker[global.selectedDeviceID]
+                          .markerData
+                          .deviceId!),
+                      icon: const Icon(
+                        Icons.refresh,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  //TODO: Поправить
+
+  Widget buildExtPower(BuildContext context) {
+    return Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          const Flexible(
+            flex: 2,
+            child: SizedBox(
+              width: 150,
+              child: Text("Предохранитель:"),
+            ),
+          ),
+          Flexible(
+              flex: 3,
+              child: SizedBox(
+                width: 200,
+                child: Checkbox(
+                    value: global.selectedDeviceID > -1
+                        ? global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice2
+                        : false,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice2 = value!;
+                      });
+                    }),
+              )),
+          Flexible(
+            flex: 2,
+            child: SizedBox(
+              width: 100,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  IconButton(
+                    onPressed: () => TakeInternalDeviceParamClick(global
+                        .globalMapMarker[global.selectedDeviceID]
+                        .markerData
+                        .deviceId!),
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => SetInternalDeviceParamClick(
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.deviceId!,
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice1,
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice2,
+                        false,
+                        false),
+                    icon: const Icon(Icons.check),
+                    color: Colors.green,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Text('Задержка \nактивации:'),
+              )),
+          Flexible(
+            flex: 3,
+            child: SizedBox(
+              width: 200,
+              child: DropdownButton<String>(
+                selectedItemBuilder: (BuildContext context) {
+                  return global.deviceTypeList.map((String value) {
+                    return Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        value,
+                        style: const TextStyle(color: Colors.black),
+                      ),
+                    );
+                  }).toList();
+                },
+                isExpanded: true,
+                items: global.deviceTypeList
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (String? value) {
+                  chooseDeviceType = value!;
+                },
+                value: chooseDeviceType,
+                icon: const Icon(Icons.keyboard_double_arrow_down),
+              ),
+            ),
+          ),
+          const Flexible(
+            flex: 2,
+            child: SizedBox(
+              width: 100,
+            ),
+          ),
+        ],
+      ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Text('Длительность \nимпульса:'),
+              )),
+          Flexible(
+            flex: 3,
+            child: SizedBox(
+              width: 200,
+              child: DropdownButton<String>(
+                selectedItemBuilder: (BuildContext context) {
+                  return global.deviceTypeList.map((String value) {
+                    return Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        value,
+                        style: const TextStyle(color: Colors.black),
+                      ),
+                    );
+                  }).toList();
+                },
+                isExpanded: true,
+                items: global.deviceTypeList
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (String? value) {
+                  chooseDeviceType = value!;
+                },
+                value: chooseDeviceType,
+                icon: const Icon(Icons.keyboard_double_arrow_down),
+              ),
+            ),
+          ),
+          const Flexible(
+            flex: 2,
+            child: SizedBox(
+              width: 100,
+            ),
+          ),
+        ],
+      ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          const Flexible(
+            flex: 2,
+            child: SizedBox(
+              width: 150,
+              child: Text("Включение по обрывной:"),
+            ),
+          ),
+          Flexible(
+            flex: 3,
+            child: SizedBox(
+              width: 200,
+              child: Visibility(
+                visible: true, //TODO
+                child: Checkbox(
+                    value: global.selectedDeviceID > -1
+                        ? global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice2
+                        : false,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice2 = value!;
+                      });
+                    }),
+              ),
+            ),
+          ),
+          Flexible(
+            flex: 2,
+            child: SizedBox(
+              width: 100,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  IconButton(
+                    onPressed: () => TakeInternalDeviceParamClick(global
+                        .globalMapMarker[global.selectedDeviceID]
+                        .markerData
+                        .deviceId!),
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => SetInternalDeviceParamClick(
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.deviceId!,
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice1,
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice2,
+                        false,
+                        false),
+                    icon: const Icon(Icons.check),
+                    color: Colors.green,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          const Flexible(
+            flex: 2,
+            child: SizedBox(
+              width: 150,
+              child: Text("Питание:"),
+            ),
+          ),
+          Flexible(
+            flex: 3,
+            child: SizedBox(
+              width: 200,
+              child: Visibility(
+                visible: true, //TODO
+                child: Checkbox(
+                    value: global.selectedDeviceID > -1
+                        ? global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice2
+                        : false,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice2 = value!;
+                      });
+                    }),
+              ),
+            ),
+          ),
+          Flexible(
+            flex: 2,
+            child: SizedBox(
+              width: 100,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  IconButton(
+                    onPressed: () => TakeInternalDeviceParamClick(global
+                        .globalMapMarker[global.selectedDeviceID]
+                        .markerData
+                        .deviceId!),
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => SetInternalDeviceParamClick(
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.deviceId!,
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice1,
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.extDevice2,
+                        false,
+                        false),
+                    icon: const Icon(Icons.check),
+                    color: Colors.green,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    ]);
+  }
+
+  Widget buildPowerSupply(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 150,
+                child: Text('Напряжение, В:'),
+              ),
+            ),
+            Flexible(
+              flex: 3,
+              child: SizedBox(
+                width: 200,
+                child: global.selectedDeviceID > -1 &&
+                        global.globalMapMarker[global.selectedDeviceID]
+                                .markerData.deviceBattery !=
+                            null
+                    ? Text(
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.deviceBattery!
+                            .toString(),
+                        textAlign: TextAlign.center)
+                    : Text(
+                        'null',
+                        textAlign: TextAlign.center,
+                      ),
+              ),
+            ),
+            const Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 150,
+                child: Text('Температура, °С:'),
+              ),
+            ),
+            Flexible(
+              flex: 3,
+              child: SizedBox(
+                width: 200,
+                child: global.selectedDeviceID > -1 &&
+                        global.globalMapMarker[global.selectedDeviceID]
+                                .markerData.deviceTemperature !=
+                            null
+                    ? Text(
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.deviceTemperature!
+                            .toString(),
+                        textAlign: TextAlign.center)
+                    : Text(
+                        'null',
+                        textAlign: TextAlign.center,
+                      ),
+              ),
+            ),
+            Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 100,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    IconButton(
+                      onPressed: () => TakeBatteryMonitorClick(global
                           .globalMapMarker[global.selectedDeviceID]
                           .markerData
                           .deviceId!),
@@ -1356,11 +2377,203 @@ class _TestPage extends State<TestPage>
     );
   }
 
-  Widget buildDeviceSettings(BuildContext context) {
-    return Column();
+//TODO: Поправить (again)
+  Widget buildSeismicSettings(BuildContext context) {
+    return Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          const Flexible(
+            flex: 2,
+            child: SizedBox(
+              width: 100,
+              child: Text("Человек:"),
+            ),
+          ),
+          Flexible(
+            flex: 3,
+            child: SizedBox(
+              width: 200,
+              /*child: Checkbox(
+                  value: global.selectedDeviceID > -1
+                      ? global.globalMapMarker[global.selectedDeviceID]
+                      .markerData.extDevice2
+                      : false,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      global.globalMapMarker[global.selectedDeviceID]
+                          .markerData.extDevice2 = value!;
+                    });
+                  }),*/
+            ),
+          ),
+          const Flexible(
+            flex: 2,
+            child: SizedBox(
+              width: 100,
+            ),
+          ),
+        ],
+      ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          const Flexible(
+            flex: 2,
+            child: SizedBox(
+              width: 100,
+              child: Text("Транспорт:"),
+            ),
+          ),
+          Flexible(
+              flex: 3,
+              child: SizedBox(
+                width: 200,
+                /*child: Checkbox(
+                    value: global.selectedDeviceID > -1
+                        ? global.globalMapMarker[global.selectedDeviceID]
+                        .markerData.deviceGeophone
+                        : false,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.deviceGeophone = value!;
+                      });
+                    }),*/
+              )),
+          Flexible(
+            flex: 2,
+            child: SizedBox(
+              width: 100,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  IconButton(
+                    onPressed: () => TakeStateHumanTransportSensitivityClick(
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.deviceId!),
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => SetStateHumanTransportSensitivityClick(
+                        global.globalMapMarker[global.selectedDeviceID]
+                            .markerData.deviceId!,
+                        false,
+                        false),
+                    icon: const Icon(Icons.check),
+                    color: Colors.green,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          const Flexible(
+            flex: 2,
+            child: SizedBox(
+              width: 150,
+              child: Text('Размах сигнала:'),
+            ),
+          ),
+          Flexible(
+            flex: 3,
+            child: SizedBox(
+              width: 200,
+              /*child: global.selectedDeviceID > -1 &&
+                      global.globalMapMarker[global.selectedDeviceID].markerData
+                              .deviceTemperature !=
+                          null
+                  ? Text(
+                      global.globalMapMarker[global.selectedDeviceID].markerData
+                          .deviceTemperature!
+                          .toString(),
+                      textAlign: TextAlign.center)
+                  : Text(
+                      'null',
+                      textAlign: TextAlign.center,
+                    ),*/
+            ),
+          ),
+          Flexible(
+            flex: 2,
+            child: SizedBox(
+              width: 100,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  IconButton(
+                    onPressed: () => TakeDifSignalClick(global
+                        .globalMapMarker[global.selectedDeviceID]
+                        .markerData
+                        .deviceId!),
+                    icon: Icon(
+                      Icons.refresh,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Flexible(
+              flex: 2,
+              child: SizedBox(
+                width: 150,
+                child: Text('Чувствительность \nпо человеку:\n(25-255)'),
+              )),
+          Flexible(
+            flex: 3,
+            child: SizedBox(
+              width: 200,
+              child: TextFormField(
+                textAlign: TextAlign.center,
+                initialValue: '25',
+                keyboardType: TextInputType.number,
+                inputFormatters: <TextInputFormatter>[
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                maxLength: 3,
+                onChanged: (string) => {
+                  if (int.parse(string) <= 255 && int.parse(string) >= 25){
+                    string = string,
+                    print ('good')
+                  }
+                  else
+                    string = '25'
+                },
+              ),
+            ),
+          ),
+          Flexible(
+              flex: 1,
+              child: SizedBox(
+                width: 100,
+                child: IconButton(
+                  onPressed: () => checkDevID(int.parse(stringId)),
+                  icon: Icon(Icons.check),
+                  color: Colors.green,
+                ),
+              )),
+        ],
+      ),
+    ]);
   }
 
-  List<bool> _isOpenMain = List.filled(8, false);
+  final List<bool> _isOpenMain = List.filled(4, false);
+  final List<bool> _isOpenRT = List.filled(7, false);
+  final List<bool> _isOpenCSD = List.filled(8, false);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1394,7 +2607,7 @@ class _TestPage extends State<TestPage>
         child: Column(
           children: [
             Visibility(
-              visible: checkTypeForMainSet(),
+              visible: chooseDeviceType == global.deviceTypeList[0],
               child: ExpansionPanelList(
                 elevation: 2,
                 expansionCallback: (int index, bool isExpanded) {
@@ -1441,6 +2654,182 @@ class _TestPage extends State<TestPage>
                     },
                     body: buildDeviceSettings(context),
                     isExpanded: _isOpenMain[3],
+                    canTapOnHeader: true,
+                  ),
+                ],
+              ),
+            ),
+            Visibility(
+              visible: chooseDeviceType == global.deviceTypeList[1],
+              child: ExpansionPanelList(
+                elevation: 2,
+                expansionCallback: (int index, bool isExpanded) {
+                  setState(() {
+                    _isOpenRT[index] = !isExpanded;
+                  });
+                },
+                children: [
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Основные'),
+                      );
+                    },
+                    body: buildMainSettings(context),
+                    isExpanded: _isOpenRT[0],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Координаты'),
+                      );
+                    },
+                    body: buildCoordSettings(context),
+                    isExpanded: _isOpenRT[1],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Подключенные устройства'),
+                      );
+                    },
+                    body: buildConnectedDevicesRT(context),
+                    isExpanded: _isOpenRT[2],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Внешнее питание'),
+                      );
+                    },
+                    body: buildExtPower(context),
+                    isExpanded: _isOpenRT[3],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Радиосеть'),
+                      );
+                    },
+                    body: buildRadioSettings(context),
+                    isExpanded: _isOpenRT[4],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Источник питания'),
+                      );
+                    },
+                    body: buildPowerSupply(context),
+                    isExpanded: _isOpenRT[5],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Сохранение/Сброс настроек'),
+                      );
+                    },
+                    body: buildDeviceSettings(context),
+                    isExpanded: _isOpenRT[6],
+                    canTapOnHeader: true,
+                  ),
+                ],
+              ),
+            ),
+            Visibility(
+              visible: chooseDeviceType == global.deviceTypeList[2],
+              child: ExpansionPanelList(
+                elevation: 2,
+                expansionCallback: (int index, bool isExpanded) {
+                  setState(() {
+                    _isOpenCSD[index] = !isExpanded;
+                  });
+                },
+                children: [
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Основные'),
+                      );
+                    },
+                    body: buildMainSettings(context),
+                    isExpanded: _isOpenCSD[0],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Координаты'),
+                      );
+                    },
+                    body: buildCoordSettings(context),
+                    isExpanded: _isOpenCSD[1],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Подключенные устройства'),
+                      );
+                    },
+                    body: buildConnectedDevicesCSD(context),
+                    isExpanded: _isOpenCSD[2],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Внешнее питание'),
+                      );
+                    },
+                    body: buildExtPower(context),
+                    isExpanded: _isOpenCSD[3],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Радиосеть'),
+                      );
+                    },
+                    body: buildRadioSettings(context),
+                    isExpanded: _isOpenCSD[4],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Источник питания'),
+                      );
+                    },
+                    body: buildPowerSupply(context),
+                    isExpanded: _isOpenCSD[5],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Сейсмика'),
+                      );
+                    },
+                    body: buildSeismicSettings(context),
+                    isExpanded: _isOpenCSD[6],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return ListTile(
+                        title: Text('Сохранение/Сброс настроек'),
+                      );
+                    },
+                    body: buildDeviceSettings(context),
+                    isExpanded: _isOpenCSD[7],
                     canTapOnHeader: true,
                   ),
                 ],

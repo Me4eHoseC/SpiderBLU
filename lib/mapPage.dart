@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +8,11 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
 import 'package:projects/NetPackagesDataTypes.dart';
+import 'package:projects/RoutesManager.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 
+import 'AllEnum.dart';
+import 'NetPhotoPackages.dart';
 import 'global.dart' as global;
 
 class MarkerData {
@@ -44,6 +49,11 @@ class MarkerData {
   //var
 }
 
+class Example {
+  Example(this.time, this.seisma);
+  final int time, seisma;
+}
+
 class MapMarker extends Marker {
   _mapPage? parent;
   int markerId = -1;
@@ -51,7 +61,7 @@ class MapMarker extends Marker {
   Color colorBack = Colors.blue;
 
   MapMarker(this.parent, this.markerId, this.markerData, LatLng cord,
-      String string, String deviceType, this.colorBack)
+      String deviceId, String deviceType, this.colorBack)
       : super(
             rotate: true,
             height: 50,
@@ -63,12 +73,14 @@ class MapMarker extends Marker {
                     backgroundColor: markerData.backColor,
                   ),
                   onPressed: () => {
-                    parent?.selectMapMarker(markerId, cord, string, deviceType)
+                    parent?.selectMapMarker(
+                        markerId, cord, deviceId, deviceType)
                   },
-              onLongPress: () =>{parent?.deleteMapMarker(markerId, cord)},
+                  onLongPress: () =>
+                      {parent?.askDeleteMapMarker(markerId, cord)},
                   child: Text(
-                    string + '\n' + deviceType,
-                    style: TextStyle(
+                    '$deviceId\n$deviceType',
+                    style: const TextStyle(
                       fontSize: 10,
                     ),
                     textAlign: TextAlign.center,
@@ -77,8 +89,20 @@ class MapMarker extends Marker {
 }
 
 class mapPage extends StatefulWidget {
+  // @override
+  // createState() => _mapPage();
+
+  late _mapPage _page;
+
   @override
-  createState() => _mapPage();
+  State createState() {
+    _page = _mapPage();
+    return _page;
+  }
+
+  void fuck() {
+    _page.displayPhoto();
+  }
 }
 
 class _mapPage extends State<mapPage>
@@ -89,14 +113,18 @@ class _mapPage extends State<mapPage>
   int markerIndex = -1, alarmMarkerIndex = -1, markerIdForCheck = -1;
 
   Location location = Location();
-  LatLng? myCoords, currentLocation, alarmLocation;
+  LatLng? myCords, currentLocation, alarmLocation;
   Timer? timer;
   MapController mapController = MapController();
   List<MarkerData> markerData = [];
   List<int> idMarkersForCheck = List<int>.empty(growable: true),
       idMarkersFromBluetooth = List<int>.empty(growable: true),
+      markerIDDeletedList = List<int>.empty(growable: true),
       alarmList = List<int>.empty(growable: true);
   Widget bottomBarWidget = Container(height: 0);
+  
+  Widget? photoWindow;
+
   bool flagSenderDevice = false, flagAddMarkerCheck = false;
   MapMarker? bufferMarker;
   String? chooseDeviceType;
@@ -105,7 +133,7 @@ class _mapPage extends State<mapPage>
   void initState() {
     chooseDeviceType = global.deviceTypeList[0];
     super.initState();
-    timer = Timer.periodic(Duration(seconds: 1), (_) {
+    timer = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() {
         if (global.deviceIDChanged != -1) {
           global.selectedDeviceID;
@@ -136,7 +164,7 @@ class _mapPage extends State<mapPage>
           }
         }
         location.getLocation().then((p) {
-          myCoords = LatLng(p.latitude!, p.longitude!);
+          myCords = LatLng(p.latitude!, p.longitude!);
         });
       });
     });
@@ -163,12 +191,13 @@ class _mapPage extends State<mapPage>
 
   void findMyPosition() {
     setState(() {
-      mapController.moveAndRotate(myCoords!, 17, 0.0);
+      mapController.moveAndRotate(myCords!, 17, 0.0);
     });
   }
 
   void findMarkerPosition() {
     setState(() {
+
       print(global.selectedDeviceID);
       if (global.selectedDeviceID > -1) {
         mapController.moveAndRotate(
@@ -182,8 +211,100 @@ class _mapPage extends State<mapPage>
     changeBottomBarWidget(1, markerId, cord, string, deviceType);
   }
 
-  void deleteMapMarker(int markerId, LatLng cord){
-    print ('Marker deleted');
+  void askDeleteMapMarker(int markerId, LatLng cord) {
+    setState(() {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Подтвердите удаление устройства"),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    deleteMapMarker(markerId, cord);
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Подтвердить')),
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Отменить')),
+            ],
+          );
+        },
+      );
+    });
+  }
+
+  void getPhoto(PhotoImageSize photoImageSize, int deviceId) {
+    var photoComp = PhotoImageCompression.HIGH;
+    //var imageSize = PhotoImageSize.IMAGE_160X120;
+
+    global.fileManager.setCameraImageProperty(deviceId, photoImageSize, photoComp);
+
+    var cc = PhotoRequestPackage();
+    cc.setType(PackageType.GET_NEW_PHOTO);
+    cc.setParameters(140, photoComp, photoImageSize);
+    cc.setBlackAndWhite(false);
+    cc.setReceiver(deviceId);
+    cc.setSender(RoutesManager.getLaptopAddress());
+
+    var tid = global.postManager.sendPackage(cc);
+  }
+
+  void displayPhoto() {
+    setState(() {
+      if (photoWindow != null) {
+        Navigator.pop(context);
+        photoWindow = null;
+
+        MemoryImage(global.photoTest.data()).evict();
+      }
+
+      photoWindow = AlertDialog(
+          content: Image.memory(global.photoTest.data()),
+          actions: [
+            TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  photoWindow = null;
+                },
+                child: const Text('Подтвердить')),
+          ]);
+
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return photoWindow!;
+          });
+    });
+  }
+
+  void deleteMapMarker(int markerId, LatLng cord) {
+    int index = 0;
+
+    for (int i = 0; i < global.globalMapMarker.length; i++) {
+      if (global.globalMapMarker[i].markerId == markerId) {
+        index = i;
+        markerIDDeletedList.add(markerId);
+        break;
+      }
+    }
+
+    if (index + 1 == global.globalMapMarker.length) {
+      global.selectedDevice =
+          global.globalMapMarker[index - 1].markerData.deviceId.toString();
+      print('selected');
+    }
+
+    if (global.selectedDeviceID > markerId) {
+      global.selectedDeviceID -= 1;
+    }
+
+    global.globalDevicesListFromMap.removeAt(index);
+    global.globalMapMarker.removeAt(index);
+    print('Marker deleted');
   }
 
   void openBottomMenu(var tap, LatLng cord) {
@@ -193,7 +314,7 @@ class _mapPage extends State<mapPage>
     });
   }
 
-  void clearBottomMenu(var tap, LatLng cord){
+  void clearBottomMenu(var tap, LatLng cord) {
     setState(() {
       changeBottomBarWidget(-1, null, null, null, null);
     });
@@ -221,20 +342,45 @@ class _mapPage extends State<mapPage>
 
   void createNewMapMarker(int id, String deviceType) {
     setState(() {
-      markerIndex++;
-      createMarkerData(id, deviceType);
-      Color colorBack = Colors.blue;
-      var localMarker = MapMarker(
-          this,
-          markerIndex,
-          markerData[markerIndex],
-          markerData[markerIndex].deviceCord!,
-          markerData[markerIndex].deviceId.toString(),
-          markerData[markerIndex].deviceType!,
-          colorBack);
-      global.globalMapMarker.add(localMarker);
-      global.globalDevicesListFromMap.add(id.toString());
-      changeBottomBarWidget(-1, null, null, null, null);
+      if (markerIDDeletedList.isEmpty) {
+        markerIndex++;
+        createMarkerData(id, deviceType);
+        Color colorBack = Colors.blue;
+        var localMarker = MapMarker(
+            this,
+            markerIndex,
+            markerData[markerIndex],
+            markerData[markerIndex].deviceCord!,
+            markerData[markerIndex].deviceId.toString(),
+            markerData[markerIndex].deviceType!,
+            colorBack);
+        global.globalMapMarker.add(localMarker);
+        global.globalDevicesListFromMap.add(id.toString());
+        changeBottomBarWidget(-1, null, null, null, null);
+      } else {
+        changeMarkerData(id, deviceType, markerIDDeletedList.first);
+        Color colorBack = Colors.blue;
+        var localMarker = MapMarker(
+            this,
+            markerIDDeletedList.first,
+            markerData[markerIDDeletedList.first],
+            markerData[markerIDDeletedList.first].deviceCord!,
+            markerData[markerIDDeletedList.first].deviceId.toString(),
+            markerData[markerIDDeletedList.first].deviceType!,
+            colorBack);
+        markerIDDeletedList.removeAt(0);
+        global.globalMapMarker.add(localMarker);
+        global.globalDevicesListFromMap.add(id.toString());
+        changeBottomBarWidget(-1, null, null, null, null);
+      }
+    });
+  }
+
+  void changeMarkerData(int id, String deviceType, int index) {
+    setState(() {
+      markerData[index].deviceId = id;
+      markerData[index].deviceCord = currentLocation;
+      markerData[index].deviceType = deviceType;
     });
   }
 
@@ -333,7 +479,7 @@ class _mapPage extends State<mapPage>
               maxLength: 3,
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
-                icon:  Icon(Icons.developer_board),
+                icon: Icon(Icons.developer_board),
                 labelText: 'Device ID',
                 hintText: '',
                 helperText: 'Input device ID',
@@ -385,23 +531,23 @@ class _mapPage extends State<mapPage>
         );
         if (deviceType == global.deviceTypeList[0]) {
           bottomBarWidget = SizedBox(
-                height: 70,
-                child: Row(
-                  children: [
-                    Text(global.globalMapMarker[markerId].markerData.deviceTime
-                        .toString()),
-                    Text(global.globalMapMarker[markerId].markerData.deviceType
-                        .toString()),
-                    IconButton(
-                        onPressed: () => {
-                              changeBottomBarWidget(-1, null, null, null, null),
-                              global.globalMapMarker[markerId].markerData
-                                  .deviceAlarm = false,
-                            },
-                        icon: const Icon(Icons.power_settings_new))
-                  ],
-                ),
-              );
+            height: 70,
+            child: Row(
+              children: [
+                Text(global.globalMapMarker[markerId].markerData.deviceTime
+                    .toString()),
+                Text(global.globalMapMarker[markerId].markerData.deviceType
+                    .toString()),
+                IconButton(
+                    onPressed: () => {
+                          changeBottomBarWidget(-1, null, null, null, null),
+                          global.globalMapMarker[markerId].markerData
+                              .deviceAlarm = false,
+                        },
+                    icon: const Icon(Icons.power_settings_new))
+              ],
+            ),
+          );
         }
         if (deviceType == global.deviceTypeList[1]) {}
         if (deviceType == global.deviceTypeList[2]) {
@@ -419,6 +565,26 @@ class _mapPage extends State<mapPage>
                         return AlertDialog(
                           title: const Text("Сейсмограмма"),
                           actions: [
+                            Container(
+                              width: 150,
+                              height: 150,
+                              child: SfCartesianChart(
+                                primaryXAxis: CategoryAxis(),
+                                series: <LineSeries<Example, String>>[
+                                  LineSeries<Example, String>(
+                                    dataSource: <Example>[
+                                      Example(1, 80),
+                                      Example(2, -100),
+                                      Example(3, 200),
+                                      Example(4, 100)
+                                    ],
+                                    xValueMapper: (Example ex, _) =>
+                                        ex.time.toString(),
+                                    yValueMapper: (Example ex, _) => ex.seisma,
+                                  ),
+                                ],
+                              ),
+                            ),
                             TextButton(
                                 onPressed: () {
                                   Navigator.pop(context);
@@ -439,6 +605,29 @@ class _mapPage extends State<mapPage>
                         return AlertDialog(
                           title: const Text("Сейсмограмма"),
                           actions: [
+                            Container(
+                              width: 150,
+                              height: 150,
+                              child: SfCartesianChart(
+                                primaryXAxis: CategoryAxis(),
+                                series: <LineSeries<Example, String>>[
+                                  LineSeries<Example, String>(
+                                    dataSource: <Example>[
+                                      Example(1, -80),
+                                      Example(2, -100),
+                                      Example(3, 200),
+                                      Example(4, 100),
+                                      Example(5, -80),
+                                      Example(6, -100),
+                                      Example(7, 200),
+                                    ],
+                                    xValueMapper: (Example ex, _) =>
+                                        ex.time.toString(),
+                                    yValueMapper: (Example ex, _) => ex.seisma,
+                                  ),
+                                ],
+                              ),
+                            ),
                             TextButton(
                                 onPressed: () {
                                   Navigator.pop(context);
@@ -495,61 +684,20 @@ class _mapPage extends State<mapPage>
               children: [
                 IconButton(
                   onPressed: () => {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: const Text("Малое фото"),
-                          actions: [
-                            TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text('Ok'))
-                          ],
-                        );
-                      },
-                    )
+                    getPhoto(PhotoImageSize.IMAGE_160X120, global.globalMapMarker[markerId].markerData.deviceId!)
                   },
                   icon: const Icon(Icons.photo_size_select_small),
                 ),
                 IconButton(
                   onPressed: () => {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: const Text("Среднее фото"),
-                          actions: [
-                            TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text('Ok'))
-                          ],
-                        );
-                      },
-                    )
+                    getPhoto(PhotoImageSize.IMAGE_320X240, global.globalMapMarker[markerId].markerData.deviceId!),
                   },
                   icon: const Icon(Icons.photo_size_select_large),
                 ),
                 IconButton(
                   onPressed: () => {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: const Text("Большое фото"),
-                          actions: [
-                            TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text('Ok'))
-                          ],
-                        );
-                      },
-                    )
+                    getPhoto(PhotoImageSize.IMAGE_640X480, global.globalMapMarker[markerId].markerData.deviceId!),
+
                   },
                   icon: const Icon(Icons.photo_size_select_actual),
                 ),
@@ -590,14 +738,14 @@ class _mapPage extends State<mapPage>
   }
 
   Widget build(BuildContext context) {
-    if (myCoords == null) {
+    if (myCords == null) {
       return Container();
     }
 
     return Scaffold(
       body: FlutterMap(
         options: MapOptions(
-          center: myCoords,
+          center: myCords,
           zoom: 17.0,
           maxZoom: 18.0,
           minZoom: 1.0,

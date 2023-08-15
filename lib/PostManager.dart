@@ -4,7 +4,7 @@ import 'dart:math';
 
 import 'package:projects/BasePackage.dart';
 
-import './AllEnum.dart';
+import 'AllEnum.dart';
 import 'global.dart' as global;
 
 class PackageSendingStatus {
@@ -19,8 +19,8 @@ enum PostType {
   Poll,
   Alarm,
   File,
-  Response,
-  Acknowledge,
+  Network,
+  Response;
 }
 
 enum RequestPriority {
@@ -28,8 +28,8 @@ enum RequestPriority {
   Alarm,
   Package,
   File,
-  Response,
-  Acknowledge,
+  Network,
+  Response;
 }
 
 class Request {
@@ -46,10 +46,14 @@ class Request {
 
 class PostManager {
   bool keepRunning = true;
+
   static int mandatoryPauseMs = 60;
+
   final Random _random = Random();
+
   int _transactionIdCounter = 0;
   int _packagesIdCounter = 0;
+
   final List<global.Pair<int, int>> _transactions =
       List<global.Pair<int, int>>.empty(growable: true);
 
@@ -61,7 +65,6 @@ class PostManager {
   late void Function(PackageSendingStatus sendingStatus) packageSendingAttempt;
 
   void _send() {
-
     _offsetTimer?.cancel();
 
     if (!keepRunning) return;
@@ -77,18 +80,21 @@ class PostManager {
         _currentRequestId = -1;
       } else {
         _currentRequest = _getRequest();
-        Timer(Duration.zero, _send);
+        Timer.run(_send);
       }
 
       return;
     }
 
-    bool hasResponse = _checkResponse(req);
+    bool hasResponse = false;
+    if (_currentRequest.postType != PostType.Response) {
+      hasResponse = _checkResponse(req);
+    }
 
     if (hasResponse) {
       _closeTransaction(req.getId());
       _currentRequest = _getRequest();
-      Timer(Duration.zero, _send);
+      Timer.run(_send);
 
       return;
     }
@@ -99,35 +105,43 @@ class PostManager {
       _requests.add(_currentRequest);
 
       _currentRequest = _getRequest();
-      Timer(Duration.zero, _send);
+      Timer.run(_send);
 
       return;
     }
 
     if (_currentRequest.attemptNumber >= _currentRequest.totalAttemptNumber) {
-      if (req != null) {
+      if (_currentRequest.postType != PostType.Response) {
         int tid = _closeTransaction(req.getId());
-        Timer(Duration.zero, () => ranOutOfSendAttempts(req, tid));
+        Timer.run(() => ranOutOfSendAttempts(req, tid));
       }
 
       _currentRequest = _getRequest();
-      Timer(Duration.zero, _send);
+      Timer.run(_send);
 
       return;
     }
 
     _currentRequest.attemptNumber += 1;
 
-    PackageSendingStatus sendingStatus = PackageSendingStatus();
-    sendingStatus.transactionId = _currentRequest.transactionId;
-    sendingStatus.receiver = req.getReceiver();
-    sendingStatus.attemptNumber = _currentRequest.attemptNumber;
-    sendingStatus.totalAttemptNumber = _currentRequest.totalAttemptNumber;
+    if (_currentRequest.postType != PostType.Response) {
+      PackageSendingStatus sendingStatus = PackageSendingStatus();
+      sendingStatus.transactionId = _currentRequest.transactionId;
+      sendingStatus.receiver = req.getReceiver();
+      sendingStatus.attemptNumber = _currentRequest.attemptNumber;
+      sendingStatus.totalAttemptNumber = _currentRequest.totalAttemptNumber;
 
-    Timer(Duration.zero, () => packageSendingAttempt(sendingStatus));
+      Timer.run(() => packageSendingAttempt(sendingStatus));
+    }
 
-    req.setId(_getNextPackageId());
-    _openTransaction(req.getId());
+    if (!req.isAnswer()) {
+      req.setId(_getNextPackageId());
+    }
+
+    if (_currentRequest.postType != PostType.Response) {
+      _openTransaction(req.getId());
+    }
+
     _currentRequestId = req.getId();
 
     DateTime currentSendTime = DateTime.now();
@@ -179,7 +193,7 @@ class PostManager {
   int _closeTransaction(int packageId) {
     var index = _transactions.indexWhere((el) => el.second == packageId);
 
-    if (index == -1){
+    if (index == -1) {
       return -1;
     }
     var transactionId = _transactions[index].first;
@@ -203,7 +217,7 @@ class PostManager {
     }
 
     int _previousDevice = -1;
-    if (_currentRequest.package != null){
+    if (_currentRequest.package != null) {
       _previousDevice = _currentRequest.package!.getPartner();
     }
 
@@ -220,15 +234,13 @@ class PostManager {
       }
 
       int selectedDevice = 0;
-      if (_requests[index].package != null){
+      if (_requests[index].package != null) {
         selectedDevice = _requests[index].package!.getPartner();
       }
 
-
       int itDevice = 0;
-      if (_requests[i].package != null){
+      if (_requests[i].package != null) {
         itDevice = _requests[i].package!.getPartner();
-
       }
 
       if (selectedDevice == _previousDevice && itDevice != _previousDevice) {
@@ -258,14 +270,19 @@ class PostManager {
 
   DateTime _previousSendTime = DateTime.now();
 
-  static const int packAttemptNumber = 6;
-  static const int maxAttemptNumber = 30;
+  static const int _packAttemptNumber = 6;
+  static const int _maxAttemptNumber = 30;
 
-  static const int packMsOffset = 1800; // Time period between packages
-  static const int packWobbleMs = 300; // Range of random time period change
+  static const int _packMsOffset = 1800; // Time period between packages
+  static const int _packWobbleMs = 300; // Range of random time period change
 
-  static const int pollMsOffset = 2500; // Time period between poll packages
-  static const int pollWobbleMs = 800; // Range of random time period change
+  static const int _pollMsOffset = 2500; // Time period between poll packages
+  static const int _pollWobbleMs = 800; // Range of random time period change
+
+  // Should be executed in the same thread as PostManager instance
+  void sendAcknowledge(BasePackage acknowledge) {
+    global.std!.write(acknowledge.toBytesArray());
+  }
 
   int sendPackage(BasePackage? package,
       [PostType type = PostType.Package, int attemptNumber = -1]) {
@@ -273,16 +290,15 @@ class PostManager {
       return -1;
     }
 
-    if (type == PostType.Acknowledge) {
-      global.std!.write(package.toBytesArray());
-      return 0;
+    int transactionId = 0;
+
+    if (type != PostType.Response) {
+      transactionId = _getNextTransactionId();
     }
 
-    int transactionId = _getNextTransactionId();
-
-    int offsetMs = packMsOffset;
-    int wobbleMs = packWobbleMs;
-    int attemptsCount = packAttemptNumber;
+    int offsetMs = _packMsOffset;
+    int wobbleMs = _packWobbleMs;
+    int attemptsCount = _packAttemptNumber;
     bool isInterleavable = false;
 
     RequestPriority priority;
@@ -296,8 +312,8 @@ class PostManager {
       case PostType.Poll:
         {
           priority = RequestPriority.Poll;
-          offsetMs = pollMsOffset;
-          wobbleMs = pollWobbleMs;
+          offsetMs = _pollMsOffset;
+          wobbleMs = _pollWobbleMs;
           isInterleavable = true;
           break;
         }
@@ -309,6 +325,13 @@ class PostManager {
       case PostType.File:
         {
           priority = RequestPriority.File;
+          break;
+        }
+      case PostType.Network:
+        {
+          priority = RequestPriority.Network;
+          offsetMs = _pollMsOffset;
+          wobbleMs = _pollWobbleMs;
           break;
         }
       case PostType.Response:
@@ -323,9 +346,9 @@ class PostManager {
         }
     }
 
-    if (attemptNumber > 0){
-      if (attemptNumber > maxAttemptNumber){
-        attemptNumber = maxAttemptNumber;
+    if (attemptNumber > 0) {
+      if (attemptNumber > _maxAttemptNumber) {
+        attemptNumber = _maxAttemptNumber;
       }
       attemptsCount = attemptNumber;
     }
@@ -343,30 +366,30 @@ class PostManager {
 
     _requests.add(req);
 
-    if(_currentRequestId == -1){
+    if (_currentRequestId == -1) {
       _currentRequestId = package.getId();
-      Timer(Duration.zero, _send);
+      Timer.run(_send);
     }
 
     return transactionId;
   }
 
   void responseReceived(BasePackage? response) {
-    if (response == null){
+    if (response == null) {
       return;
     }
 
     _responses.insert(0, response);
 
-    if (_currentRequestId == response.getInvId()){
-      Timer(Duration.zero,_send);
+    if (_currentRequestId == response.getInvId()) {
+      Timer.run(_send);
     }
   }
 
   int getRequestTransactionId(int packageId) {
     var it = _transactions.indexWhere((element) => element.second == packageId);
     int transactionId = -1;
-    if (it != -1){
+    if (it != -1) {
       transactionId = _transactions[it].first;
     }
     return transactionId;

@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.grey,
+        primarySwatch: Colors.brown,
       ),
       home: const MyHomePage(title: 'БРСК "Паук"'),
     );
@@ -79,18 +79,18 @@ class HomePageState extends State<MyHomePage>
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 130,
+        leading: SizedBox(
+          height: 30,
+          width: 30,
+          child: GifImage(
+            image: const AssetImage("assets/gifs/spider.gif"),
+            controller: controller,
+          ),
+        ),
         title: Column(
           children: [
             Row(
               children: [
-                SizedBox(
-                  height: 30,
-                  width: 30,
-                  child: GifImage(
-                    image: const AssetImage("assets/gifs/spider.gif"),
-                    controller: controller,
-                  ),
-                ),
                 SizedBox(
                   height: 30,
                   child: Text(
@@ -130,6 +130,14 @@ class HomePageState extends State<MyHomePage>
               onTap: () {
                 global.flagMapPage = false;
                 changePage(2);
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: const Text('image page'),
+              onTap: () {
+                global.flagMapPage = false;
+                changePage(3);
                 Navigator.pop(context);
               },
             ),

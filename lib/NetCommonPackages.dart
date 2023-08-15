@@ -10,7 +10,18 @@ class InformationPackage extends BasePackage {
   int _state = 0, _battery = 0, _rssi = 0;
 
   InformationPackage() {
-    setType(PacketTypeEnum.INFORMATION);
+    setType(PackageType.INFORMATION);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is InformationPackage) {
+      _state = other._state;
+      _battery = other._battery;
+      _rssi = other._rssi;
+    }
   }
 
   int getState() {
@@ -53,7 +64,23 @@ class AllInformationPackage extends BasePackage {
   int _alarmType = 0, _alarmReason = 0, _state = 0, _battery = 0;
 
   AllInformationPackage() {
-    setType(PacketTypeEnum.ALL_INFORMATION);
+    setType(PackageType.ALL_INFORMATION);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is AllInformationPackage) {
+      _time = other._time;
+      _alarmTime = other._alarmTime;
+      _latitude = other._latitude;
+      _longitude = other._longitude;
+      _alarmType = other._alarmType;
+      _alarmReason = other._alarmReason;
+      _state = other._state;
+      _battery = other._battery;
+    }
   }
 
   DateTime getTime() {
@@ -136,7 +163,16 @@ class StatePackage extends BasePackage {
   int _state = 0;
 
   StatePackage() {
-    setType(PacketTypeEnum.SET_STATE);
+    setType(PackageType.SET_STATE);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is StatePackage) {
+      _state = other._state;
+    }
   }
 
   int getStateMask() {
@@ -175,12 +211,76 @@ class StatePackage extends BasePackage {
   }
 }
 
+class ErrorCodePackage extends BasePackage {
+  int _errorCode = 0;
+
+  ErrorCodePackage() {
+    setType(PackageType.ERROR_STAT);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is ErrorCodePackage) {
+      _errorCode = other._errorCode;
+    }
+  }
+
+  ErrorCodes getErrorCode() {
+    return ErrorCodes.values[_errorCode];
+  }
+
+  void setErrorCode(ErrorCodes mask) {
+    _errorCode = mask.index;
+  }
+
+  @override
+  bool tryParse(Uint8List rawData) {
+    bool success = true;
+    UnpackMan unpackMan = UnpackMan(rawData);
+
+    success &= super.unpackHeader(unpackMan);
+
+    var value = unpackMan.unpack<int>(2);
+    success &= (value != null);
+    if (success) _errorCode = value!;
+
+    return success;
+  }
+
+  @override
+  Uint8List toBytesArray() {
+    bool success = true;
+    PackMan packMan = PackMan();
+    success &= super.packHeader(packMan);
+    success &= packMan.pack(_errorCode, 2);
+    if (!success) return Uint8List(0);
+    var rawData = packMan.getRawData();
+    fillSizeAndCrc(rawData!);
+
+    return rawData;
+  }
+}
+
 class AlarmPackage extends BasePackage {
   DateTime? _alarmTime;
   int _alarmType = 0, _alarmReason = 0, _number = 0;
 
   AlarmPackage() {
-    setType(PacketTypeEnum.ALARM);
+    setType(PackageType.ALARM);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is AlarmPackage) {
+      _alarmTime = other._alarmTime;
+      _alarmType = other._alarmType;
+      _alarmReason = other._alarmReason;
+      _number = other._number; 
+    }
   }
 
   DateTime getAlarmTime() {
@@ -231,7 +331,16 @@ class AlarmReasonMaskPackage extends BasePackage {
   int _mask = 0;
 
   AlarmReasonMaskPackage() {
-    setType(PacketTypeEnum.SET_ALARM_REASON_MASK);
+    setType(PackageType.SET_ALARM_REASON_MASK);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is AlarmReasonMaskPackage) {
+      _mask = other._mask;
+    }
   }
 
   int getAlarmReasonMask() {
@@ -275,7 +384,17 @@ class CoordinatesPackage extends BasePackage {
   double _latitude = 0, _longitude = 0;
 
   CoordinatesPackage() {
-    setType(PacketTypeEnum.SET_COORDINATE);
+    setType(PackageType.SET_COORDINATE);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is CoordinatesPackage) {
+      _latitude = other._latitude;
+      _longitude = other._longitude;
+    }
   }
 
   double getLatitude() {
@@ -330,13 +449,24 @@ class CoordinatesPackage extends BasePackage {
 
 class TimePackage extends BasePackage {
   DateTime? _time;
-  bool autoUpdate = true;
+  bool _autoUpdate = true;
 
   TimePackage() {
-    setType(PacketTypeEnum.SET_TIME);
+    setType(PackageType.SET_TIME);
   }
-  void setAutoUpdate(bool doAutoUpdate) {
-    autoUpdate = doAutoUpdate;
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is TimePackage) {
+      _time = other._time;
+      _autoUpdate = other._autoUpdate;
+    }
+  }
+
+  void set_autoUpdate(bool do_autoUpdate) {
+    _autoUpdate = do_autoUpdate;
   }
 
   DateTime getTime() {
@@ -363,7 +493,7 @@ class TimePackage extends BasePackage {
 
   @override
   Uint8List toBytesArray() {
-    if (getType() == PacketTypeEnum.SET_TIME && autoUpdate) {
+    if (getType() == PackageType.SET_TIME && _autoUpdate) {
       setTime(DateTime.now());
     }
 
@@ -381,8 +511,18 @@ class TimePackage extends BasePackage {
 
 class VersionPackage extends BasePackage {
   int _version = 0;
+
   VersionPackage() {
-    setType(PacketTypeEnum.VERSION);
+    setType(PackageType.VERSION);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is VersionPackage) {
+      _version = other._version;
+    }
   }
 
   int getVersion() {
@@ -404,11 +544,154 @@ class VersionPackage extends BasePackage {
   }
 }
 
+class ExternalPowerSafetyCatchPackage extends BasePackage {
+  int _state = 1;
+
+  ExternalPowerSafetyCatchPackage() {
+    setType(PackageType.SET_SAFETY_CATCH);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is ExternalPowerSafetyCatchPackage) {
+      _state = other._state;
+    }
+  }
+
+  void setSafetyCatchState(bool isOn) {
+    _state = isOn ? 1 : 0;
+  }
+
+  bool getSafetyCatchState() {
+    return _state == 1;
+  }
+
+  @override
+  bool tryParse(Uint8List rawData) {
+    bool success = true;
+    UnpackMan unpackMan = UnpackMan(rawData);
+
+    success &= super.unpackHeader(unpackMan);
+
+    var value = unpackMan.unpack<int>(2);
+    success &= (value != null);
+    if (success) _state = value!;
+
+    return success;
+  }
+
+  @override
+  Uint8List toBytesArray() {
+    bool success = true;
+    PackMan packMan = PackMan();
+    success &= super.packHeader(packMan);
+    success &= packMan.pack(_state, 2);
+    if (!success) return Uint8List(0);
+    var rawData = packMan.getRawData();
+    fillSizeAndCrc(rawData!);
+
+    return rawData;
+  }
+}
+
+class AutoExternalPowerPackage extends BasePackage {
+  int _activation_delay_s = 60; // seconds
+  int _impulse_duration_s = 1; // 0 - unlimited
+  int _aep_state = 0; // 0 – auto mode off, 1 – auto mode on
+  int _reserve = 0; // unused for now
+
+  AutoExternalPowerPackage() {
+    setType(PackageType.SET_AUTO_EXT_POWER);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is AutoExternalPowerPackage) {
+      _activation_delay_s = other._activation_delay_s;
+      _impulse_duration_s = other._impulse_duration_s;
+      _aep_state = other._aep_state;
+      _reserve = other._reserve;
+    }
+  }
+
+  /// Returns device auto external power mode activation delay (seconds)
+  int getActivationDelay() { return _activation_delay_s; }
+
+  /// Sets device auto external power mode activation delay (seconds)
+  void setActivationDelay(int delayS) { _activation_delay_s = delayS; }
+
+  /// Returns device external power impulse duration (seconds)
+  int getImpulseDuration() { return _impulse_duration_s; }
+
+  /// Sets device external power impulse duration (seconds)
+  void setImpulseDuration(int durationS) { _impulse_duration_s = durationS; }
+
+  /// Returns device auto extarnal power mode state
+  bool getAutoExternalPowerModeState() { return _aep_state == 1; }
+
+  /// Sets device auto extarnal power mode state
+  void setAutoExternalPowerModeState(bool state) {
+    _aep_state = state ? 1 : 0;
+  }
+
+  @override
+  bool tryParse(Uint8List rawData) {
+    bool success = true;
+    UnpackMan unpackMan = UnpackMan(rawData);
+
+    success &= super.unpackHeader(unpackMan);
+
+    var value = unpackMan.unpack<int>(2);
+    success &= (value != null);
+    if (success) _activation_delay_s = value!;
+    value = unpackMan.unpack<int>(2);
+    success &= (value != null);
+    if (success) _impulse_duration_s = value!;
+    value = unpackMan.unpack<int>(2);
+    success &= (value != null);
+    if (success) _aep_state = value!;
+    value = unpackMan.unpack<int>(2);
+    success &= (value != null);
+    if (success) _reserve = value!;
+
+    return success;
+  }
+
+  @override
+  Uint8List toBytesArray() {
+    bool success = true;
+    PackMan packMan = PackMan();
+    success &= super.packHeader(packMan);
+    success &= packMan.pack(_activation_delay_s, 2);
+    success &= packMan.pack(_impulse_duration_s, 2);
+    success &= packMan.pack(_aep_state, 2);
+    success &= packMan.pack(_reserve, 2);
+    if (!success) return Uint8List(0);
+    var rawData = packMan.getRawData();
+    fillSizeAndCrc(rawData!);
+
+    return rawData;
+  }
+}
+
 class ExternalPowerPackage extends BasePackage {
   int _state = 0;
 
   ExternalPowerPackage() {
-    setType(PacketTypeEnum.EXTERNAL_POWER);
+    setType(PackageType.SET_EXTERNAL_POWER);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is ExternalPowerPackage) {
+      _state = other._state;
+    }
   }
 
   void setExternalPowerState(ExternalPower state) {
@@ -444,7 +727,23 @@ class BatteryMonitorPackage extends BasePackage {
   int _number = 0, _totalNumber = 0;
 
   BatteryMonitorPackage() {
-    setType(PacketTypeEnum.BATTERY_MONITOR);
+    setType(PackageType.BATTERY_MONITOR);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is BatteryMonitorPackage) {
+      _residue = other._residue;
+      _usedCapacity = other._usedCapacity;
+      _voltage = other._voltage;
+      _current = other._current;
+      _temperature = other._temperature;
+      _elapsedTime = other._elapsedTime;
+      _number = other._number;
+      _totalNumber = other._totalNumber;
+    }
   }
 
   double getResidue() {
@@ -527,7 +826,16 @@ class BatteryMonitorRequestPackage extends BasePackage {
   int _batteryId = 0;
 
   BatteryMonitorRequestPackage() {
-    setType(PacketTypeEnum.GET_BATTERY_MONITOR);
+    setType(PackageType.GET_BATTERY_MONITOR);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is BatteryMonitorRequestPackage) {
+      _batteryId = other._batteryId;
+    }
   }
 
   void setBatteryId(int id) {
@@ -556,7 +864,16 @@ class BatteryStatePackage extends BasePackage {
   int _state = 0;
 
   BatteryStatePackage() {
-    setType(PacketTypeEnum.BATTERY_STATE);
+    setType(PackageType.BATTERY_STATE);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is BatteryStatePackage) {
+      _state = other._state;
+    }
   }
 
   BatteryState getBatteryState() {
@@ -582,7 +899,16 @@ class PeripheryMaskPackage extends BasePackage {
   int _mask = 0;
 
   PeripheryMaskPackage() {
-    setType(PacketTypeEnum.SET_PERIPHERY);
+    setType(PackageType.SET_PERIPHERY);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is PeripheryMaskPackage) {
+      _mask = other._mask;
+    }
   }
 
   int getPeripheryMask() {
@@ -629,19 +955,19 @@ class EEPROMFactorsPackage extends BasePackage {
   int _wakeNetworkResendTimeMs = 0, //32bit
       _alarmResendTimeMs = 0,
       _seismicResendTimeMs = 0,
-      _filter1A = 0,
+      _transportSignalsTreshold = 0,
       _photoResendTimeMs = 0;
 
-  int _filter2A = 0, //16bit
+  int _transportIntervalsCount = 0, //16bit
       _alarmTriesResend = 0,
       _seismicTriesResend = 0,
-      _filter1H = 0,
+      _humanSignalsTreshold = 0,
       _photoTriesResend = 0;
 
   int _periodicSendTelemetryTime10S = 0, //8bit
       _afterSeismicAlarmPauseS = 0,
       _afterLineAlarmPauseS = 0,
-      _filter2H = 0;
+      _humanIntervalsCount = 0;
 
   int _batteryPeriodicUpdate10Min = 0, //8bit
       _batteryVoltageThresholdAlarm100mV = 0,
@@ -650,7 +976,34 @@ class EEPROMFactorsPackage extends BasePackage {
       _deviceType = 0;
 
   EEPROMFactorsPackage() {
-    setType(PacketTypeEnum.SET_EEPROM_FACTORS);
+    setType(PackageType.SET_EEPROM_FACTORS);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is EEPROMFactorsPackage) {
+      _wakeNetworkResendTimeMs = other._wakeNetworkResendTimeMs;
+      _alarmResendTimeMs = other._alarmResendTimeMs;
+      _seismicResendTimeMs = other._seismicResendTimeMs;
+      _transportSignalsTreshold = other._transportSignalsTreshold;
+      _photoResendTimeMs = other._photoResendTimeMs;
+      _transportIntervalsCount = other._transportIntervalsCount;
+      _alarmTriesResend = other._alarmTriesResend;
+      _seismicTriesResend = other._seismicTriesResend;
+      _humanSignalsTreshold = other._humanSignalsTreshold;
+      _photoTriesResend = other._photoTriesResend;
+      _periodicSendTelemetryTime10S = other._periodicSendTelemetryTime10S;
+      _afterSeismicAlarmPauseS = other._afterSeismicAlarmPauseS;
+      _afterLineAlarmPauseS = other._afterLineAlarmPauseS;
+      _humanIntervalsCount = other._humanIntervalsCount;
+      _batteryPeriodicUpdate10Min = other._batteryPeriodicUpdate10Min;
+      _batteryVoltageThresholdAlarm100mV = other._batteryVoltageThresholdAlarm100mV;
+      _batteryResidueThresholdAlarmPC = other._batteryResidueThresholdAlarmPC;
+      _batteryPeriodicAlarmH = other._batteryPeriodicAlarmH;
+      _deviceType = other._deviceType;
+    }
   }
 
   int getWakeNetworkResendTimeMs() {
@@ -677,12 +1030,12 @@ class EEPROMFactorsPackage extends BasePackage {
     _seismicResendTimeMs = value;
   }
 
-  int getFilter1A() {
-    return _filter1A;
+  int getTransportSignalsTreshold() {
+    return _transportSignalsTreshold;
   }
 
-  void setFilter1A(int value) {
-    _filter1A = value;
+  void setTransportSignalsTreshold(int value) {
+    _transportSignalsTreshold = value;
   }
 
   int getPhotoResendTimeMs() {
@@ -693,12 +1046,12 @@ class EEPROMFactorsPackage extends BasePackage {
     _photoResendTimeMs = value;
   }
 
-  int getFilter2A() {
-    return _filter2A;
+  int getTransportIntervalsCount() {
+    return _transportIntervalsCount;
   }
 
-  void setFilter2A(int value) {
-    _filter2A = value;
+  void setTransportIntervalsCount(int value) {
+    _transportIntervalsCount = value;
   }
 
   int getAlarmTriesResend() {
@@ -717,12 +1070,12 @@ class EEPROMFactorsPackage extends BasePackage {
     _seismicTriesResend = value;
   }
 
-  int getFilter1H() {
-    return _filter1H;
+  int getHumanSignalsTreshold() {
+    return _humanSignalsTreshold;
   }
 
-  void setFilter1H(int value) {
-    _filter1H = value;
+  void setHumanSignalsTreshold(int value) {
+    _humanSignalsTreshold = value;
   }
 
   int getPhotoTriesResend() {
@@ -757,12 +1110,12 @@ class EEPROMFactorsPackage extends BasePackage {
     _afterLineAlarmPauseS = value;
   }
 
-  int getFilter2H() {
-    return _filter2H;
+  int getHumanIntervalsCount() {
+    return _humanIntervalsCount;
   }
 
-  void setFilter2H(int value) {
-    _filter2H = value;
+  void setHumanIntervalsCount(int value) {
+    _humanIntervalsCount = value;
   }
 
   int getBatteryPeriodicUpdate10Min() {
@@ -797,11 +1150,11 @@ class EEPROMFactorsPackage extends BasePackage {
     _batteryPeriodicAlarmH = value;
   }
 
-  DeviceType getDeviceType() {
-    return DeviceType.values[_deviceType];
+  SlaveModel getDeviceType() {
+    return SlaveModel.values[_deviceType];
   }
 
-  void setDeviceType(DeviceType value) {
+  void setDeviceType(SlaveModel value) {
     _deviceType = value.index;
   }
 
@@ -823,14 +1176,14 @@ class EEPROMFactorsPackage extends BasePackage {
     if (success) _seismicResendTimeMs = valueSeismicResendTimeMs!;
     var valueFilter1A = unpackMan.unpack<int>(4);
     success &= (valueFilter1A != null);
-    if (success) _filter1A = valueFilter1A!;
+    if (success) _transportSignalsTreshold = valueFilter1A!;
     var valuePhotoResendTimeMs = unpackMan.unpack<int>(4);
     success &= (valuePhotoResendTimeMs != null);
     if (success) _photoResendTimeMs = valuePhotoResendTimeMs!;
 
     var valueFilter2A = unpackMan.unpack<int>(2);
     success &= (valueFilter2A != null);
-    if (success) _filter2A = valueFilter2A!;
+    if (success) _transportIntervalsCount = valueFilter2A!;
     var valueAlarmTriesResend = unpackMan.unpack<int>(2);
     success &= (valueAlarmTriesResend != null);
     if (success) _alarmTriesResend = valueAlarmTriesResend!;
@@ -839,7 +1192,7 @@ class EEPROMFactorsPackage extends BasePackage {
     if (success) _seismicTriesResend = valueSeismicTriesResend!;
     var valueFilter1H = unpackMan.unpack<int>(2);
     success &= (valueFilter1H != null);
-    if (success) _filter1H = valueFilter1H!;
+    if (success) _humanSignalsTreshold = valueFilter1H!;
     var valuePhotoTriesResend = unpackMan.unpack<int>(2);
     success &= (valuePhotoTriesResend != null);
     if (success) _photoTriesResend = valuePhotoTriesResend!;
@@ -857,7 +1210,7 @@ class EEPROMFactorsPackage extends BasePackage {
     if (success) _afterLineAlarmPauseS = valueAfterLineAlarmPauseS!;
     var valueFilter2H = unpackMan.unpack<int>(1);
     success &= (valueFilter2H != null);
-    if (success) _filter2H = valueFilter2H!;
+    if (success) _humanIntervalsCount = valueFilter2H!;
 
     var valueBatteryPeriodicUpdate10Min = unpackMan.unpack<int>(1);
     success &= (valueBatteryPeriodicUpdate10Min != null);
@@ -894,19 +1247,19 @@ class EEPROMFactorsPackage extends BasePackage {
     success &= packMan.pack(_wakeNetworkResendTimeMs, 4);
     success &= packMan.pack(_alarmResendTimeMs, 4);
     success &= packMan.pack(_seismicResendTimeMs, 4);
-    success &= packMan.pack(_filter1A, 4);
+    success &= packMan.pack(_transportSignalsTreshold, 4);
     success &= packMan.pack(_photoResendTimeMs, 4);
 
-    success &= packMan.pack(_filter2A, 2);
+    success &= packMan.pack(_transportIntervalsCount, 2);
     success &= packMan.pack(_alarmTriesResend, 2);
     success &= packMan.pack(_seismicTriesResend, 2);
-    success &= packMan.pack(_filter1H, 2);
+    success &= packMan.pack(_humanSignalsTreshold, 2);
     success &= packMan.pack(_photoTriesResend, 2);
 
     success &= packMan.pack(_periodicSendTelemetryTime10S, 1);
     success &= packMan.pack(_afterSeismicAlarmPauseS, 1);
     success &= packMan.pack(_afterLineAlarmPauseS, 1);
-    success &= packMan.pack(_filter2H, 1);
+    success &= packMan.pack(_humanIntervalsCount, 1);
 
     success &= packMan.pack(_batteryPeriodicUpdate10Min, 1);
     success &= packMan.pack(_batteryVoltageThresholdAlarm100mV, 1);
@@ -930,7 +1283,20 @@ class FilePartPackage extends BasePackage {
   late Uint8List _part;
 
   FilePartPackage() {
-    setType(PacketTypeEnum.MESSAGE);
+    setType(PackageType.MESSAGE);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is FilePartPackage) {
+      _fullSize = other._fullSize;
+      _currentPosition = other._currentPosition;
+      _creationTime = other._creationTime;
+      _part = Uint8List(other._part.length);
+      _part.setAll(0, other._part);
+    }
   }
 
   DateTime getCreationTime() {

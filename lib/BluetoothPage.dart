@@ -1,15 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:projects/Application.dart';
-import 'package:projects/BasePackage.dart';
-import 'package:projects/NetCommonPackages.dart';
-import 'package:projects/NetPackagesDataTypes.dart';
 
-import 'package:projects/RoutesManager.dart';
-
-import './AllEnum.dart';
-import 'NetNetworkPackages.dart';
 import 'global.dart' as global;
 
 class BluetoothPage extends StatefulWidget{

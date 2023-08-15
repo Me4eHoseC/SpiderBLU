@@ -10,6 +10,7 @@ import 'package:projects/NetSeismicPackage.dart';
 import 'package:projects/PostManager.dart';
 import 'package:projects/RoutesManager.dart';
 
+import 'FileManager.dart';
 import 'global.dart' as global;
 
 class Reference<T> {
@@ -44,39 +45,36 @@ class PackagesParser {
         }
       }
       BasePackage package = pair.first!;
-      PacketTypeEnum type = package.getType();
+      PackageType type = package.getType();
 
       if (package.getId() != 0) {
-        if (type == PacketTypeEnum.ALARM ||
-            type == PacketTypeEnum.PHOTO ||
-            type == PacketTypeEnum.SEISMIC_WAVE ||
-            type == PacketTypeEnum.ADPCM_SEISMIC_WAVE ||
-            type == PacketTypeEnum.MESSAGE) {
+        if ((type == PackageType.ALARM || FileManager.isFileType(type)) &&
+            !package.isAnswer()) {
           BasePackage answer = BasePackage.makeAcknowledge(package);
 
-          global.postManager.sendPackage(answer, PostType.Acknowledge);
+          global.postManager.sendAcknowledge(answer);
         }
       }
+
       bool isDuplicate = _checkDuplicate(package);
+
       if (isDuplicate) {
         continue;
       }
+
       if (package.getSize() == BasePackage.minExpectedSize) {
         if (package.isAnswer()) {
-          Timer(Duration.zero, () => acknowledgeReceived(package));
+          Timer.run(() => acknowledgeReceived(package));
         } else {
-          Timer(Duration.zero, () => requestReceived(package));
+          Timer.run(() => requestReceived(package));
         }
         continue;
       }
-      if (type == PacketTypeEnum.PHOTO ||
-          type == PacketTypeEnum.SEISMIC_WAVE ||
-          type == PacketTypeEnum.ADPCM_SEISMIC_WAVE ||
-          type == PacketTypeEnum.MESSAGE) {
-        Timer(
-            Duration.zero, () => filePartReceived(package as FilePartPackage));
+
+      if (FileManager.isFileType(type)) {
+        Timer.run(() => filePartReceived(package as FilePartPackage));
       } else {
-        Timer(Duration.zero, () => dataReceived(package));
+        Timer.run(() => dataReceived(package));
       }
     }
   }
@@ -106,8 +104,8 @@ class PackagesParser {
       return pair;
     }
 
-    PacketTypeEnum type = BasePackage.extractType(dataRef.value);
-    if (type == PacketTypeEnum.NICE_ERROR_CODE) {
+    PackageType type = BasePackage.extractType(dataRef.value);
+    if (type == PackageType.NICE_ERROR_CODE) {
       dataRef.value =
           _reduceFixedList(dataRef.value, size, dataRef.value.length - size);
       return pair;
@@ -158,65 +156,80 @@ class PackagesParser {
     return newData;
   }
 
-  static BasePackage _createAppropriatePackage(PacketTypeEnum type) {
+  static BasePackage _createAppropriatePackage(PackageType type) {
     switch (type) {
       // common packages
-      case PacketTypeEnum.EXTERNAL_POWER:
+      case PackageType.ERROR_STAT:
+        return ErrorCodePackage();
+      case PackageType.SAFETY_CATCH:
+        return ExternalPowerSafetyCatchPackage();
+      case PackageType.AUTO_EXT_POWER:
+        return AutoExternalPowerPackage();
+      case PackageType.EXTERNAL_POWER:
         return ExternalPowerPackage();
-      case PacketTypeEnum.BATTERY_STATE:
+      case PackageType.BATTERY_STATE:
         return BatteryStatePackage();
-      case PacketTypeEnum.ALL_INFORMATION:
+      case PackageType.ALL_INFORMATION:
         return AllInformationPackage();
-      case PacketTypeEnum.PERIPHERY:
+      case PackageType.PERIPHERY:
         return PeripheryMaskPackage();
-      case PacketTypeEnum.EEPROM_FACTORS:
+      case PackageType.EEPROM_FACTORS:
         return EEPROMFactorsPackage();
-      case PacketTypeEnum.INFORMATION:
+      case PackageType.INFORMATION:
         return InformationPackage();
-      case PacketTypeEnum.ALARM:
+      case PackageType.ALARM:
         return AlarmPackage();
-      case PacketTypeEnum.COORDINATE:
+      case PackageType.COORDINATE:
         return CoordinatesPackage();
-      case PacketTypeEnum.STATE:
+      case PackageType.STATE:
         return StatePackage();
-      case PacketTypeEnum.TIME:
+      case PackageType.TIME:
         return TimePackage();
-      case PacketTypeEnum.BATTERY_MONITOR:
+      case PackageType.BATTERY_MONITOR:
         return BatteryMonitorPackage();
-      case PacketTypeEnum.VERSION:
+      case PackageType.VERSION:
         return VersionPackage();
-      case PacketTypeEnum.ALARM_REASON_MASK:
+      case PackageType.ALARM_REASON_MASK:
         return AlarmReasonMaskPackage();
 
       // seismic packages
-      case PacketTypeEnum.HUMAN_SENSITIVITY:
+      case PackageType.SIGNAL_SWING:
+        return SeismicSignalSwingPackage();
+      case PackageType.HUMAN_SENSITIVITY:
         return HumanSensitivityPackage();
-      case PacketTypeEnum.TRANSPORT_SENSITIVITY:
+      case PackageType.TRANSPORT_SENSITIVITY:
         return TransportSensitivityPackage();
-      case PacketTypeEnum.CRITERION_FILTER:
+      case PackageType.CRITERION_FILTER:
         return CriterionFilterPackage();
-      case PacketTypeEnum.SIGNAL_TO_NOISE_RATIO:
+      case PackageType.SIGNAL_TO_NOISE_RATIO:
         return SignalToNoiseRatioPackage();
-      case PacketTypeEnum.CRITERION_RECOGNITION:
+      case PackageType.CRITERION_RECOGNITION:
         return CriterionRecognitionPackage();
 
       // photo packages
-      case PacketTypeEnum.TRAP_ADDRESS:
+      case PackageType.TRAP_ADDRESS:
         return PhototrapPackage();
-      case PacketTypeEnum.TRAP_PHOTO_LIST:
+      case PackageType.TRAP_PHOTO_LIST:
         return PhototrapFilesPackage();
-      case PacketTypeEnum.PHOTO_PARAMETERS:
+      case PackageType.PHOTO_PARAMETERS:
         return PhotoParametersPackage();
 
       // network packages
-      case PacketTypeEnum.MODEM_NETWORK_NUM:
+      case PackageType.MODEM_NETWORK_NUM:
         return ModemNetworkNumberPackage();
-      case PacketTypeEnum.MODEM_FREQUENCY:
+      case PackageType.MODEM_FREQUENCY:
         return ModemFrequencyPackage();
-      case PacketTypeEnum.ALLOWED_HOPS:
+      case PackageType.ALLOWED_HOPS:
         return HopsPackage();
-      case PacketTypeEnum.UNALLOWED_HOPS:
+      case PackageType.UNALLOWED_HOPS:
         return HopsPackage();
+
+        //files packages
+      case PackageType.PHOTO:
+      case PackageType.SEISMIC_WAVE:
+      case PackageType.ADPCM_SEISMIC_WAVE:
+      case PackageType.MESSAGE:
+        return FilePartPackage();
 
       default:
         return BasePackage();

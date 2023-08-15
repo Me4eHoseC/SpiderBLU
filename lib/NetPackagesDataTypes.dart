@@ -1,4 +1,3 @@
-
 class DeviceState {
   static const int MONITOR_SEISMIC = 1 << 0;
   static const int MONITORING_LINE1 = 1 << 1;
@@ -10,17 +9,19 @@ class DeviceState {
   static const int PLAYER = 1 << 7;
 }
 
-enum AlarmType{
+enum AlarmType {
   NO,
   SEISMIC,
   LINE1,
   LINE2,
   BATTERY,
   TRAP,
-  RADIATION;
+  RADIATION,
+  EXT_POWER_SAFETY_CATCH_OFF,
+  AUTO_EXT_POWER_TRIGGERED;
 }
 
-enum AlarmReason{
+enum AlarmReason {
   UNKNOWN,
   INTERFERENCE,
   FAR_TARGET,
@@ -41,38 +42,65 @@ class AlarmReasonMask {
   static final int BATTERY = 1 << AlarmReason.BATTERY.index;
 }
 
-enum ExternalPower{
+enum ExternalPower {
   OFF,
   ON;
 }
 
-enum BatteryState{
+enum BatteryState {
   BAD,
   NORMAL;
 }
 
-class PeripheryMask{
+class PeripheryMask {
   static const int LINE1 = 1 << 0;
   static const int LINE2 = 1 << 1;
   static const int AUDIO = 1 << 2;
   static const int CAMERA = 1 << 3;
 }
 
-class YellowAlarm{
+class YellowAlarm {
   static const int NUMBER_MIN = 2;
   static const int NUMBER_MAX = 30;
   static const int TIME_MIN = 1;
   static const int TIME_MAX = 60;
 }
 
-enum PhotoImageSize{
+enum PhotoImageSize {
   IMAGE_160X120,
   IMAGE_320X240,
   IMAGE_640X480,
   IMAGE_SIZE_TRAP;
 }
 
-enum CriterionFilter{
+enum PhotoImageCompression {
+  MINIMUM,
+  LOW,
+  MEDIUM,
+  HIGH,
+  MAXIMUM;
+}
+
+int castFromCompression(PhotoImageCompression compression, PhotoImageSize size) {
+  switch (compression) {
+    case PhotoImageCompression.MINIMUM: return size == PhotoImageSize.IMAGE_640X480 ? 40 : 0;
+    case PhotoImageCompression.LOW: return 80;
+    case PhotoImageCompression.MEDIUM: return 130;
+    case PhotoImageCompression.HIGH: return 180;
+    case PhotoImageCompression.MAXIMUM: return 255;
+    default: return 180;
+  }
+}
+
+PhotoImageCompression castToCompression(int compression) {
+  if (compression <= 40) return PhotoImageCompression.MINIMUM;
+  else if (compression <= 80) return PhotoImageCompression.LOW;
+  else if (compression <= 130) return PhotoImageCompression.MEDIUM;
+  else if (compression <= 180) return PhotoImageCompression.HIGH;
+  else return PhotoImageCompression.MAXIMUM;
+}
+
+enum CriterionFilter {
   FILTER_1_FROM_3,
   FILTER_2_FROM_3,
   FILTER_3_FROM_3,
@@ -81,7 +109,16 @@ enum CriterionFilter{
   FILTER_4_FROM_4;
 }
 
-enum DeviceType{
+enum SlaveModel {
   SENSOR,
   MASTER;
+}
+
+enum ErrorCodes {
+  AEP_SAFETY_CATCH_BLOCKED,
+  AEP_NO_BRAKELINES,
+  AEP_BRAKELINES_STATE,
+  AEP_EXT_POW_DISABLE,
+  AEP_CHANGING_DISABLE,
+  AEP_AEP_ONLY_SAFETY_CATCHED;
 }

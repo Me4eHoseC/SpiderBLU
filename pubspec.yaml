@@ -43,9 +43,11 @@ dependencies:
   mutex: ^3.0.1
   permission_handler: ^10.2.0
   flutter_gif: ^0.0.4
+  syncfusion_flutter_charts: ^22.2.7
+  flutter_launcher_icons: ^0.13.1
+  path_provider: ^2.1.0
 
 dev_dependencies:
-  flutter_launcher_icons: ^0.7.4
   flutter_test:
     sdk: flutter
 
@@ -82,6 +84,9 @@ flutter:
     - assets/gifs/spider.gif
     - assets/gifs/spider30x30.gif
     - assets/gifs/image.gif
+    - assets/icons/phototest.jpeg
+    - assets/160x120.jpeg
+    - assets/320x240.jpeg
 
   # To add assets to your application, add an assets section, like this:
   # assets:

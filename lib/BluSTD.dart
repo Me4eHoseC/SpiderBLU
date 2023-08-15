@@ -4,18 +4,18 @@ import 'dart:async';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:projects/ISTD.dart';
 
+
 class BluSTD extends ISTD {
   BluetoothConnection? _connection;
-  String? _deviceAddress, _deviceName;
+  String? _deviceAddress;
 
   BluSTD(int stdId, void Function(Uint8List) onData) {
     super.stdId = stdId;
     super.onData = onData;
   }
 
-  void setBTHost(String deviceAddress, String deviceName) {
+  void setBTHost(String deviceAddress) {
     _deviceAddress = deviceAddress;
-    _deviceName = deviceName;
   }
 
   @override
@@ -24,21 +24,30 @@ class BluSTD extends ISTD {
       return _connection!.isConnected;
     }
 
-    _connection = await BluetoothConnection.toAddress(_deviceAddress);
+    return BluetoothConnection.toAddress(_deviceAddress)
+        .then((value) {
+        _connection = value;
 
-    if (_connection == null) {
-      return connect();
-    }
+        _connection!.input?.listen(onData);
 
-    _connection!.input?.listen(onData);
-    Timer(Duration.zero, onConnected);
-    return true;
+        Timer.run(onConnected);
+        return true;
+    })
+        .catchError((err) {
+          _connection = null;
+          Timer.run(onDisconnected);
+          return false;
+    });
   }
 
   @override
   void disconnect() {
-    _connection!.close();
-    Timer(Duration.zero, onDisconnected);
+    if (_connection != null) {
+      _connection!.close();
+      _connection = null;
+    }
+
+    Timer.run(onDisconnected);
   }
 
   @override

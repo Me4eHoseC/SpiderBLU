@@ -14,7 +14,6 @@ class BluetoothPage extends StatefulWidget{
 
 class _BluetoothPage extends State<BluetoothPage>
     with TickerProviderStateMixin {
-  @override
   bool get wantKeepAlive => true;
 
   @override
@@ -28,6 +27,7 @@ class _BluetoothPage extends State<BluetoothPage>
     global.stdConnectionManager.setStateOnDone = () {
       setState(() {});
     };
+
     setState(() {
       global.stdConnectionManager.searchAndConnect();
     });
@@ -35,7 +35,7 @@ class _BluetoothPage extends State<BluetoothPage>
 
   void Disconnect() {
     setState(() {
-      global.stdConnectionManager.Disconnect();
+      global.stdConnectionManager.disconnect();
     });
   }
 

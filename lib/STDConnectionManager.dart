@@ -10,32 +10,39 @@ class STDConnectionManager {
   final String _stdName = global.deviceName;
   String _stdAddress = '';
   bool isDiscovering = true;
-  void Function()? setStateOnDone;
+  late void Function() setStateOnDone;
   Timer? timer;
 
   void searchAndConnect() {
     isDiscovering = true;
+
     FlutterBluetoothSerial.instance.startDiscovery().listen((r) {
       if (r.device.name == _stdName) {
         _stdAddress = r.device.address.toString();
 
-        global.std = BluSTD(_stdId, (Uint8List? data) {
+        var std = BluSTD(_stdId, (Uint8List? data) {
           global.packagesParser.addData(data!);
         });
-        global.std!.onConnected = onConnected;
-        global.std!.onDisconnected = onDisconnected;
 
-        (global.std! as BluSTD).setBTHost(_stdAddress, _stdName);
+        std.onConnected = onConnected;
+        std.onDisconnected = onDisconnected;
 
-        global.std!.connect();
+        std.setBTHost(_stdAddress);
+        std.connect();
+
+        global.std = std;
+
         isDiscovering = false;
       }
     });
-    timer = Timer(Duration(seconds: 14), () {isDiscovering = false;});
+
+    timer = Timer(const Duration(seconds: 14), () {
+      isDiscovering = false;
+      setStateOnDone();
+    });
   }
 
-  void Disconnect(){
-    print("dis");
+  void disconnect(){
     global.std!.disconnect();
   }
 
@@ -44,20 +51,14 @@ class STDConnectionManager {
   }
 
   void onConnected() {
-    Timer(Duration.zero, setStateOnDone!);
-   /* if (BluSTD.){
-
-    }*/
-    print('Connected');
-    if (global.std == null){
-      print('notConnect');
-    }
     global.flagConnect = true;
+    Timer.run(setStateOnDone);
   }
 
   void onDisconnected() {
-    print('Disconnected');
     global.std = null;
     global.flagConnect = false;
+    isDiscovering = false;
+    Timer.run(setStateOnDone);
   }
 }

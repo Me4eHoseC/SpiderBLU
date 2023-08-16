@@ -111,7 +111,6 @@ class _mapPage extends State<mapPage>
 
   Location location = Location();
   LatLng? myCords, currentLocation, alarmLocation;
-  Timer? timer;
   MapController mapController = MapController();
   List<MarkerData> markerData = [];
   List<int> idMarkersForCheck = List<int>.empty(growable: true),
@@ -119,7 +118,7 @@ class _mapPage extends State<mapPage>
       markerIDDeletedList = List<int>.empty(growable: true),
       alarmList = List<int>.empty(growable: true);
   Widget bottomBarWidget = Container(height: 0);
-
+  Timer? timer;
   Widget? photoWindow;
 
   bool flagSenderDevice = false, flagAddMarkerCheck = false;
@@ -130,18 +129,13 @@ class _mapPage extends State<mapPage>
   void initState() {
     chooseDeviceType = global.deviceTypeList[0];
     super.initState();
-    Timer.periodic(Duration(seconds: 2), (_) {
-      location.getLocation().then((p) {
-        myCords = LatLng(p.latitude!, p.longitude!);
-      });
-    });
-    timer = Timer.periodic(Duration.zero, (_) {
+
+      timer = Timer.periodic(Duration.zero, (timer) {
       setState(() {
         if (global.deviceIDChanged != -1) {
           global.selectedDeviceID;
           changeMapMarker(global.deviceIDChanged,
               global.globalMapMarker[global.deviceIDChanged].markerData);
-
           global.deviceIDChanged = -1;
         }
         for (int i = 0; i < global.globalMapMarker.length; i++) {
@@ -149,25 +143,30 @@ class _mapPage extends State<mapPage>
               global.globalMapMarker[i].markerData.backColor != Colors.red) {
             global.globalMapMarker[i].markerData.backColor = Colors.red;
             global.globalMapMarker[i].markerData.deviceAvailable = true;
-            global.globalMapMarker[i].markerData.timer!.cancel();
+            global.globalMapMarker[i].markerData.timer = null;
             startTimer(i);
           }
           if (global.globalMapMarker[i].markerData.deviceAvailable &&
               global.globalMapMarker[i].markerData.deviceAlarm == false &&
-              global.globalMapMarker[i].markerData.timer == null) {
+              global.globalMapMarker[i].markerData.timer == null &&
+              global.globalMapMarker[i].markerData.backColor == Colors.blue) {
             global.globalMapMarker[i].markerData.backColor = Colors.green;
             startTimer(i);
           }
           if (global.globalMapMarker[i].markerData.deviceAvailable &&
               global.globalMapMarker[i].markerData.deviceAlarm == false &&
               global.globalMapMarker[i].markerData.timer != null &&
-              global.globalMapMarker[i].markerData.deviceReturnCheck == true) {
+              global.globalMapMarker[i].markerData.deviceReturnCheck == true &&
+              global.globalMapMarker[i].markerData.backColor == Colors.red) {
             global.globalMapMarker[i].markerData.backColor = Colors.green;
-            global.globalMapMarker[i].markerData.timer!.cancel();
+            global.globalMapMarker[i].markerData.timer = null;
             startTimer(i);
           }
         }
       });
+    });
+    location.getLocation().then((p) {
+      myCords = LatLng(p.latitude!, p.longitude!);
     });
   }
 
@@ -193,7 +192,10 @@ class _mapPage extends State<mapPage>
 
   void findMyPosition() {
     setState(() {
+      location.getLocation().then((p) {
+        myCords = LatLng(p.latitude!, p.longitude!);
       mapController.moveAndRotate(myCords!, 17, 0.0);
+      });
     });
   }
 

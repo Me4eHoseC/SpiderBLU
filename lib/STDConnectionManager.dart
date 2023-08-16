@@ -36,7 +36,7 @@ class STDConnectionManager {
       }
     });
 
-    timer = Timer(const Duration(seconds: 14), () {
+    timer = Timer(const Duration(seconds: 20), () {
       isDiscovering = false;
       setStateOnDone();
     });

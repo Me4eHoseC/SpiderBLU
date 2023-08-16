@@ -9,6 +9,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
 import 'package:projects/NetPackagesDataTypes.dart';
 import 'package:projects/RoutesManager.dart';
+import 'package:projects/main.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 import 'AllEnum.dart';
@@ -99,10 +100,6 @@ class mapPage extends StatefulWidget {
     _page = _mapPage();
     return _page;
   }
-
-  void fuck() {
-    _page.displayPhoto();
-  }
 }
 
 class _mapPage extends State<mapPage>
@@ -122,7 +119,7 @@ class _mapPage extends State<mapPage>
       markerIDDeletedList = List<int>.empty(growable: true),
       alarmList = List<int>.empty(growable: true);
   Widget bottomBarWidget = Container(height: 0);
-  
+
   Widget? photoWindow;
 
   bool flagSenderDevice = false, flagAddMarkerCheck = false;
@@ -133,7 +130,12 @@ class _mapPage extends State<mapPage>
   void initState() {
     chooseDeviceType = global.deviceTypeList[0];
     super.initState();
-    timer = Timer.periodic(const Duration(seconds: 1), (_) {
+    Timer.periodic(Duration(seconds: 2), (_) {
+      location.getLocation().then((p) {
+        myCords = LatLng(p.latitude!, p.longitude!);
+      });
+    });
+    timer = Timer.periodic(Duration.zero, (_) {
       setState(() {
         if (global.deviceIDChanged != -1) {
           global.selectedDeviceID;
@@ -143,10 +145,12 @@ class _mapPage extends State<mapPage>
           global.deviceIDChanged = -1;
         }
         for (int i = 0; i < global.globalMapMarker.length; i++) {
-          if (global.globalMapMarker[i].markerData.deviceAlarm) {
+          if (global.globalMapMarker[i].markerData.deviceAlarm &&
+              global.globalMapMarker[i].markerData.backColor != Colors.red) {
             global.globalMapMarker[i].markerData.backColor = Colors.red;
             global.globalMapMarker[i].markerData.deviceAvailable = true;
             global.globalMapMarker[i].markerData.timer!.cancel();
+            startTimer(i);
           }
           if (global.globalMapMarker[i].markerData.deviceAvailable &&
               global.globalMapMarker[i].markerData.deviceAlarm == false &&
@@ -163,9 +167,6 @@ class _mapPage extends State<mapPage>
             startTimer(i);
           }
         }
-        location.getLocation().then((p) {
-          myCords = LatLng(p.latitude!, p.longitude!);
-        });
       });
     });
   }
@@ -174,7 +175,8 @@ class _mapPage extends State<mapPage>
     setState(() {
       global.globalMapMarker[id].markerData.deviceReturnCheck = false;
       global.globalMapMarker[id].markerData.timer =
-          Timer(Duration(seconds: 10), () {
+          Timer(Duration(seconds: 50), () {
+        global.globalMapMarker[id].markerData.deviceAlarm = false;
         global.globalMapMarker[id].markerData.backColor = Colors.blue;
         global.globalMapMarker[id].markerData.deviceAvailable = false;
         global.globalMapMarker[id].markerData.deviceReturnCheck = false;
@@ -197,7 +199,6 @@ class _mapPage extends State<mapPage>
 
   void findMarkerPosition() {
     setState(() {
-
       print(global.selectedDeviceID);
       if (global.selectedDeviceID > -1) {
         mapController.moveAndRotate(
@@ -241,7 +242,8 @@ class _mapPage extends State<mapPage>
     var photoComp = PhotoImageCompression.HIGH;
     //var imageSize = PhotoImageSize.IMAGE_160X120;
 
-    global.fileManager.setCameraImageProperty(deviceId, photoImageSize, photoComp);
+    global.fileManager
+        .setCameraImageProperty(deviceId, photoImageSize, photoComp);
 
     var cc = PhotoRequestPackage();
     cc.setType(PackageType.GET_NEW_PHOTO);
@@ -251,34 +253,6 @@ class _mapPage extends State<mapPage>
     cc.setSender(RoutesManager.getLaptopAddress());
 
     var tid = global.postManager.sendPackage(cc);
-  }
-
-  void displayPhoto() {
-    setState(() {
-      if (photoWindow != null) {
-        Navigator.pop(context);
-        photoWindow = null;
-
-        MemoryImage(global.photoTest.data()).evict();
-      }
-
-      photoWindow = AlertDialog(
-          content: Image.memory(global.photoTest.data()),
-          actions: [
-            TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  photoWindow = null;
-                },
-                child: const Text('Подтвердить')),
-          ]);
-
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return photoWindow!;
-          });
-    });
   }
 
   void deleteMapMarker(int markerId, LatLng cord) {
@@ -668,6 +642,14 @@ class _mapPage extends State<mapPage>
                     changeBottomBarWidget(-1, null, null, null, null),
                     global.globalMapMarker[markerId].markerData.deviceAlarm =
                         false,
+                    global.globalMapMarker[markerId].markerData
+                        .deviceReturnCheck = true,
+                    print(global
+                            .globalMapMarker[markerId].markerData.deviceAlarm
+                            .toString() +
+                        ' ' +
+                        global.globalMapMarker[markerId].markerData.deviceId
+                            .toString()),
                   },
                   icon: const Icon(Icons.power_settings_new),
                 ),
@@ -684,20 +666,25 @@ class _mapPage extends State<mapPage>
               children: [
                 IconButton(
                   onPressed: () => {
-                    getPhoto(PhotoImageSize.IMAGE_160X120, global.globalMapMarker[markerId].markerData.deviceId!)
+                    getPhoto(PhotoImageSize.IMAGE_160X120,
+                        global.globalMapMarker[markerId].markerData.deviceId!),
+                    global.globalKey.currentState?.changePage(3),
                   },
                   icon: const Icon(Icons.photo_size_select_small),
                 ),
                 IconButton(
                   onPressed: () => {
-                    getPhoto(PhotoImageSize.IMAGE_320X240, global.globalMapMarker[markerId].markerData.deviceId!),
+                    getPhoto(PhotoImageSize.IMAGE_320X240,
+                        global.globalMapMarker[markerId].markerData.deviceId!),
+                    global.globalKey.currentState?.changePage(3),
                   },
                   icon: const Icon(Icons.photo_size_select_large),
                 ),
                 IconButton(
                   onPressed: () => {
-                    getPhoto(PhotoImageSize.IMAGE_640X480, global.globalMapMarker[markerId].markerData.deviceId!),
-
+                    getPhoto(PhotoImageSize.IMAGE_640X480,
+                        global.globalMapMarker[markerId].markerData.deviceId!),
+                    global.globalKey.currentState?.changePage(3),
                   },
                   icon: const Icon(Icons.photo_size_select_actual),
                 ),

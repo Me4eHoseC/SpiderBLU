@@ -14,6 +14,7 @@ import 'package:projects/STDConnectionManager.dart';
 
 import 'FileManager.dart';
 import 'ImagePage.dart';
+import 'main.dart';
 
 
 const String deviceName = 'HC-05-DMRS1';
@@ -28,7 +29,7 @@ Widget list = Container();
 final BluetoothPage bluetoothPage = BluetoothPage();
 final mapPage mapClass = mapPage();
 final TestPage testPage = TestPage();
-ImagePage imagePage = ImagePage();
+final ImagePage imagePage = ImagePage();
 
 final List<StatefulWidget> pages = [
   bluetoothPage,
@@ -64,4 +65,4 @@ List<int> globalActiveDevices = List<int>.empty(growable: true),
 List<MapMarker> globalMapMarker = List<MapMarker>.empty(growable: true);
 List<int> retransmissionRequests = List<int>.empty(growable: true);
 List<String> deviceTypeList = ["СППУ", "РТ", "КСД", "КФУ"];
-var photoTest = Uint8Vector(0);
+GlobalKey<HomePageState> globalKey = GlobalKey<HomePageState>();

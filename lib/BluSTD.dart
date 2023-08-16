@@ -36,7 +36,7 @@ class BluSTD extends ISTD {
         .catchError((err) {
           _connection = null;
           Timer.run(onDisconnected);
-          return false;
+          //return false;
     });
   }
 

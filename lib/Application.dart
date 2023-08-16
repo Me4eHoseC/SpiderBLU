@@ -85,25 +85,26 @@ class Application {
   }
 
   static void fileDownloadStarted(int sender){
-    global.photoTest.clear();
+    global.imagePage.clearImage();
   }
 
   static void filePartReceived(FilePartPackage filePartPackage) {
-
     var fp = filePartPackage;
     if (fp.getType() == PackageType.PHOTO) {
-      if (global.photoTest.isEmpty) {
-        global.photoTest = Uint8Vector(fp.getFileSize());
+      if (global.imagePage.isImageEmpty) {
+        global.imagePage.setImageSize(fp.getFileSize());
       }
 
-      global.photoTest.add(fp.getPartData());
+      global.imagePage.addImagePart(fp.getPartData());
 
-      global.mapClass.fuck();
+      //global.mapClass.fuck();
+      global.imagePage.redrawImage();
     }
   }
 
   static void fileDownloaded(int sender) {
-    global.mapClass.fuck();
+    //global.mapClass.fuck();
+    global.imagePage.redrawImage();
   }
 
   static void requestReceived(BasePackage basePackage) {

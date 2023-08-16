@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.brown,
       ),
-      home: const MyHomePage(title: 'БРСК "Паук"'),
+      home: MyHomePage(key: global.globalKey,title: 'БРСК "Паук"'),
     );
   }
 }
@@ -34,7 +34,6 @@ class MyHomePage extends StatefulWidget {
 
 class HomePageState extends State<MyHomePage>
     with TickerProviderStateMixin {
-  @override
   bool get wantKeepAlive => true;
   Timer? timer;
   String statusBarString = '';
@@ -62,9 +61,11 @@ class HomePageState extends State<MyHomePage>
   }
 
   void changePage(int selectedPage) {
-    setState(() {
-      selectedBodyWidget = selectedPage;
-    });
+    if (selectedPage != 1){
+      global.flagMapPage = false;
+    }
+    selectedBodyWidget = selectedPage;
+    setState(() {});
   }
 
   void changeStatusBarString() {

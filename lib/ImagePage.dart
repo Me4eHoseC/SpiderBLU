@@ -1,53 +1,54 @@
-import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:projects/core/Uint8Vector.dart';
 
-import 'global.dart' as global;
 
 class ImagePage extends StatefulWidget {
-  final bool start;
-  ImagePage({super.key, this.start = true});
+  ImagePage({super.key});
+
+  late _ImagePage _page;
+
+  var photoTest = Uint8Vector(0);
+
+  bool get isImageEmpty => photoTest.isEmpty;
+
+  void setImageSize(int fileSize){
+    photoTest = Uint8Vector(fileSize);
+  }
+
+  void addImagePart(Uint8List filePart){
+    photoTest.add(filePart);
+  }
+
+  void clearImage(){
+    photoTest.clear();
+  }
+
+  void redrawImage() {
+    _page.redrawImage();
+  }
 
   @override
-  _ImagePage createState() => new _ImagePage();
+  State createState() {
+    _page = _ImagePage();
+    return _page;
+  }
 }
 
-class _ImagePage extends State<ImagePage>
-    with TickerProviderStateMixin {
+class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
   bool get wantKeepAlive => true;
-  var photo = Image.memory(global.photoTest.data());
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    checkPhoto();
+  void redrawImage() {
+    MemoryImage(widget.photoTest.data()).evict();
+    setState(() {});
   }
 
-  void checkPhoto(){
-    setState(() {
-      Timer.periodic(Duration(seconds: 1), (_) {
-        photo = Image.memory(global.photoTest.data());
-        global.imagePage = ImagePage();
-
-
-      });
-    });
-  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          photo,
-          Image(
-            image: photo.image,
-            loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress){
-              return Center(child: photo);
-            },
-          ),
-        ],
-      ),
-    );
+        body: Center(
+            child: !widget.isImageEmpty ? Image.memory(widget.photoTest.data(), key: UniqueKey())
+                                        : Image.asset("assets/320x240.jpeg")));
   }
 }

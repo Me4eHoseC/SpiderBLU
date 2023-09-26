@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:projects/core/Uint8Vector.dart';
 
+import 'global.dart' as global;
 
 class ImagePage extends StatefulWidget {
   ImagePage({super.key});
@@ -13,15 +14,15 @@ class ImagePage extends StatefulWidget {
 
   bool get isImageEmpty => photoTest.isEmpty;
 
-  void setImageSize(int fileSize){
+  void setImageSize(int fileSize) {
     photoTest = Uint8Vector(fileSize);
   }
 
-  void addImagePart(Uint8List filePart){
+  void addImagePart(Uint8List filePart) {
     photoTest.add(filePart);
   }
 
-  void clearImage(){
+  void clearImage() {
     photoTest.clear();
   }
 
@@ -48,7 +49,15 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
         body: Center(
-            child: !widget.isImageEmpty ? Image.memory(widget.photoTest.data(), key: UniqueKey())
-                                        : Image.asset("assets/320x240.jpeg")));
+            child: Column(
+      children: [
+        InteractiveViewer(
+          maxScale: 5,
+          child: !widget.isImageEmpty
+              ? Image.memory(widget.photoTest.data(), key: UniqueKey())
+              : Image.asset("assets/320x240.jpeg"),
+        ),
+      ],
+    )));
   }
 }

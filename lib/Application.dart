@@ -56,18 +56,11 @@ class Application {
       global.postManager.responseReceived(basePackage);
     }
 
-    /*var pages = [global.bluetoothPage, */ /**/ /*];
-
-    for (TIDManagement page in pages) {
-      if (page.isMyTransaction(tid)) {
-        page.dataReceived(tid, basePackage);
-        break;
-      }
-    }*/
-
     if (global.testPage.isMyTransaction(tid)) {
       global.testPage.dataReceived(tid, basePackage);
     }
+
+
 
     if (tid == -1) {
       global.testPage.alarmReceived(basePackage);

@@ -17,7 +17,7 @@ class STDConnectionManager {
     isDiscovering = true;
 
     FlutterBluetoothSerial.instance.startDiscovery().listen((r) {
-      if (r.device.name == _stdName) {
+      if (r.device.name == _stdName && global.std == null) {
         _stdAddress = r.device.address.toString();
 
         var std = BluSTD(_stdId, (Uint8List? data) {

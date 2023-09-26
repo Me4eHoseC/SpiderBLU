@@ -7,7 +7,7 @@ import 'package:projects/BluetoothPage.dart';
 import 'package:projects/PackagesParser.dart';
 import 'package:projects/PostManager.dart';
 import 'package:projects/TestPage.dart';
-import 'package:projects/core/Uint8Vector.dart';
+import 'package:projects/core/Device.dart';
 import 'package:projects/mapPage.dart';
 import 'package:projects/ISTD.dart';
 import 'package:projects/STDConnectionManager.dart';
@@ -31,11 +31,13 @@ final mapPage mapClass = mapPage();
 final TestPage testPage = TestPage();
 final ImagePage imagePage = ImagePage();
 
+//final AlarmCounterPage alarmCounterPage = AlarmCounterPage();
+
 final List<StatefulWidget> pages = [
   bluetoothPage,
   mapClass,
   testPage,
-  imagePage
+  imagePage,
 ];
 
 PackagesParser packagesParser = PackagesParser();
@@ -54,15 +56,20 @@ class Pair<T1, T2> {
   Pair(this.first, this.second);
 }
 
-List<String> globalDevicesListFromMap = [];
+//List<String> globalDevicesListFromMap = [];
 
 bool flagConnect = false, dataComeFlag = false, flagMapPage = false,
-    flagCheckSPPU = false, allowedHopsCame = false, flagDeleteMarker = false;
+    flagCheckSPPU = false, allowedHopsCame = false, unallowedHopsCame = false,
+    flagDeleteMarker = false;
 
 List<int> globalActiveDevices = List<int>.empty(growable: true),
     globalAlarmDevices = List<int>.empty(growable: true);
 
+List<Device> globalDeviceList = List<Device>.empty(growable: true);
 List<MapMarker> globalMapMarker = List<MapMarker>.empty(growable: true);
 List<int> retransmissionRequests = List<int>.empty(growable: true);
-List<String> deviceTypeList = ["СППУ", "РТ", "КСД", "КФУ"];
+List<String> deviceTypeList = ["STD", "CSD", "CPD", "RT"];
+List<String> photoCompression = ["Мин", "Низк", "Средн", "Выс", "Макс"];
 GlobalKey<HomePageState> globalKey = GlobalKey<HomePageState>();
+
+int testCounter = 0;

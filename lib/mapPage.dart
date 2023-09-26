@@ -9,6 +9,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
 import 'package:projects/NetPackagesDataTypes.dart';
 import 'package:projects/RoutesManager.dart';
+import 'package:projects/core/Device.dart';
 import 'package:projects/main.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
@@ -25,12 +26,14 @@ class MarkerData {
       deviceRssi,
       deviceMaskExtDevice,
       deviceMaskPeriphery,
-      deviceExternalPower;
+      deviceExternalPower,
+      deviceHumanSensitivity,
+      deviceTransportSensitivity;
   LatLng? deviceCord;
   DateTime? deviceTime, deviceLastAlarmTime;
   AlarmType? deviceLastAlarmType;
   AlarmReason? deviceLastAlarmReason;
-  double? deviceVoltage, deviceTemperature, deviceBattery;
+  double? deviceVoltage, deviceTemperature, deviceBattery, deviceSignalSwing;
   List<int>? deviceAllowedHops, deviceRetransmissionToAll, deviceUnallowedHops;
   String? deviceType;
   bool extDevice1 = false,
@@ -44,6 +47,8 @@ class MarkerData {
       deviceExtPhototrapState = false,
       deviceAvailable = false,
       deviceReturnCheck = false,
+      humanAlarm = false,
+      transportAlarm = false,
       deviceAlarm = false;
   Color backColor = Colors.blue;
   Timer? timer;
@@ -60,9 +65,12 @@ class MapMarker extends Marker {
   int markerId = -1;
   MarkerData markerData;
   Color colorBack = Colors.blue;
+  String deviceId;
+  String deviceType;
+  Timer? timer;
 
   MapMarker(this.parent, this.markerId, this.markerData, LatLng cord,
-      String deviceId, String deviceType, this.colorBack)
+      this.deviceId, this.deviceType, this.timer, this.colorBack)
       : super(
             rotate: true,
             height: 50,
@@ -77,8 +85,10 @@ class MapMarker extends Marker {
                     parent?.selectMapMarker(
                         markerId, cord, deviceId, deviceType)
                   },
-                  onLongPress: () =>
-                      {parent?.askDeleteMapMarker(markerId, cord)},
+                  onLongPress: () => {
+                    parent?.askDeleteMapMarker(
+                        markerId, cord, int.parse(deviceId))
+                  },
                   child: Text(
                     '$deviceId\n$deviceType',
                     style: const TextStyle(
@@ -90,10 +100,135 @@ class MapMarker extends Marker {
 }
 
 class mapPage extends StatefulWidget {
-  // @override
-  // createState() => _mapPage();
+  mapPage({super.key});
 
   late _mapPage _page;
+  int markerOnMapIndex = 0;
+
+  void CreateMapMarker(int id, String type, MarkerData data, int? posInList) {
+    var value = Device();
+    for(int i = 0; i < DeviceType.values.length; i++){
+      if (DeviceType.values[i].name == type){
+        value.type = DeviceType.values[i];
+        break;
+      }
+    }
+    value.id = id;
+
+    if (type == DeviceType.STD) {
+      global.flagCheckSPPU = true;
+    }
+
+    if (posInList == null) {
+      var localMarker = MapMarker(
+          _page,
+          markerOnMapIndex,
+          data,
+          data.deviceCord!,
+          data.deviceId.toString(),
+          data.deviceType!,
+          null,
+          data.backColor);
+
+      global.globalDeviceList.add(value);
+      global.globalMapMarker.add(localMarker);
+      markerOnMapIndex++;
+    }else{
+      var localMarker = MapMarker(
+          _page,
+          posInList,
+          data,
+          data.deviceCord!,
+          data.deviceId.toString(),
+          data.deviceType!,
+          null,
+          data.backColor);
+
+      global.globalDeviceList.insert(posInList, value);
+      global.globalMapMarker.insert(posInList, localMarker);
+    }
+
+    global.testPage.addDeviceInDropdown(value.id, value.type.name);
+  }
+
+  void ChangeMapMarker(int oldDevId, int newDevID, int newDevTypePos,
+      Device device, int devPosInList) {
+    if (int.parse(global.globalMapMarker[devPosInList].deviceId) == oldDevId) {
+      DeleteMapMarker(oldDevId);
+      _page.markerData[devPosInList].deviceId = newDevID;
+      _page.markerData[devPosInList].deviceType = DeviceType.values[newDevTypePos].name;
+      CreateMapMarker(newDevID, DeviceType.values[newDevTypePos].name, _page.markerData[devPosInList], devPosInList);
+    }
+  }
+
+  void DeleteMapMarker(int id) {
+    for (int i = 0; i < global.globalDeviceList.length; i++) {
+      if (global.globalDeviceList[i].id == id) {
+        if (global.globalDeviceList[i].type == DeviceType.STD) {
+          global.flagCheckSPPU = false;
+        }
+        if (i == global.selectedDeviceID){
+          global.mainBottomSelectedDev = Text(
+            '',
+            textScaleFactor: 1.4,
+          );
+        }
+
+        if (i < global.globalDeviceList.length-1) {
+          global.selectedDeviceID = i;
+        } else {
+          global.selectedDeviceID -= 1;
+        }
+
+        global.globalDeviceList.removeAt(i);
+        global.testPage.deleteDeviceInDropdown(id);
+        global.globalMapMarker.removeAt(i);
+        break;
+      }
+    }
+  }
+
+  void MapMarkerAlarm(int devId) {
+    for (int i = 0; i < global.globalMapMarker.length; i++) {
+      if (int.parse(global.globalMapMarker[i].deviceId) == devId) {
+        global.globalMapMarker[i].markerData.deviceAlarm = true;
+        global.globalMapMarker[i].markerData.deviceAvailable = true;
+        MapMarkerActivate(devId);
+        global.globalMapMarker[i].markerData.backColor = Colors.red;
+        break;
+      }
+    }
+  }
+
+  void MapMarkerActivate(int devId) {
+    for (int i = 0; i < global.globalMapMarker.length; i++) {
+      if (int.parse(global.globalMapMarker[i].deviceId) == devId) {
+        global.globalMapMarker[i].markerData.backColor = Colors.green;
+        print(global.globalMapMarker[i].colorBack);
+        if (global.globalMapMarker[i].timer != null) {
+          global.globalMapMarker[i].timer!.cancel();
+        }
+        global.globalMapMarker[i].markerData.deviceAvailable = true;
+        global.globalMapMarker[i].timer =
+            Timer(const Duration(minutes: 1), () => MapMarkerDeactivate(devId));
+        break;
+      }
+    }
+  }
+
+  void MapMarkerDeactivate(int devId) {
+    for (int i = 0; i < global.globalMapMarker.length; i++) {
+      if (int.parse(global.globalMapMarker[i].deviceId) == devId) {
+        if (global.globalMapMarker[i].markerData.deviceAlarm != true) {
+          global.globalMapMarker[i].markerData.backColor = Colors.blue;
+          global.globalMapMarker[i].markerData.deviceAvailable = false;
+        } else {
+          global.globalMapMarker[i].markerData.deviceAvailable = false;
+        }
+        break;
+      }
+    }
+  }
 
   @override
   State createState() {
@@ -120,17 +255,21 @@ class _mapPage extends State<mapPage>
   Widget bottomBarWidget = Container(height: 0);
   Timer? timer;
   Widget? photoWindow;
+  List<Example> testListExample = List<Example>.empty(growable: true);
 
   bool flagSenderDevice = false, flagAddMarkerCheck = false;
   MapMarker? bufferMarker;
   String? chooseDeviceType;
+  Marker? myLocalPosition;
+
 
   @override
   void initState() {
-    chooseDeviceType = global.deviceTypeList[0];
+    createTestExample();
+    chooseDeviceType = DeviceType.STD.name;
     super.initState();
 
-      timer = Timer.periodic(Duration.zero, (timer) {
+    timer = Timer.periodic(Duration.zero, (timer) {
       setState(() {
         if (global.deviceIDChanged != -1) {
           global.selectedDeviceID;
@@ -138,50 +277,20 @@ class _mapPage extends State<mapPage>
               global.globalMapMarker[global.deviceIDChanged].markerData);
           global.deviceIDChanged = -1;
         }
-        for (int i = 0; i < global.globalMapMarker.length; i++) {
-          if (global.globalMapMarker[i].markerData.deviceAlarm &&
-              global.globalMapMarker[i].markerData.backColor != Colors.red) {
-            global.globalMapMarker[i].markerData.backColor = Colors.red;
-            global.globalMapMarker[i].markerData.deviceAvailable = true;
-            global.globalMapMarker[i].markerData.timer = null;
-            startTimer(i);
-          }
-          if (global.globalMapMarker[i].markerData.deviceAvailable &&
-              global.globalMapMarker[i].markerData.deviceAlarm == false &&
-              global.globalMapMarker[i].markerData.timer == null &&
-              global.globalMapMarker[i].markerData.backColor == Colors.blue) {
-            global.globalMapMarker[i].markerData.backColor = Colors.green;
-            startTimer(i);
-          }
-          if (global.globalMapMarker[i].markerData.deviceAvailable &&
-              global.globalMapMarker[i].markerData.deviceAlarm == false &&
-              global.globalMapMarker[i].markerData.timer != null &&
-              global.globalMapMarker[i].markerData.deviceReturnCheck == true &&
-              global.globalMapMarker[i].markerData.backColor == Colors.red) {
-            global.globalMapMarker[i].markerData.backColor = Colors.green;
-            global.globalMapMarker[i].markerData.timer = null;
-            startTimer(i);
-          }
-        }
       });
     });
-    location.getLocation().then((p) {
-      myCords = LatLng(p.latitude!, p.longitude!);
+    Timer.periodic(const Duration(seconds: 5), (timer) {
+      location.getLocation().then((p) {
+        myCords = LatLng(p.latitude!, p.longitude!);
+        myLocalPosition = Marker(point: myCords!, builder: (ctx) => const Icon(Icons.navigation));
+      });
     });
   }
 
-  void startTimer(int id) {
-    setState(() {
-      global.globalMapMarker[id].markerData.deviceReturnCheck = false;
-      global.globalMapMarker[id].markerData.timer =
-          Timer(Duration(seconds: 50), () {
-        global.globalMapMarker[id].markerData.deviceAlarm = false;
-        global.globalMapMarker[id].markerData.backColor = Colors.blue;
-        global.globalMapMarker[id].markerData.deviceAvailable = false;
-        global.globalMapMarker[id].markerData.deviceReturnCheck = false;
-        global.globalMapMarker[id].markerData.timer = null;
-      });
-    });
+  void createTestExample() {
+    for (int i = 0; i < 10000; i++) {
+      testListExample.add(Example(i, i));
+    }
   }
 
   void changeMapRotation() {
@@ -194,7 +303,7 @@ class _mapPage extends State<mapPage>
     setState(() {
       location.getLocation().then((p) {
         myCords = LatLng(p.latitude!, p.longitude!);
-      mapController.moveAndRotate(myCords!, 17, 0.0);
+        mapController.moveAndRotate(myCords!, 17, 0.0);
       });
     });
   }
@@ -214,7 +323,7 @@ class _mapPage extends State<mapPage>
     changeBottomBarWidget(1, markerId, cord, string, deviceType);
   }
 
-  void askDeleteMapMarker(int markerId, LatLng cord) {
+  void askDeleteMapMarker(int markerId, LatLng cord, int deviceId) {
     setState(() {
       showDialog(
         context: context,
@@ -224,7 +333,7 @@ class _mapPage extends State<mapPage>
             actions: [
               TextButton(
                   onPressed: () {
-                    deleteMapMarker(markerId, cord);
+                    deleteMapMarker(markerId, cord, deviceId);
                     Navigator.pop(context);
                   },
                   child: const Text('Подтвердить')),
@@ -257,7 +366,7 @@ class _mapPage extends State<mapPage>
     var tid = global.postManager.sendPackage(cc);
   }
 
-  void deleteMapMarker(int markerId, LatLng cord) {
+  void deleteMapMarker(int markerId, LatLng cord, int deviceId) {
     int index = 0;
 
     for (int i = 0; i < global.globalMapMarker.length; i++) {
@@ -268,18 +377,7 @@ class _mapPage extends State<mapPage>
       }
     }
 
-    if (index + 1 == global.globalMapMarker.length) {
-      global.selectedDevice =
-          global.globalMapMarker[index - 1].markerData.deviceId.toString();
-      print('selected');
-    }
-
-    if (global.selectedDeviceID > markerId) {
-      global.selectedDeviceID -= 1;
-    }
-
-    global.globalDevicesListFromMap.removeAt(index);
-    global.globalMapMarker.removeAt(index);
+    widget.DeleteMapMarker(deviceId);
     print('Marker deleted');
   }
 
@@ -296,10 +394,10 @@ class _mapPage extends State<mapPage>
     });
   }
 
-  void changeMapMarker(int id, MarkerData _markerData) {
+  void changeMapMarker(int id, MarkerData markerData) {
     setState(() {
       global.mainBottomSelectedDev = Text(
-        '${_markerData.deviceType!} #${_markerData.deviceId}',
+        '${markerData.deviceType!} #${markerData.deviceId}',
         textScaleFactor: 1.4,
       );
       global.globalMapMarker.removeAt(id);
@@ -307,10 +405,11 @@ class _mapPage extends State<mapPage>
       var localMarker = MapMarker(
           this,
           id,
-          _markerData,
-          _markerData.deviceCord!,
-          _markerData.deviceId.toString(),
-          _markerData.deviceType!,
+          markerData,
+          markerData.deviceCord!,
+          markerData.deviceId.toString(),
+          markerData.deviceType!,
+          null,
           colorBack);
       global.globalMapMarker.insert(id, localMarker);
     });
@@ -318,35 +417,16 @@ class _mapPage extends State<mapPage>
 
   void createNewMapMarker(int id, String deviceType) {
     setState(() {
+
       if (markerIDDeletedList.isEmpty) {
         markerIndex++;
         createMarkerData(id, deviceType);
-        Color colorBack = Colors.blue;
-        var localMarker = MapMarker(
-            this,
-            markerIndex,
-            markerData[markerIndex],
-            markerData[markerIndex].deviceCord!,
-            markerData[markerIndex].deviceId.toString(),
-            markerData[markerIndex].deviceType!,
-            colorBack);
-        global.globalMapMarker.add(localMarker);
-        global.globalDevicesListFromMap.add(id.toString());
+        widget.CreateMapMarker(id, deviceType, markerData[markerIndex], null);
         changeBottomBarWidget(-1, null, null, null, null);
       } else {
         changeMarkerData(id, deviceType, markerIDDeletedList.first);
-        Color colorBack = Colors.blue;
-        var localMarker = MapMarker(
-            this,
-            markerIDDeletedList.first,
-            markerData[markerIDDeletedList.first],
-            markerData[markerIDDeletedList.first].deviceCord!,
-            markerData[markerIDDeletedList.first].deviceId.toString(),
-            markerData[markerIDDeletedList.first].deviceType!,
-            colorBack);
+        widget.CreateMapMarker(id, deviceType, markerData[markerIDDeletedList.first], markerIDDeletedList.first);
         markerIDDeletedList.removeAt(0);
-        global.globalMapMarker.add(localMarker);
-        global.globalDevicesListFromMap.add(id.toString());
         changeBottomBarWidget(-1, null, null, null, null);
       }
     });
@@ -393,14 +473,18 @@ class _mapPage extends State<mapPage>
       bool flag = false;
       flagAddMarkerCheck = false;
       if (markerIdForCheck > 0 && markerIdForCheck < 256) {
-        if (global.globalMapMarker.isEmpty) {
-          createNewMapMarker(markerIdForCheck, chooseDeviceType!);
-          global.mainBottomSelectedDev = Text(
-            '${chooseDeviceType!} #$markerIdForCheck',
-            textScaleFactor: 1.4,
-          );
-          global.selectedDeviceID = 0;
+        if (global.globalMapMarker.isEmpty || !global.flagCheckSPPU) {
+          if (chooseDeviceType != global.deviceTypeList[0]) {
+            showError("Нанесите СППУ на карту!!!");
+          }
+
           if (chooseDeviceType == global.deviceTypeList[0]) {
+            createNewMapMarker(markerIdForCheck, chooseDeviceType!);
+            global.mainBottomSelectedDev = Text(
+              '${chooseDeviceType!} #$markerIdForCheck',
+              textScaleFactor: 1.4,
+            );
+            global.selectedDeviceID = 0;
             global.flagCheckSPPU = true;
           }
         } else {
@@ -499,8 +583,18 @@ class _mapPage extends State<mapPage>
         );
       }
       if (counter == 1) {
+        global.testPage.selectDeviceInDropdown(int.parse(string!));
         global.selectedDevice = string!;
-        global.selectedDeviceID = markerId!;
+        if (markerIDDeletedList.isNotEmpty){
+          for(int i = 0; i < global.globalMapMarker.length; i++){
+            if (global.globalDeviceList[i].id.toString() == global.selectedDevice){
+              global.selectedDeviceID = i;
+              break;
+            }
+          }
+        }else{
+          global.selectedDeviceID = markerId!;
+        }
         global.mainBottomSelectedDev = Text(
           '${deviceType!} #$string',
           textScaleFactor: 1.4,
@@ -510,9 +604,9 @@ class _mapPage extends State<mapPage>
             height: 70,
             child: Row(
               children: [
-                Text(global.globalMapMarker[markerId].markerData.deviceTime
+                Text(global.globalMapMarker[markerId!].markerData.deviceTime
                     .toString()),
-                Text(global.globalMapMarker[markerId].markerData.deviceType
+                Text(global.globalMapMarker[markerId!].markerData.deviceType
                     .toString()),
                 IconButton(
                     onPressed: () => {
@@ -525,8 +619,8 @@ class _mapPage extends State<mapPage>
             ),
           );
         }
-        if (deviceType == global.deviceTypeList[1]) {}
-        if (deviceType == global.deviceTypeList[2]) {
+        if (deviceType == global.deviceTypeList[3]) {}
+        if (deviceType == global.deviceTypeList[1]) {
           bottomBarWidget = SizedBox(
             height: 70,
             child: Row(
@@ -548,12 +642,7 @@ class _mapPage extends State<mapPage>
                                 primaryXAxis: CategoryAxis(),
                                 series: <LineSeries<Example, String>>[
                                   LineSeries<Example, String>(
-                                    dataSource: <Example>[
-                                      Example(1, 80),
-                                      Example(2, -100),
-                                      Example(3, 200),
-                                      Example(4, 100)
-                                    ],
+                                    dataSource: testListExample,
                                     xValueMapper: (Example ex, _) =>
                                         ex.time.toString(),
                                     yValueMapper: (Example ex, _) => ex.seisma,
@@ -642,7 +731,7 @@ class _mapPage extends State<mapPage>
                 IconButton(
                   onPressed: () => {
                     changeBottomBarWidget(-1, null, null, null, null),
-                    global.globalMapMarker[markerId].markerData.deviceAlarm =
+                    global.globalMapMarker[markerId!].markerData.deviceAlarm =
                         false,
                     global.globalMapMarker[markerId].markerData
                         .deviceReturnCheck = true,
@@ -659,7 +748,7 @@ class _mapPage extends State<mapPage>
             ),
           );
         }
-        if (deviceType == global.deviceTypeList[3]) {
+        if (deviceType == global.deviceTypeList[2]) {
           bottomBarWidget = SizedBox(
             height: 70,
             child: Row(
@@ -669,7 +758,7 @@ class _mapPage extends State<mapPage>
                 IconButton(
                   onPressed: () => {
                     getPhoto(PhotoImageSize.IMAGE_160X120,
-                        global.globalMapMarker[markerId].markerData.deviceId!),
+                        global.globalMapMarker[markerId!].markerData.deviceId!),
                     global.globalKey.currentState?.changePage(3),
                   },
                   icon: const Icon(Icons.photo_size_select_small),
@@ -677,7 +766,7 @@ class _mapPage extends State<mapPage>
                 IconButton(
                   onPressed: () => {
                     getPhoto(PhotoImageSize.IMAGE_320X240,
-                        global.globalMapMarker[markerId].markerData.deviceId!),
+                        global.globalMapMarker[markerId!].markerData.deviceId!),
                     global.globalKey.currentState?.changePage(3),
                   },
                   icon: const Icon(Icons.photo_size_select_large),
@@ -685,7 +774,7 @@ class _mapPage extends State<mapPage>
                 IconButton(
                   onPressed: () => {
                     getPhoto(PhotoImageSize.IMAGE_640X480,
-                        global.globalMapMarker[markerId].markerData.deviceId!),
+                        global.globalMapMarker[markerId!].markerData.deviceId!),
                     global.globalKey.currentState?.changePage(3),
                   },
                   icon: const Icon(Icons.photo_size_select_actual),
@@ -713,7 +802,7 @@ class _mapPage extends State<mapPage>
                 IconButton(
                   onPressed: () => {
                     changeBottomBarWidget(-1, null, null, null, null),
-                    global.globalMapMarker[markerId].markerData.deviceAlarm =
+                    global.globalMapMarker[markerId!].markerData.deviceAlarm =
                         false,
                   },
                   icon: const Icon(Icons.power_settings_new),
@@ -747,6 +836,7 @@ class _mapPage extends State<mapPage>
               urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
               subdomains: ['a', 'b', 'c']),
           MarkerLayerOptions(markers: global.globalMapMarker),
+          MarkerLayerOptions(markers: [myLocalPosition!]),
         ],
       ),
       floatingActionButton: Builder(builder: (context) {

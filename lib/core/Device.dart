@@ -1,4 +1,4 @@
-import 'package:flutter/physics.dart';
+import 'package:projects/global.dart';
 
 import '../NetPackagesDataTypes.dart';
 import 'Marker.dart';
@@ -23,15 +23,16 @@ class Device extends Marker {
   }
 
   DeviceType type = DeviceType.CSD;
-  int timeS = 0;
+  DateTime timeS = DateTime(2000);
   int firmwareVersion = 0;
 
   double storedLatitude = 0;
   double storedLongitude = 0;
 
   int rssi = 0;
-  List<int> allowedHops = [];
-  List<int> unallowedHops = [];
+  List<int> allowedHops = [0];
+  List<int> unallowedHops = [0];
+  int modemFrequency = 0;
 
   int peripheryMask = 0;
   int stateMask = 0;
@@ -65,11 +66,11 @@ class Device extends Marker {
 
   // Seismic parameters
   int alarmReasonMask = 0;
-  int humanSensitivity = 0;
-  int transportSensitivity = 0;
+  int humanSensitivity = 25;
+  int transportSensitivity = 25;
   CriterionFilter criterionFilter = CriterionFilter.FILTER_1_FROM_3;
-  int snr = 0;
-  List<int> recognitionParameters = [];
+  int snr = 5;
+  List<int> recognitionParameters = [0,0];
 
   double signalSwing = 0;
 
@@ -79,19 +80,19 @@ class Device extends Marker {
   int wake_network_resend_time_ms = 0;
   int alarm_resend_time_ms = 0;
   int seismic_resend_time_ms = 0;
-  int transportSignalsTreshold = 0;
-  int photo_resend_time_ms = 0;
 
-  int transportIntervalsCount = 0;
+  int transportSignalsTreshold = 0; // одиночные транспорт
+  int photo_resend_time_ms = 0;
+  int transportIntervalsCount = 0; // серийные транспорт
   int alarm_tries_resend = 0;
   int seismic_tries_resend = 0;
-  int humanSignalsTreshold = 0;
-  int photo_tries_resend = 0;
 
+  int humanSignalsTreshold = 0; // одиночные человек
+  int photo_tries_resend = 0;
   int  periodic_send_telemetry_time_10s = 0;
   int  after_seismic_alarm_pause_s = 0;
   int  after_line_alarm_pause_s = 0;
-  int  humanIntervalsCount = 0;
+  int  humanIntervalsCount = 0; // серийные человек
 
   // Battery section
   int  battery_periodic_update_10min = 0;
@@ -104,12 +105,12 @@ class Device extends Marker {
   bool get isEEPROMInitialized => eepromInitialized;
 
   bool seriesHumanFilterState = false;
-  int seriesHumanFilterTreshold = 0;
+  int seriesHumanFilterTreshold = 1;
   DateTime lastHumanAlarmDateTime = DateTime.now();
   int currentSeriesHumanIteration = 0;
 
   bool seriesTransportFilterState = false;
-  int seriesTransportFilterTreshold = 0;
+  int seriesTransportFilterTreshold = 1;
   DateTime lastTransportAlarmDateTime = DateTime.now();
   int currentSeriesTransportIteration = 0;
 
@@ -117,6 +118,16 @@ class Device extends Marker {
   bool isFirstSeismicAlarmMuted = false;
 
   bool doPostAlarmPollFlag = false;
+
+  bool extDevice1 = false,
+      extDevice2 = false,
+      devicePhototrap = false,
+      deviceGeophone = false,
+      deviceExtDev1State = false,
+      deviceExtDev2State = false,
+      deviceExtPhototrapState = false,
+      humanAlarm = false,
+      transportAlarm = false;
 
 }
 

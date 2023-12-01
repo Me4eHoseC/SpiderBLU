@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: getMaterialColor(Colors.green[900]!),
       ),
-      home: MyHomePage(key: global.globalKey,title: 'БРСК "Паук"'),
+      home: MyHomePage(key: global.globalKey, title: 'БРСК "Паук"'),
     );
   }
 }
@@ -56,8 +56,7 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => HomePageState();
 }
 
-class HomePageState extends State<MyHomePage>
-    with TickerProviderStateMixin {
+class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   bool get wantKeepAlive => true;
   Timer? timer;
   String statusBarString = '';
@@ -66,6 +65,7 @@ class HomePageState extends State<MyHomePage>
 
   int selectedBodyWidget = 0;
 
+  @override
   void initState() {
     controller = FlutterGifController(vsync: this);
     repeatAnim();
@@ -80,12 +80,14 @@ class HomePageState extends State<MyHomePage>
     });
   }
 
-  void repeatAnim(){
-    controller.repeat(min:0, max: 50, period: Duration(seconds: 2));
+  void onKeyDown() {}
+
+  void repeatAnim() {
+    controller.repeat(min: 0, max: 50, period: Duration(seconds: 2));
   }
 
   void changePage(int selectedPage) {
-    if (selectedPage != 1){
+    if (selectedPage != 1) {
       global.flagMapPage = false;
     }
     selectedBodyWidget = selectedPage;
@@ -98,131 +100,156 @@ class HomePageState extends State<MyHomePage>
     });
   }
 
+  void alert() {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("ДАЙТЕ ДЕНЯХ"),
+            actions: [
+              Image.asset("assets/320x240.jpeg"),
+              Center(child: Text("ДАЙТЕ ДЕНЯХ, ПАМИРАЮ!!!!")),
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('ДАТЬ ДЕНЕГ'))
+            ],
+          );
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        toolbarHeight: 130,
-        leading: SizedBox(
-          height: 30,
-          width: 30,
-          child: GifImage(
-            image: const AssetImage("assets/gifs/spider.gif"),
-            controller: controller,
+    return WillPopScope(
+      onWillPop: () async {
+        //alert();
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          toolbarHeight: 130,
+          leading: SizedBox(
+            height: 30,
+            width: 30,
+            child: GifImage(
+              image: const AssetImage("packages/assets/gifs/spider.gif"),
+              controller: controller,
+            ),
+          ),
+          title: Column(
+            children: [
+              Row(
+                children: [
+                  SizedBox(
+                    height: 30,
+                    child: Text(
+                      statusBarString,
+                      textAlign: TextAlign.end,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 100, child: list),
+            ],
           ),
         ),
-        title: Column(
-          children: [
-            Row(
+        drawerEdgeDragWidth: 0,
+        drawer: Drawer(
+          width: 200,
+          child: ListView(
+            children: [
+              ListTile(
+                title: const Text('bluetooth page'),
+                onTap: () {
+                  global.flagMapPage = false;
+                  changePage(0);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('map page'),
+                onTap: () {
+                  global.flagMapPage = true;
+                  changePage(1);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('test page'),
+                onTap: () {
+                  global.flagMapPage = false;
+                  changePage(2);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('image page'),
+                onTap: () {
+                  global.flagMapPage = false;
+                  changePage(3);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('TEST'),
+                onTap: () {
+                  global.flagMapPage = false;
+                  changePage(4);
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        ),
+        body: IndexedStack(
+          index: selectedBodyWidget,
+          children: global.pages,
+        ),
+        bottomNavigationBar: BottomAppBar(
+          child: SizedBox(
+            height: 60,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(
-                  height: 30,
-                  child: Text(
-                    statusBarString,
-                    textAlign: TextAlign.end,
-                  ),
-                ),
+                Builder(builder: (context) {
+                  return FloatingActionButton(
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                    child: const Icon(
+                      Icons.menu,
+                      color: Colors.red,
+                    ),
+                  );
+                }),
+                global.mainBottomSelectedDev,
+                global.flagMapPage
+                    ? Builder(builder: (context) {
+                        return FloatingActionButton(
+                          onPressed: () => {
+                            changePage(2),
+                            global.flagMapPage = false,
+                          },
+                          child: const Icon(
+                            Icons.settings,
+                            color: Colors.red,
+                          ),
+                        );
+                      })
+                    : Builder(builder: (context) {
+                        return FloatingActionButton(
+                          onPressed: () => {
+                            changePage(1),
+                            global.flagMapPage = true,
+                          },
+                          child: const Icon(
+                            Icons.map,
+                            color: Colors.red,
+                          ),
+                        );
+                      }),
               ],
             ),
-            SizedBox(height: 100, child: list),
-          ],
-        ),
-      ),
-      drawerEdgeDragWidth: 0,
-      drawer: Drawer(
-        width: 200,
-        child: ListView(
-          children: [
-            ListTile(
-              title: const Text('bluetooth page'),
-              onTap: () {
-                global.flagMapPage = false;
-                changePage(0);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: const Text('map page'),
-              onTap: () {
-                global.flagMapPage = true;
-                changePage(1);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: const Text('test page'),
-              onTap: () {
-                global.flagMapPage = false;
-                changePage(2);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: const Text('image page'),
-              onTap: () {
-                global.flagMapPage = false;
-                changePage(3);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: const Text('TEST'),
-              onTap: () {
-                global.flagMapPage = false;
-                changePage(4);
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        ),
-      ),
-      body: IndexedStack(
-        index: selectedBodyWidget,
-        children: global.pages,
-      ),
-      bottomNavigationBar: BottomAppBar(
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Builder(builder: (context) {
-                return FloatingActionButton(
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                  child: const Icon(
-                    Icons.menu,
-                    color: Colors.red,
-                  ),
-                );
-              }),
-              global.mainBottomSelectedDev,
-              global.flagMapPage
-                  ? Builder(builder: (context) {
-                      return FloatingActionButton(
-                        onPressed: () => {
-                          changePage(2),
-                          global.flagMapPage = false,
-                        },
-                        child: const Icon(
-                          Icons.settings,
-                          color: Colors.red,
-                        ),
-                      );
-                    })
-                  : Builder(builder: (context) {
-                      return FloatingActionButton(
-                        onPressed: () => {
-                          changePage(1),
-                          global.flagMapPage = true,
-                        },
-                        child: const Icon(
-                          Icons.map,
-                          color: Colors.red,
-                        ),
-                      );
-                    }),
-            ],
           ),
         ),
       ),

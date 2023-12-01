@@ -47,6 +47,7 @@ dependencies:
   flutter_launcher_icons: ^0.13.1
   path_provider: ^2.1.0
   provider: ^6.0.5
+  flutter_svg: ^2.0.7
 
 dev_dependencies:
   flutter_test:
@@ -80,14 +81,19 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - assets/
-    - assets/icons/
-    - assets/gifs/spider.gif
-    - assets/gifs/spider30x30.gif
-    - assets/gifs/image.gif
-    - assets/icons/phototest.jpeg
-    - assets/160x120.jpeg
-    - assets/320x240.jpeg
+    - packages/assets/
+    - packages/assets/icons/
+    - packages/assets/devices/
+    - packages/assets/gifs/spider.gif
+    - packages/assets/gifs/spider30x30.gif
+    - packages/assets/gifs/image.gif
+    - packages/assets/icons/phototest.jpeg
+    - packages/assets/160x120.jpeg
+    - packages/assets/320x240.jpeg
+    - packages/assets/devices/csd/
+    - packages/assets/devices/std/
+    - packages/assets/devices/cpd/
+    - packages/assets/devices/rt/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

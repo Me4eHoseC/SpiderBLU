@@ -89,15 +89,13 @@ class Application {
       }
 
       global.imagePage.addImagePart(fp.getPartData());
-
-      //global.mapClass.fuck();
       global.imagePage.redrawImage();
     }
   }
 
   static void fileDownloaded(int sender) {
-    //global.mapClass.fuck();
-    global.imagePage.redrawImage();
+    global.imagePage.lastPartCome();
+    //global.imagePage.redrawImage();
   }
 
   static void requestReceived(BasePackage basePackage) {

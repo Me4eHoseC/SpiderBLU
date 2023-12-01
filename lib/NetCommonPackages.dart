@@ -2,12 +2,14 @@ import 'dart:typed_data';
 
 import 'package:projects/BasePackage.dart';
 import 'package:projects/AllEnum.dart';
+import 'package:projects/core/Device.dart';
 
 import 'NetCommonFunctions.dart';
 import 'NetPackagesDataTypes.dart';
 
 class InformationPackage extends BasePackage {
-  int _state = 0, _battery = 0, _rssi = 0;
+  int _battery = 0, _rssi = 0;
+  ObjState _state = ObjState.Offline;
 
   InformationPackage() {
     setType(PackageType.INFORMATION);
@@ -24,7 +26,7 @@ class InformationPackage extends BasePackage {
     }
   }
 
-  int getState() {
+  ObjState getState() {
     return _state;
   }
 
@@ -50,7 +52,7 @@ class InformationPackage extends BasePackage {
     success &= (valueBattery != null);
     success &= (valueRssi != null);
     if (success) {
-      _state = valueState!;
+      _state = ObjState.values[valueState!];
       _battery = valueBattery!;
       _rssi = valueRssi!;
     }

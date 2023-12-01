@@ -334,19 +334,6 @@ enum PackageType {
   const PackageType();
   //final num value;
 }
-//TODO: Move to dev class
-enum ObjState {
-  ACTIVE,
-  SEISMO,
-  BREAKLINE1,
-  BREAKLINE2,
-  LOWBATTERY,
-  LINETRAP,
-  PHOTOTRAP,
-  NOACTIVE,
-  ERRORACTIVE,
-  RADIATION;
-}
 
 enum ReceiverStateEnum {
   markerWaitingState,

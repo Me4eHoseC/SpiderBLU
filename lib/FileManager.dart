@@ -95,7 +95,7 @@ class FileManager {
         }
 
         Timer.run(() {
-          fileDownloadStarted(filePart.getSender());
+          fileDownloadStarted(filePart.getSender(), filePart);
           filePartReceived(filePart);
         });
 
@@ -215,7 +215,7 @@ class FileManager {
     _imageProperties[cameraId] = ip;
   }
 
-  late void Function(int sender) fileDownloadStarted;
+  late void Function(int sender, FilePartPackage filePartPackage) fileDownloadStarted;
   late void Function(FilePartPackage filePart) filePartReceived;
   late void Function(int sender) fileDownloaded;
   late void Function(FilePartPackage message) messageReceived;

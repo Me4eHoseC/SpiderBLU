@@ -141,9 +141,7 @@ class ItemsManager {
 
   List<int> getItemsIds() {
     List<int> idsVector = [];
-    for (var item in _items.values) {
-      idsVector.add(item.id);
-    }
+    idsVector.addAll(_items.keys);
     return idsVector;
   }
 

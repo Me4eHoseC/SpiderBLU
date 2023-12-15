@@ -60,7 +60,13 @@ class Application {
       global.testPage.dataReceived(tid, basePackage);
     }
 
+    if (global.pageWithMap.isMyTransaction(tid)) {
+      global.pageWithMap.dataReceived(tid, basePackage);
+    }
 
+    if (global.imagePage.isMyTransaction(tid)) {
+      global.imagePage.dataReceived(tid, basePackage);
+    }
 
     if (tid == -1) {
       global.testPage.alarmReceived(basePackage);
@@ -77,8 +83,9 @@ class Application {
     }
   }
 
-  static void fileDownloadStarted(int sender){
-    global.imagePage.clearImage();
+  static void fileDownloadStarted(int sender, FilePartPackage filePartPackage){
+    global.imagePage.clearImage(filePartPackage.getCreationTime());
+
   }
 
   static void filePartReceived(FilePartPackage filePartPackage) {

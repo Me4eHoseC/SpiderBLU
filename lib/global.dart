@@ -19,7 +19,7 @@ import 'main.dart';
 
 const String deviceName = 'HC-05-DMRS1';
 String selectedPage = '', statusBarString = '', selectedDevice = '', deleteStr = '';
-int  selectedMapMarkerIndex = -1;
+//int  selectedMapMarkerIndex = -1;
 
 Text mainBottomSelectedDev = Text('');
 Timer? timer;
@@ -60,13 +60,14 @@ class Pair<T1, T2> {
 
 bool flagConnect = false, dataComeFlag = false, flagMapPage = false,
     flagCheckSPPU = false, allowedHopsCame = false, unallowedHopsCame = false,
-    flagDeleteMarker = false;
+    flagMoveMarker = false;
 
 List<int> globalActiveDevices = List<int>.empty(growable: true),
     globalAlarmDevices = List<int>.empty(growable: true);
 
-List<Device> globalDeviceList = List<Device>.empty(growable: true);
-List<MapMarker> globalMapMarker = List<MapMarker>.empty(growable: true);
+Map<int, MapMarker> listMapMarkers = {};
+
+//List<MapMarker> globalMapMarker = List<MapMarker>.empty(growable: true);
 List<int> retransmissionRequests = List<int>.empty(growable: true);
 List<int> delayList = [60, 180, 300];
 List<int> impulseList = [1, 2, 3];

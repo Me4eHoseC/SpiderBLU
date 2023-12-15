@@ -24,11 +24,11 @@ class TestPage extends StatefulWidget with TIDManagement {
   Device device = Device();
   late _TestPage _page;
 
-  void addDeviceInDropdown(int id, String type, int? posInDropdown) {
+  void addDeviceInDropdown(int id, DeviceType type, int? posInDropdown) {
     dropdownValue = id.toString();
     var newItem = DropdownMenuItem(
       value: dropdownValue,
-      child: Text('$type '
+      child: Text('${type.name} '
           '#$id'),
     );
     if (posInDropdown == null) {
@@ -38,7 +38,7 @@ class TestPage extends StatefulWidget with TIDManagement {
     }
   }
 
-  void changeDeviceInDropdown(int newId, String newType, String oldId, int posInDropdown) {
+  void changeDeviceInDropdown(int newId, DeviceType newType, String oldId, int posInDropdown) {
     deleteDeviceInDropdown(int.parse(oldId));
     addDeviceInDropdown(newId, newType, posInDropdown);
   }
@@ -80,418 +80,415 @@ class TestPage extends StatefulWidget with TIDManagement {
 
     if (basePackage.getType() == PackageType.VERSION) {
       var package = basePackage as VersionPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].firmwareVersion = package.getVersion();
-          global.pageWithMap.ActivateMapMarker(package.getSender());
-          array.add('dataReceived: ${package.getVersion()}');
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.firmwareVersion = package.getVersion();
+        global.pageWithMap.ActivateMapMarker(bufDev);
+        array.add('dataReceived: ${package.getVersion()}');
       }
     }
 
     if (basePackage.getType() == PackageType.TIME) {
       var package = basePackage as TimePackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].timeS = package.getTime();
-          global.pageWithMap.ActivateMapMarker(package.getSender());
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.timeS = package.getTime();
+        global.pageWithMap.ActivateMapMarker(bufDev);
+        array.add('dataReceived: ${package.getTime()}');
       }
-      array.add('dataReceived: ${package.getTime()}');
     }
 
     if (basePackage.getType() == PackageType.ALL_INFORMATION) {
       var package = basePackage as AllInformationPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].storedLongitude = package.getLongitude();
-          global.globalDeviceList[i].storedLatitude = package.getLatitude();
-          global.globalDeviceList[i].timeS = package.getTime();
-          global.globalDeviceList[i].stateMask = package.getStateMask();
-          global.globalDeviceList[i].batMonVoltage = package.getBattery();
-          global.globalDeviceList[i].objState = ObjState.Online;
-
-          switch (package.getLastAlarmType()) {
-            case AlarmType.SEISMIC:
-              global.globalDeviceList[i].objState = ObjState.SeismicAlarm;
-              break;
-            case AlarmType.TRAP:
-              global.globalDeviceList[i].objState = ObjState.PhototrapAlarm;
-              break;
-            case AlarmType.LINE1:
-              global.globalDeviceList[i].objState = ObjState.BreaklineAlarm;
-              break;
-            case AlarmType.LINE2:
-              global.globalDeviceList[i].objState = ObjState.BreaklineAlarm;
-              break;
-            case AlarmType.RADIATION:
-              global.globalDeviceList[i].objState = ObjState.RadiationAlarm;
-              break;
-            case AlarmType.BATTERY:
-              global.globalDeviceList[i].objState = ObjState.LowBatteryAlarm;
-              break;
-            case AlarmType.NO:
-              global.globalDeviceList[i].objState = ObjState.Online;
-              break;
-            case AlarmType.EXT_POWER_SAFETY_CATCH_OFF:
-              global.globalDeviceList[i].objState = ObjState.ExternalPowerSafetyCatchOff;
-              break;
-            case AlarmType.AUTO_EXT_POWER_TRIGGERED:
-              global.globalDeviceList[i].objState = ObjState.AutoExternalPowerTriggered;
-          }
-
-          array.add('dataReceived: ${package.getLongitude()}');
-          array.add('dataReceived: ${package.getLatitude()}');
-          array.add('dataReceived: ${package.getTime()}');
-          array.add('dataReceived: ${package.getStateMask()}');
-          array.add('dataReceived: ${package.getBattery()}');
-          global.pageWithMap.ActivateMapMarker(package.getSender());
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.storedLongitude = package.getLongitude();
+        global.itemsManager.getDevice(bufDev)?.storedLatitude = package.getLatitude();
+        global.itemsManager.getDevice(bufDev)?.longitude = global.itemsManager.getDevice(bufDev)!.storedLongitude;
+        global.itemsManager.getDevice(bufDev)?.latitude = global.itemsManager.getDevice(bufDev)!.storedLatitude;
+        global.itemsManager.getDevice(bufDev)?.timeS = package.getTime();
+        global.itemsManager.getDevice(bufDev)?.stateMask = package.getStateMask();
+        global.itemsManager.getDevice(bufDev)?.batMonVoltage = package.getBattery();
+        global.itemsManager.getDevice(bufDev)?.objState = ObjState.Online;
+        switch (package.getLastAlarmType()) {
+          case AlarmType.SEISMIC:
+            global.itemsManager.getDevice(bufDev)?.objState = ObjState.SeismicAlarm;
+            break;
+          case AlarmType.TRAP:
+            global.itemsManager.getDevice(bufDev)?.objState = ObjState.PhototrapAlarm;
+            break;
+          case AlarmType.LINE1:
+            global.itemsManager.getDevice(bufDev)?.objState = ObjState.BreaklineAlarm;
+            break;
+          case AlarmType.LINE2:
+            global.itemsManager.getDevice(bufDev)?.objState = ObjState.BreaklineAlarm;
+            break;
+          case AlarmType.RADIATION:
+            global.itemsManager.getDevice(bufDev)?.objState = ObjState.RadiationAlarm;
+            break;
+          case AlarmType.BATTERY:
+            global.itemsManager.getDevice(bufDev)?.objState = ObjState.LowBatteryAlarm;
+            break;
+          case AlarmType.NO:
+            global.itemsManager.getDevice(bufDev)?.objState = ObjState.Online;
+            break;
+          case AlarmType.EXT_POWER_SAFETY_CATCH_OFF:
+            global.itemsManager.getDevice(bufDev)?.objState = ObjState.ExternalPowerSafetyCatchOff;
+            break;
+          case AlarmType.AUTO_EXT_POWER_TRIGGERED:
+            global.itemsManager.getDevice(bufDev)?.objState = ObjState.AutoExternalPowerTriggered;
         }
+        global.pageWithMap.ActivateMapMarker(bufDev);
+        array.add('dataReceived: ${package.getLongitude()}');
+        array.add('dataReceived: ${package.getLatitude()}');
+        array.add('dataReceived: ${package.getTime()}');
+        array.add('dataReceived: ${package.getStateMask()}');
+        array.add('dataReceived: ${package.getBattery()}');
       }
     }
 
     if (basePackage.getType() == PackageType.COORDINATE) {
       var package = basePackage as CoordinatesPackage;
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.storedLongitude = package.getLongitude();
+        global.itemsManager.getDevice(bufDev)?.storedLatitude = package.getLatitude();
+        global.itemsManager.getDevice(bufDev)?.longitude = global.itemsManager.getDevice(bufDev)!.storedLongitude;
+        global.itemsManager.getDevice(bufDev)?.latitude = global.itemsManager.getDevice(bufDev)!.storedLatitude;
+        global.listMapMarkers[bufDev]?.point.latitude = package.getLatitude();
+        global.listMapMarkers[bufDev]?.point.longitude = package.getLongitude();
 
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].storedLongitude = package.getLongitude();
-          global.globalDeviceList[i].storedLatitude = package.getLatitude();
-          global.globalMapMarker[i].markerData.cord = LatLng(package.getLatitude(), package.getLongitude());
-        }
+        array.add('dataReceived: ${package.getLatitude()}');
+        array.add('dataReceived: ${package.getLongitude()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-
-      array.add('dataReceived: ${package.getLatitude()}');
-      array.add('dataReceived: ${package.getLongitude()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.INFORMATION) {
       var package = basePackage as InformationPackage;
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.rssi = package.getRssi();
 
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].rssi = package.getRssi();
-        }
+        array.add('dataReceived: ${package.getRssi()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      array.add('dataReceived: ${package.getRssi()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.ALLOWED_HOPS && !global.retransmissionRequests.contains(tid)) {
       var package = basePackage as HopsPackage;
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.allowedHops = package.getHops();
 
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].allowedHops = package.getHops();
-        }
+        array.add('dataReceived: ${package.getHops()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
+        global.allowedHopsCame = true;
       }
-      array.add('dataReceived: ${package.getHops()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
-      global.allowedHopsCame = true;
     }
 
     if (basePackage.getType() == PackageType.ALLOWED_HOPS && global.retransmissionRequests.contains(tid)) {
       global.retransmissionRequests.remove(tid);
       var package = basePackage as HopsPackage;
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.allowedHops = package.getHops();
 
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].allowedHops = package.getHops();
-        }
+        array.add('dataReceived: ${package.getHops()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      array.add('dataReceived: ${package.getHops()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.UNALLOWED_HOPS) {
       var package = basePackage as HopsPackage;
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.unallowedHops = package.getHops();
 
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].unallowedHops = package.getHops();
-        }
+        array.add('dataReceived: ${package.getHops()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
+        global.unallowedHopsCame = true;
       }
-      array.add('dataReceived: ${package.getHops()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
-      global.unallowedHopsCame = true;
     }
 
     if (basePackage.getType() == PackageType.MODEM_FREQUENCY) {
       var package = basePackage as ModemFrequencyPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].modemFrequency = package.getModemFrequency();
-          global.pageWithMap.ActivateMapMarker(package.getSender());
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.modemFrequency = package.getModemFrequency();
+
+        global.pageWithMap.ActivateMapMarker(bufDev);
+        array.add('dataReceived: ${package.getModemFrequency()}');
       }
-      array.add('dataReceived: ${package.getModemFrequency()}');
     }
 
     if (basePackage.getType() == PackageType.STATE) {
       var package = basePackage as StatePackage;
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.stateMask = package.getStateMask();
+        global.itemsManager.getDevice(bufDev)?.extDevice1 =
+            ((global.itemsManager.getDevice(bufDev)!.stateMask & DeviceState.MONITORING_LINE1) != 0);
+        global.itemsManager.getDevice(bufDev)?.extDevice2 =
+            ((global.itemsManager.getDevice(bufDev)!.stateMask & DeviceState.MONITORING_LINE2) != 0);
+        global.itemsManager.getDevice(bufDev)?.devicePhototrap =
+            ((global.itemsManager.getDevice(bufDev)!.stateMask & DeviceState.LINES_CAMERA_TRAP) != 0);
+        global.itemsManager.getDevice(bufDev)?.deviceGeophone =
+            ((global.itemsManager.getDevice(bufDev)!.stateMask & DeviceState.MONITOR_SEISMIC) != 0);
 
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].stateMask = package.getStateMask();
-          global.globalDeviceList[i].extDevice1 = ((global.globalDeviceList[i].stateMask & DeviceState.MONITORING_LINE1) != 0);
-          global.globalDeviceList[i].extDevice2 = ((global.globalDeviceList[i].stateMask & DeviceState.MONITORING_LINE2) != 0);
-          global.globalDeviceList[i].devicePhototrap = ((global.globalDeviceList[i].stateMask & DeviceState.LINES_CAMERA_TRAP) != 0);
-          global.globalDeviceList[i].deviceGeophone = ((global.globalDeviceList[i].stateMask & DeviceState.MONITOR_SEISMIC) != 0);
-        }
+        print('dataReceived: ${package.getStateMask()}');
+        array.add('dataReceived: ${package.getStateMask()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-
-      print('dataReceived: ${package.getStateMask()}');
-      array.add('dataReceived: ${package.getStateMask()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.PERIPHERY) {
       var package = basePackage as PeripheryMaskPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].peripheryMask = package.getPeripheryMask();
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.peripheryMask = package.getPeripheryMask();
+        global.itemsManager.getDevice(bufDev)?.deviceExtDev1State =
+            ((global.itemsManager.getDevice(bufDev)!.peripheryMask & PeripheryMask.LINE1) != 0);
+        global.itemsManager.getDevice(bufDev)?.deviceExtDev2State =
+            ((global.itemsManager.getDevice(bufDev)!.peripheryMask & PeripheryMask.LINE2) != 0);
+        global.itemsManager.getDevice(bufDev)?.deviceExtPhototrapState =
+            ((global.itemsManager.getDevice(bufDev)!.peripheryMask & PeripheryMask.CAMERA) != 0);
 
-          global.globalDeviceList[i].deviceExtDev1State = ((global.globalDeviceList[i].peripheryMask & PeripheryMask.LINE1) != 0);
-          global.globalDeviceList[i].deviceExtDev2State = ((global.globalDeviceList[i].peripheryMask & PeripheryMask.LINE2) != 0);
-          global.globalDeviceList[i].deviceExtPhototrapState = ((global.globalDeviceList[i].peripheryMask & PeripheryMask.CAMERA) != 0);
-        }
+        array.add('dataReceived: ${package.getPeripheryMask()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      array.add('dataReceived: ${package.getPeripheryMask()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.EXTERNAL_POWER) {
       var package = basePackage as ExternalPowerPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].extPower = package.getExternalPowerState();
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.extPower = package.getExternalPowerState();
+
+        array.add('dataReceived: ${package.getExternalPowerState()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      array.add('dataReceived: ${package.getExternalPowerState()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.BATTERY_MONITOR) {
       var package = basePackage as BatteryMonitorPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].batMonVoltage = package.getVoltage();
-          global.globalDeviceList[i].batMonTemperature = package.getTemperature();
-          global.globalDeviceList[i].batMonCurrentMA = package.getCurrent();
-          global.globalDeviceList[i].batMonElapsedTime = package.getElapsedTime();
-          global.globalDeviceList[i].batMonUsedCapacity = package.getUsedCapacity();
-          global.globalDeviceList[i].batMonResidue = package.getResidue();
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.batMonVoltage = package.getVoltage();
+        global.itemsManager.getDevice(bufDev)?.batMonTemperature = package.getTemperature();
+        global.itemsManager.getDevice(bufDev)?.batMonCurrentMA = package.getCurrent();
+        global.itemsManager.getDevice(bufDev)?.batMonElapsedTime = package.getElapsedTime();
+        global.itemsManager.getDevice(bufDev)?.batMonUsedCapacity = package.getUsedCapacity();
+        global.itemsManager.getDevice(bufDev)?.batMonResidue = package.getResidue();
+
+        array.add('dataReceived: ${package.getTemperature()}');
+        array.add('dataReceived: ${package.getVoltage()}');
+        array.add('dataReceived: ${package.getCurrent()}');
+        array.add('dataReceived: ${package.getElapsedTime()}');
+        array.add('dataReceived: ${package.getUsedCapacity()}');
+        array.add('dataReceived: ${package.getResidue()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      array.add('dataReceived: ${package.getTemperature()}');
-      array.add('dataReceived: ${package.getVoltage()}');
-      array.add('dataReceived: ${package.getCurrent()}');
-      array.add('dataReceived: ${package.getElapsedTime()}');
-      array.add('dataReceived: ${package.getUsedCapacity()}');
-      array.add('dataReceived: ${package.getResidue()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.BATTERY_STATE) {
       var package = basePackage as BatteryStatePackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].weakBatteryFlag = package.getBatteryState() == BatteryState.BAD;
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.weakBatteryFlag = package.getBatteryState() == BatteryState.BAD;
+
+        array.add('dataReceived: ${package.getBatteryState()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      array.add('dataReceived: ${package.getBatteryState()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.ALARM_REASON_MASK) {
       var package = basePackage as AlarmReasonMaskPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          if (package.getAlarmReasonMask() == 0) {
-            global.globalDeviceList[i].humanAlarm = false;
-            global.globalDeviceList[i].transportAlarm = false;
-          }
-          if (package.getAlarmReasonMask() == 8) {
-            global.globalDeviceList[i].humanAlarm = true;
-            global.globalDeviceList[i].transportAlarm = false;
-          }
-          if (package.getAlarmReasonMask() == 16) {
-            global.globalDeviceList[i].humanAlarm = false;
-            global.globalDeviceList[i].transportAlarm = true;
-          }
-          if (package.getAlarmReasonMask() == 24) {
-            global.globalDeviceList[i].humanAlarm = true;
-            global.globalDeviceList[i].transportAlarm = true;
-          }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        if (package.getAlarmReasonMask() == 0) {
+          global.itemsManager.getDevice(bufDev)?.humanAlarm = false;
+          global.itemsManager.getDevice(bufDev)?.transportAlarm = false;
         }
+        if (package.getAlarmReasonMask() == 8) {
+          global.itemsManager.getDevice(bufDev)?.humanAlarm = true;
+          global.itemsManager.getDevice(bufDev)?.transportAlarm = false;
+        }
+        if (package.getAlarmReasonMask() == 16) {
+          global.itemsManager.getDevice(bufDev)?.humanAlarm = false;
+          global.itemsManager.getDevice(bufDev)?.transportAlarm = true;
+        }
+        if (package.getAlarmReasonMask() == 24) {
+          global.itemsManager.getDevice(bufDev)?.humanAlarm = true;
+          global.itemsManager.getDevice(bufDev)?.transportAlarm = true;
+        }
+        print('dataReceived: ${package.getAlarmReasonMask()}');
+        array.add('dataReceived: ${package.getAlarmReasonMask()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      print('dataReceived: ${package.getAlarmReasonMask()}');
-      array.add('dataReceived: ${package.getAlarmReasonMask()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.SIGNAL_SWING) {
       var package = basePackage as SeismicSignalSwingPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].signalSwing = package.getSignalSwing();
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.signalSwing = package.getSignalSwing();
+
+        print('dataReceived: ${package.getSignalSwing()}');
+        array.add('dataReceived: ${package.getSignalSwing()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      print('dataReceived: ${package.getSignalSwing()}');
-      array.add('dataReceived: ${package.getSignalSwing()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.HUMAN_SENSITIVITY) {
       var package = basePackage as HumanSensitivityPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].humanSensitivity = package.getHumanSensitivity();
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.humanSensitivity = package.getHumanSensitivity();
+
+        array.add('dataReceived: ${package.getHumanSensitivity()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      array.add('dataReceived: ${package.getHumanSensitivity()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.TRANSPORT_SENSITIVITY) {
       var package = basePackage as TransportSensitivityPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].transportSensitivity = package.getTransportSensitivity();
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.transportSensitivity = package.getTransportSensitivity();
+
+        array.add('dataReceived: ${package.getTransportSensitivity()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      array.add('dataReceived: ${package.getTransportSensitivity()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.CRITERION_FILTER) {
       var package = basePackage as CriterionFilterPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].criterionFilter = package.getCriterionFilter();
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.criterionFilter = package.getCriterionFilter();
+
+        array.add('dataReceived: ${package.getCriterionFilter()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      array.add('dataReceived: ${package.getCriterionFilter()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.SIGNAL_TO_NOISE_RATIO) {
       var package = basePackage as SignalToNoiseRatioPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].snr = package.getSignalToNoiseRatio();
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.snr = package.getSignalToNoiseRatio();
+
+        array.add('dataReceived: ${package.getSignalToNoiseRatio()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      array.add('dataReceived: ${package.getSignalToNoiseRatio()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.CRITERION_RECOGNITION) {
       var package = basePackage as CriterionRecognitionPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].recognitionParameters = package.getCriteria();
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.recognitionParameters = package.getCriteria();
+
+        print(package.getCriteria());
+        array.add('dataReceived: ${package.getCriteria()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      print(package.getCriteria());
-      array.add('dataReceived: ${package.getCriteria()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.PHOTO_PARAMETERS) {
       var package = basePackage as PhotoParametersPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].cameraSensitivity = package.getInvLightSensitivity();
-          global.globalDeviceList[i].cameraCompression = package.getCompressRatio();
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.cameraSensitivity = package.getInvLightSensitivity();
+        global.itemsManager.getDevice(bufDev)?.cameraCompression = package.getCompressRatio();
+
+        array.add('dataReceived: ${package.getInvLightSensitivity()}');
+        array.add('dataReceived: ${package.getCompressRatio()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      array.add('dataReceived: ${package.getInvLightSensitivity()}');
-      array.add('dataReceived: ${package.getCompressRatio()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.TRAP_ADDRESS) {
       var package = basePackage as PhototrapPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].targetSensor = package.getCrossDevicesList().first;
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.targetSensor = package.getCrossDevicesList().first;
+
+        array.add('dataReceived: ${package.getCrossDevicesList()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      array.add('dataReceived: ${package.getCrossDevicesList()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.EEPROM_FACTORS) {
       var package = basePackage as EEPROMFactorsPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].eepromInitialized = true;
-          global.globalDeviceList[i].wake_network_resend_time_ms = package.getWakeNetworkResendTimeMs();
-          global.globalDeviceList[i].alarm_resend_time_ms = package.getAlarmResendTimeMs();
-          global.globalDeviceList[i].seismic_resend_time_ms = package.getSeismicResendTimeMs();
-          global.globalDeviceList[i].photo_resend_time_ms = package.getPhotoResendTimeMs();
-          global.globalDeviceList[i].alarm_tries_resend = package.getAlarmTriesResend();
-          global.globalDeviceList[i].seismic_tries_resend = package.getSeismicTriesResend();
-          global.globalDeviceList[i].photo_tries_resend = package.getPhotoTriesResend();
-          global.globalDeviceList[i].periodic_send_telemetry_time_10s = package.getPeriodicSendTelemetryTime10S();
-          global.globalDeviceList[i].after_seismic_alarm_pause_s = package.getAfterSeismicAlarmPauseS();
-          global.globalDeviceList[i].after_line_alarm_pause_s = package.getAfterLineAlarmPauseS();
-          global.globalDeviceList[i].battery_periodic_update_10min = package.getBatteryPeriodicUpdate10Min();
-          global.globalDeviceList[i].battery_voltage_threshold_alarm_100mV = package.getBatteryVoltageThresholdAlarm100mV();
-          global.globalDeviceList[i].battery_residue_threshold_alarm_pc = package.getBatteryResidueThresholdAlarmPC();
-          global.globalDeviceList[i].battery_periodic_alarm_h = package.getBatteryPeriodicAlarmH();
-          global.globalDeviceList[i].device_type = package.getDeviceType();
+      var bufDev = global.itemsManager.getDevice(package.getSender());
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        bufDev?.eepromInitialized = true;
+        bufDev?.wake_network_resend_time_ms = package.getWakeNetworkResendTimeMs();
+        bufDev?.alarm_resend_time_ms = package.getAlarmResendTimeMs();
+        bufDev?.seismic_resend_time_ms = package.getSeismicResendTimeMs();
+        bufDev?.photo_resend_time_ms = package.getPhotoResendTimeMs();
+        bufDev?.alarm_tries_resend = package.getAlarmTriesResend();
+        bufDev?.seismic_tries_resend = package.getSeismicTriesResend();
+        bufDev?.photo_tries_resend = package.getPhotoTriesResend();
+        bufDev?.periodic_send_telemetry_time_10s = package.getPeriodicSendTelemetryTime10S();
+        bufDev?.after_seismic_alarm_pause_s = package.getAfterSeismicAlarmPauseS();
+        bufDev?.after_line_alarm_pause_s = package.getAfterLineAlarmPauseS();
+        bufDev?.battery_periodic_update_10min = package.getBatteryPeriodicUpdate10Min();
+        bufDev?.battery_voltage_threshold_alarm_100mV = package.getBatteryVoltageThresholdAlarm100mV();
+        bufDev?.battery_residue_threshold_alarm_pc = package.getBatteryResidueThresholdAlarmPC();
+        bufDev?.battery_periodic_alarm_h = package.getBatteryPeriodicAlarmH();
+        bufDev?.device_type = package.getDeviceType();
 
-          global.globalDeviceList[i].humanSignalsTreshold = package.getHumanSignalsTreshold();
-          global.globalDeviceList[i].humanIntervalsCount = package.getHumanIntervalsCount();
-          global.globalDeviceList[i].transportSignalsTreshold = package.getTransportSignalsTreshold();
-          global.globalDeviceList[i].transportIntervalsCount = package.getTransportIntervalsCount();
-        }
+        bufDev?.humanSignalsTreshold = package.getHumanSignalsTreshold();
+        bufDev?.humanIntervalsCount = package.getHumanIntervalsCount();
+        bufDev?.transportSignalsTreshold = package.getTransportSignalsTreshold();
+        bufDev?.transportIntervalsCount = package.getTransportIntervalsCount();
+
+        array.add('dataReceived: ${package.getHumanSignalsTreshold()}');
+        array.add('dataReceived: ${package.getHumanIntervalsCount()}');
+        array.add('dataReceived: ${package.getTransportSignalsTreshold()}');
+        array.add('dataReceived: ${package.getTransportIntervalsCount()}');
+        global.pageWithMap.ActivateMapMarker(package.getSender());
       }
-      array.add('dataReceived: ${package.getHumanSignalsTreshold()}');
-      array.add('dataReceived: ${package.getHumanIntervalsCount()}');
-      array.add('dataReceived: ${package.getTransportSignalsTreshold()}');
-      array.add('dataReceived: ${package.getTransportIntervalsCount()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.TRAP_PHOTO_LIST) {
       var package = basePackage as PhototrapFilesPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].phototrapFiles = package.getPhototrapFiles();
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.phototrapFiles = package.getPhototrapFiles();
+
+        array.add('dataReceived: ${package.getPhototrapFiles()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      array.add('dataReceived: ${package.getPhototrapFiles()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.SAFETY_CATCH) {
       var package = basePackage as ExternalPowerSafetyCatchPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].extPowerSafetyCatchState = package.getSafetyCatchState();
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.extPowerSafetyCatchState = package.getSafetyCatchState();
+
+        array.add('dataReceived: ${package.getSafetyCatchState()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      array.add('dataReceived: ${package.getSafetyCatchState()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     if (basePackage.getType() == PackageType.AUTO_EXT_POWER) {
       var package = basePackage as AutoExternalPowerPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.globalDeviceList[i].autoExtPowerActivationDelaySec = package.getActivationDelay();
-          global.globalDeviceList[i].extPowerImpulseDurationSec = package.getImpulseDuration();
-          global.globalDeviceList[i].autoExtPowerState = package.getAutoExternalPowerModeState();
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.itemsManager.getDevice(bufDev)?.autoExtPowerActivationDelaySec = package.getActivationDelay();
+        global.itemsManager.getDevice(bufDev)?.extPowerImpulseDurationSec = package.getImpulseDuration();
+        global.itemsManager.getDevice(bufDev)?.autoExtPowerState = package.getAutoExternalPowerModeState();
+
+        array.add('dataReceived: ${package.getActivationDelay()}');
+        array.add('dataReceived: ${package.getImpulseDuration()}');
+        array.add('dataReceived: ${package.getAutoExternalPowerModeState()}');
+        global.pageWithMap.ActivateMapMarker(bufDev);
       }
-      array.add('dataReceived: ${package.getActivationDelay()}');
-      array.add('dataReceived: ${package.getImpulseDuration()}');
-      array.add('dataReceived: ${package.getAutoExternalPowerModeState()}');
-      global.pageWithMap.ActivateMapMarker(package.getSender());
     }
 
     global.dataComeFlag = true;
@@ -502,14 +499,14 @@ class TestPage extends StatefulWidget with TIDManagement {
   void alarmReceived(BasePackage basePackage) {
     if (basePackage.getType() == PackageType.ALARM) {
       var package = basePackage as AlarmPackage;
-      for (int i = 0; i < global.globalMapMarker.length; i++) {
-        if (global.globalDeviceList[i].id == package.getSender()) {
-          global.pageWithMap.AlarmMapMarker(global.globalDeviceList[i].id, package.getAlarmReason());
-          array.add('dataReceived: ${package.getAlarmType()}');
-          array.add('dataReceived: ${package.getAlarmReason()}');
-          global.dataComeFlag = true;
-          _page.checkNewIdDevice();
-        }
+      var bufDev = package.getSender();
+      if (global.itemsManager.getItemsIds().contains(bufDev)) {
+        global.pageWithMap.AlarmMapMarker(bufDev, package.getAlarmReason());
+
+        array.add('dataReceived: ${package.getAlarmType()}');
+        array.add('dataReceived: ${package.getAlarmReason()}');
+        global.dataComeFlag = true;
+        _page.checkNewIdDevice();
       }
     }
   }
@@ -517,15 +514,12 @@ class TestPage extends StatefulWidget with TIDManagement {
   @override
   void ranOutOfSendAttempts(int tid, BasePackage? pb) {
     tits.remove(tid);
-    for (int i = 0; i < global.globalMapMarker.length; i++) {
-      if (global.globalDeviceList[i].id == pb!.getReceiver()) {
-        if (global.globalMapMarker[i].markerData.notifier.active) {
-          global.pageWithMap.DeactivateMapMarker(global.globalDeviceList[i].id);
-          array.add('RanOutOfSendAttempts');
-          global.dataComeFlag = true;
-          _page.checkNewIdDevice();
-        }
-      }
+    if (global.itemsManager.getItemsIds().contains(pb!.getReceiver()) &&
+        global.listMapMarkers[pb.getReceiver()]!.markerData.notifier.active) {
+      global.pageWithMap.DeactivateMapMarker(global.listMapMarkers[pb.getReceiver()]!.markerData.id!);
+      array.add('RanOutOfSendAttempts');
+      global.dataComeFlag = true;
+      _page.checkNewIdDevice();
     }
   }
 
@@ -547,8 +541,8 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
   ScrollController _scrollController = ScrollController();
   List<DropdownMenuItem<String>> dropdownItems = [];
   String stringId = '';
-  String? chooseDeviceType, bufferDeviceType;
-  String deviceLat = '', deviceLon = '', bufferDeviceLon = '', bufferDeviceLat = '';
+  DeviceType? bufferDeviceType, chooseDeviceType;
+  //String deviceLat = '', deviceLon = '', bufferDeviceLon = '', bufferDeviceLat = '';
 
   @override
   void initState() {
@@ -595,23 +589,15 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
 
   //Main settings
 
-  void checkDevID(int newId, int oldId, String type) {
-    var bufferPos = 0;
-    print(newId.toString() + '   ' + oldId.toString());
+  void checkDevID(int newId, int oldId, DeviceType type) {
     setState(() {
+      var listIdsBuf = global.itemsManager.getItemsIds();
       if (newId > 0 && newId < 256 && oldId != newId) {
-        for (int i = 0; i < global.globalDeviceList.length; i++) {
-          if (global.globalDeviceList[i].id == newId) {
-            showError('Такой ИД уже существует');
-            break;
-          }
-          if (global.globalDeviceList[i].id == oldId) {
-            bufferPos = i;
-          }
-          if (i == global.globalDeviceList.length - 1) {
-            print(' goooooo  ');
-            global.pageWithMap.ChangeMapMarker(oldId, newId, type, type, global.globalDeviceList[bufferPos], bufferPos);
-          }
+        if (listIdsBuf.contains(newId)) {
+          showError('Такой ИД уже существует');
+        }
+        if (!listIdsBuf.contains(newId) && listIdsBuf.contains(oldId)) {
+          global.pageWithMap.ChangeMapMarker(oldId, newId, type, type);
         }
       } else {
         showError("Неверный ИД \n"
@@ -620,17 +606,17 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
     });
   }
 
-  void checkDevType(int id, String oldType, String newType) {
+  void checkDevType(int id, DeviceType oldType, DeviceType newType) {
     setState(() {
-      for (int i = 0; i < global.globalDeviceList.length; i++) {
-        if (global.globalDeviceList[i].id == id && global.globalDeviceList[i].type.name == oldType && oldType != newType) {
-          if (newType == DeviceType.STD.name && global.globalDeviceList[i].type != DeviceType.STD && global.flagCheckSPPU == true) {
+      var listIdsBuf = global.itemsManager.getItemsIds();
+      var bufDev = global.itemsManager.getDevice(id);
+      if (listIdsBuf.contains(id)) {
+        if (bufDev?.type == oldType && oldType != newType) {
+          if (newType == DeviceType.STD && bufDev?.type != DeviceType.STD && global.flagCheckSPPU == true) {
             showError('СППУ уже существует');
-            break;
           } else {
-            global.pageWithMap.ChangeMapMarker(id, id, oldType, newType, global.globalDeviceList[i], i);
+            global.pageWithMap.ChangeMapMarker(id, id, oldType, newType);
           }
-          break;
         }
       }
     });
@@ -672,14 +658,14 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
       widget.tits.add(tid);
       timer = Timer.periodic(Duration(milliseconds: 50), (_) {
         if (!widget.tits.contains(tid)) {
-          checkDevCord();
+          //checkDevCord();
           timer!.cancel();
         }
       });
     });
   }
 
-  void SetCoordClick(int devId, double latitude, double longitude) {
+  void SetCordClick(int devId, double latitude, double longitude) {
     setState(() {
       CoordinatesPackage coordinatesPackage = CoordinatesPackage();
       coordinatesPackage.setReceiver(devId);
@@ -715,7 +701,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Разрешенные хопы'),
-          content: Text(global.globalDeviceList[global.selectedMapMarkerIndex].allowedHops.toString()),
+          content: Text(global.itemsManager.getSelectedDevice()!.allowedHops.toString()),
           actions: [
             TextButton(
                 onPressed: () {
@@ -744,7 +730,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Запрещенные хопы'),
-          content: Text(global.globalDeviceList[global.selectedMapMarkerIndex].unallowedHops.toString()),
+          content: Text(global.itemsManager.getSelectedDevice()!.unallowedHops.toString()),
           actions: [
             TextButton(
                 onPressed: () {
@@ -1079,7 +1065,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
 
   void SetEEPROMClick(int devId, int singleHuman, int singleTransport, int seriesHuman, int seriesTransport) {
     setState(() {
-      var device = global.globalDeviceList[global.selectedMapMarkerIndex];
+      var device = global.itemsManager.getSelectedDevice()!;
       if (!device.eepromInitialized) {
         return;
       }
@@ -1161,51 +1147,52 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
 
   void checkDevCord() {
     setState(() {
-      for (int i = 0; i < global.globalDeviceList.length; i++) {
-        if (global.globalDeviceList[i].id == global.pageWithMap.selectedMapMarker) {
-          if (global.globalDeviceList[i].latitude.toString().length > 9) {
-            deviceLat = global.globalDeviceList[i].latitude.toString().substring(0, 9);
-          } else {
-            deviceLat = global.globalDeviceList[i].latitude.toString();
-          }
-          if (global.globalDeviceList[i].longitude.toString().length > 9) {
-            deviceLon = global.globalDeviceList[i].longitude.toString().substring(0, 9);
-          } else {
-            deviceLon = global.globalDeviceList[i].longitude.toString();
-          }
-          break;
-        }
+      var bufDevice = global.itemsManager.getSelectedDevice()!;
+
+      /*if (bufDevice.latitude.toString().length > 9) {
+        deviceLat = bufDevice.latitude.toString().substring(0, 9);
+      } else {
+        deviceLat = bufDevice.latitude.toString();
       }
+      if (bufDevice.longitude.toString().length > 9) {
+        deviceLon = bufDevice.longitude.toString().substring(0, 9);
+      } else {
+        deviceLon = bufDevice.longitude.toString();
+      }*/
+      global.listMapMarkers[bufDevice.id]!.point.latitude = bufDevice.latitude;
+      global.listMapMarkers[bufDevice.id]!.point.longitude = bufDevice.longitude;
+    });
+  }
+
+  void setMyCordsForDevice() {
+    setState(() {
+      global.itemsManager.getSelectedDevice()!.latitude = global.pageWithMap.coord()!.latitude;
+      global.itemsManager.getSelectedDevice()!.longitude = global.pageWithMap.coord()!.longitude;
+      global.listMapMarkers[global.itemsManager.getSelectedDevice()!.id]!.point.latitude =
+          global.itemsManager.getSelectedDevice()!.latitude;
+      global.listMapMarkers[global.itemsManager.getSelectedDevice()!.id]!.point.longitude =
+          global.itemsManager.getSelectedDevice()!.longitude;
     });
   }
 
   void setAllNums() {
     setState(() {
-      if (global.pageWithMap.selectedMapMarker > 0) {
-        for (int i = 0; i < global.globalDeviceList.length; i++) {
-          if (global.globalDeviceList[i].id == global.pageWithMap.selectedMapMarker) {
-            stringId = global.globalDeviceList[i].id.toString();
-            chooseDeviceType = global.globalDeviceList[i].type.name;
-            deviceLat = global.globalMapMarker[i].point.latitude.toString().substring(0, 9);
-            bufferDeviceLat = deviceLat;
-            deviceLon = global.globalMapMarker[i].point.longitude.toString().substring(0, 9);
-            bufferDeviceLon = deviceLon;
-            bufferDeviceType = global.globalDeviceList[i].type.name;
+      var bufDevice = global.itemsManager.getSelectedDevice();
+      if (bufDevice != null) {
+        stringId = bufDevice.id.toString();
+        chooseDeviceType = bufDevice.type;
+        bufferDeviceType = bufDevice.type;
 
-            bufSafetyDelay = global.delayList[0];
-            bufImpulse = global.impulseList[0];
-            global.selectedMapMarkerIndex = i;
-            bufSafety = global.globalDeviceList[i].extPowerSafetyCatchState;
-            bufExtPower = global.globalDeviceList[i].extPower;
-            bufAutoExt = global.globalDeviceList[i].autoExtPowerState;
-            bufHumanSens = global.globalDeviceList[i].humanSensitivity;
-            bufAutoSens = global.globalDeviceList[i].transportSensitivity;
-            bufSnr = global.globalDeviceList[i].snr;
-            bufRecogniZero = global.globalDeviceList[i].recognitionParameters[0];
-            bufRecogniFirst = global.globalDeviceList[i].recognitionParameters[1];
-            break;
-          }
-        }
+        bufSafetyDelay = global.delayList[0];
+        bufImpulse = global.impulseList[0];
+        bufSafety = bufDevice.extPowerSafetyCatchState;
+        bufExtPower = bufDevice.extPower;
+        bufAutoExt = bufDevice.autoExtPowerState;
+        bufHumanSens = bufDevice.humanSensitivity;
+        bufAutoSens = bufDevice.transportSensitivity;
+        bufSnr = bufDevice.snr;
+        bufRecogniZero = bufDevice.recognitionParameters[0];
+        bufRecogniFirst = bufDevice.recognitionParameters[1];
       }
     });
   }
@@ -1246,8 +1233,8 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: SizedBox(
                 width: 100,
                 child: IconButton(
-                  onPressed: () => checkDevID(int.parse(stringId), global.globalDeviceList[global.selectedMapMarkerIndex].id,
-                      global.globalDeviceList[global.selectedMapMarkerIndex].type.name),
+                  onPressed: () => checkDevID(
+                      int.parse(stringId), global.itemsManager.getSelectedDevice()!.id, global.itemsManager.getSelectedDevice()!.type),
                   icon: const Icon(Icons.check),
                   color: Colors.green,
                 ),
@@ -1269,26 +1256,26 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               flex: 3,
               child: SizedBox(
                 width: 200,
-                child: DropdownButton<String>(
+                child: DropdownButton<DeviceType>(
                   selectedItemBuilder: (BuildContext context) {
-                    return global.deviceTypeList.map((String value) {
+                    return DeviceType.values.map((DeviceType value) {
                       return Align(
                         alignment: Alignment.center,
                         child: Text(
-                          value,
+                          value.name,
                           style: const TextStyle(color: Colors.black),
                         ),
                       );
                     }).toList();
                   },
                   isExpanded: true,
-                  items: global.deviceTypeList.map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
+                  items: DeviceType.values.map<DropdownMenuItem<DeviceType>>((DeviceType value) {
+                    return DropdownMenuItem<DeviceType>(
                       value: value,
-                      child: Text(value),
+                      child: Text(value.name),
                     );
                   }).toList(),
-                  onChanged: (String? value) {
+                  onChanged: (DeviceType? value) {
                     bufferDeviceType = value!;
                   },
                   value: bufferDeviceType,
@@ -1301,8 +1288,8 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: SizedBox(
                 width: 100,
                 child: IconButton(
-                  onPressed: () => checkDevType(global.globalDeviceList[global.selectedMapMarkerIndex].id,
-                      global.globalDeviceList[global.selectedMapMarkerIndex].type.name, bufferDeviceType!),
+                  onPressed: () => checkDevType(
+                      global.itemsManager.getSelectedDevice()!.id, global.itemsManager.getSelectedDevice()!.type, bufferDeviceType!),
                   icon: const Icon(Icons.check),
                   color: Colors.green,
                 ),
@@ -1324,9 +1311,8 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               flex: 3,
               child: SizedBox(
                 width: 200,
-                child: global.selectedMapMarkerIndex > -1
-                    ? Text(global.globalDeviceList[global.selectedMapMarkerIndex].timeS.toString().substring(0, 19),
-                        textAlign: TextAlign.center)
+                child: global.itemsManager.getSelectedDevice() != null
+                    ? Text(global.itemsManager.getSelectedDevice()!.timeS.toString().substring(0, 19), textAlign: TextAlign.center)
                     : const Text(
                         'null',
                         textAlign: TextAlign.center,
@@ -1340,14 +1326,14 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 child: Row(
                   children: [
                     IconButton(
-                      onPressed: () => TakeTimeClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                      onPressed: () => TakeTimeClick(global.itemsManager.getSelectedDevice()!.id),
                       icon: const Icon(
                         Icons.refresh,
                         color: Colors.blue,
                       ),
                     ),
                     IconButton(
-                      onPressed: () => SetTimeClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                      onPressed: () => SetTimeClick(global.itemsManager.getSelectedDevice()!.id),
                       icon: const Icon(
                         Icons.access_time,
                         color: Colors.green,
@@ -1373,8 +1359,8 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               flex: 3,
               child: SizedBox(
                 width: 200,
-                child: global.selectedMapMarkerIndex > -1
-                    ? Text(global.globalDeviceList[global.selectedMapMarkerIndex].firmwareVersion.toString(), textAlign: TextAlign.center)
+                child: global.itemsManager.getSelectedDevice() != null
+                    ? Text(global.itemsManager.getSelectedDevice()!.firmwareVersion.toString(), textAlign: TextAlign.center)
                     : const Text(
                         'null',
                         textAlign: TextAlign.center,
@@ -1389,7 +1375,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     IconButton(
-                      onPressed: () => TakeVersionClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                      onPressed: () => TakeVersionClick(global.itemsManager.getSelectedDevice()!.id),
                       icon: const Icon(
                         Icons.refresh,
                         color: Colors.blue,
@@ -1424,21 +1410,37 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 width: 200,
                 child: TextFormField(
                   //autocorrect: false,
-                  key: Key(deviceLat),
+                  key: global.itemsManager.getSelectedDevice() != null
+                      ? Key(global.listMapMarkers[global.itemsManager.getSelectedDevice()!.id]!.point.latitude.toString().length > 9
+                          ? global.listMapMarkers[global.itemsManager.getSelectedDevice()!.id]!.point.latitude.toString().substring(0, 9)
+                          : global.listMapMarkers[global.itemsManager.getSelectedDevice()!.id]!.point.latitude.toString())
+                      : Key('null'),
                   textAlign: TextAlign.center,
-                  initialValue: deviceLat,
+                  initialValue: global.itemsManager.getSelectedDevice() != null
+                      ? global.listMapMarkers[global.itemsManager.getSelectedDevice()!.id]!.point.latitude.toString().length > 9
+                          ? global.listMapMarkers[global.itemsManager.getSelectedDevice()!.id]!.point.latitude.toString().substring(0, 9)
+                          : global.listMapMarkers[global.itemsManager.getSelectedDevice()!.id]!.point.latitude.toString()
+                      : 'null',
                   keyboardType: TextInputType.number,
                   maxLength: 9,
                   onChanged: (string) => {
-                    bufferDeviceLat = string,
+                    //bufferDeviceLat = string,
+                    global.listMapMarkers[global.itemsManager.getSelectedDevice()!.id]!.point.latitude = double.parse(string),
+                    global.itemsManager.getSelectedDevice()!.latitude = double.parse(string),
                   },
                 ),
               ),
             ),
-            const Flexible(
+            Flexible(
               flex: 2,
               child: SizedBox(
                 width: 100,
+                child: IconButton(
+                  onPressed: () => {
+                    setMyCordsForDevice(),
+                  },
+                  icon: const Icon(Icons.abc),
+                ),
               ),
             ),
           ],
@@ -1458,13 +1460,23 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: SizedBox(
                 width: 200,
                 child: TextFormField(
-                  key: Key(deviceLon),
+                  key: global.itemsManager.getSelectedDevice() != null
+                      ? Key(global.listMapMarkers[global.itemsManager.getSelectedDevice()!.id]!.point.longitude.toString().length > 9
+                          ? global.listMapMarkers[global.itemsManager.getSelectedDevice()!.id]!.point.longitude.toString().substring(0, 9)
+                          : global.listMapMarkers[global.itemsManager.getSelectedDevice()!.id]!.point.longitude.toString())
+                      : Key('null'),
                   textAlign: TextAlign.center,
-                  initialValue: deviceLon,
+                  initialValue: global.itemsManager.getSelectedDevice() != null
+                      ? global.listMapMarkers[global.itemsManager.getSelectedDevice()!.id]!.point.longitude.toString().length > 9
+                          ? global.listMapMarkers[global.itemsManager.getSelectedDevice()!.id]!.point.longitude.toString().substring(0, 9)
+                          : global.listMapMarkers[global.itemsManager.getSelectedDevice()!.id]!.point.longitude.toString()
+                      : 'null',
                   keyboardType: TextInputType.number,
                   maxLength: 9,
                   onChanged: (string) => {
-                    bufferDeviceLon = string,
+                    //bufferDeviceLon = string,
+                    global.listMapMarkers[global.itemsManager.getSelectedDevice()!.id]!.point.longitude = double.parse(string),
+                    global.itemsManager.getSelectedDevice()!.longitude = double.parse(string),
                   },
                 ),
               ),
@@ -1478,7 +1490,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   children: [
                     IconButton(
                       onPressed: () => {
-                        TakeCordClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                        TakeCordClick(global.itemsManager.getSelectedDevice()!.id),
                       },
                       icon: const Icon(
                         Icons.refresh,
@@ -1487,8 +1499,8 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                     ),
                     IconButton(
                       onPressed: () => {
-                        SetCoordClick(global.globalDeviceList[global.selectedMapMarkerIndex].id, double.parse(bufferDeviceLat),
-                            double.parse(bufferDeviceLon)),
+                        SetCordClick(global.itemsManager.getSelectedDevice()!.id, global.itemsManager.getSelectedDevice()!.latitude,
+                            global.itemsManager.getSelectedDevice()!.longitude),
                       },
                       icon: const Icon(
                         Icons.check,
@@ -1524,8 +1536,8 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               flex: 3,
               child: SizedBox(
                 width: 200,
-                child: global.selectedMapMarkerIndex > -1
-                    ? Text(global.globalDeviceList[global.selectedMapMarkerIndex].rssi.toString(), textAlign: TextAlign.center)
+                child: global.itemsManager.getSelectedDevice() != null
+                    ? Text(global.itemsManager.getSelectedDevice()!.rssi.toString(), textAlign: TextAlign.center)
                     : const Text(
                         'null',
                         textAlign: TextAlign.center,
@@ -1540,7 +1552,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconButton(
-                      onPressed: () => TakeSignalStrengthClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                      onPressed: () => TakeSignalStrengthClick(global.itemsManager.getSelectedDevice()!.id),
                       icon: const Icon(
                         Icons.refresh,
                         color: Colors.blue,
@@ -1576,7 +1588,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconButton(
-                      onPressed: () => TakeAllowedHopsClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                      onPressed: () => TakeAllowedHopsClick(global.itemsManager.getSelectedDevice()!.id),
                       icon: const Icon(
                         Icons.refresh,
                         color: Colors.blue,
@@ -1612,7 +1624,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconButton(
-                      onPressed: () => TakeUnallowedHopsClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                      onPressed: () => TakeUnallowedHopsClick(global.itemsManager.getSelectedDevice()!.id),
                       icon: const Icon(
                         Icons.refresh,
                         color: Colors.blue,
@@ -1640,15 +1652,15 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 width: 200,
                 child: Checkbox(
                     value:
-                        global.selectedMapMarkerIndex > -1 && global.globalDeviceList[global.selectedMapMarkerIndex].allowedHops[0] == 65535
+                        global.itemsManager.getSelectedDevice() != null && global.itemsManager.getSelectedDevice()!.allowedHops[0] == 65535
                             ? true
                             : false,
                     onChanged: (bool? value) {
                       setState(() {
                         if (value! == true) {
-                          global.globalDeviceList[global.selectedMapMarkerIndex].allowedHops[0] = 65535;
+                          global.itemsManager.getSelectedDevice()!.allowedHops[0] = 65535;
                         } else {
-                          global.globalDeviceList[global.selectedMapMarkerIndex].allowedHops[0] = 0;
+                          global.itemsManager.getSelectedDevice()!.allowedHops[0] = 0;
                         }
                       });
                     }),
@@ -1662,15 +1674,15 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconButton(
-                      onPressed: () => TakeRetransmissionAllClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                      onPressed: () => TakeRetransmissionAllClick(global.itemsManager.getSelectedDevice()!.id),
                       icon: const Icon(
                         Icons.refresh,
                         color: Colors.blue,
                       ),
                     ),
                     IconButton(
-                      onPressed: () => SetRetransmissionAllClick(global.globalDeviceList[global.selectedMapMarkerIndex].id,
-                          global.globalDeviceList[global.selectedMapMarkerIndex].allowedHops[0] == 65535),
+                      onPressed: () => SetRetransmissionAllClick(
+                          global.itemsManager.getSelectedDevice()!.id, global.itemsManager.getSelectedDevice()!.allowedHops[0] == 65535),
                       icon: const Icon(Icons.check),
                       color: Colors.green,
                     ),
@@ -1686,7 +1698,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
             SizedBox(
               height: 40,
               child: OutlinedButton(
-                onPressed: () => ButtonResetRetransmissionClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                onPressed: () => ButtonResetRetransmissionClick(global.itemsManager.getSelectedDevice()!.id),
                 child: const Text('Сброс ретрансляции'),
               ),
             ),
@@ -1704,7 +1716,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         OutlinedButton(
-          onPressed: () => {restartDevice(global.globalDeviceList[global.selectedMapMarkerIndex].id)},
+          onPressed: () => {restartDevice(global.itemsManager.getSelectedDevice()!.id)},
           child: const Row(
             children: [
               Icon(Icons.restart_alt),
@@ -1713,7 +1725,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
           ),
         ),
         OutlinedButton(
-          onPressed: () => {saveDeviceParam(global.globalDeviceList[global.selectedMapMarkerIndex].id)},
+          onPressed: () => {saveDeviceParam(global.itemsManager.getSelectedDevice()!.id)},
           child: const Row(
             children: [
               Icon(Icons.save),
@@ -1722,7 +1734,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
           ),
         ),
         OutlinedButton(
-          onPressed: () => {restartDevice(global.globalDeviceList[global.selectedMapMarkerIndex].id)},
+          onPressed: () => {restartDevice(global.itemsManager.getSelectedDevice()!.id)},
           child: const Row(
             children: [
               Icon(Icons.restore),
@@ -1762,10 +1774,10 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: SizedBox(
                 width: 200,
                 child: Checkbox(
-                    value: global.selectedMapMarkerIndex > -1 ? global.globalDeviceList[global.selectedMapMarkerIndex].extDevice1 : false,
+                    value: global.itemsManager.getSelectedDevice() != null ? global.itemsManager.getSelectedDevice()!.extDevice1 : false,
                     onChanged: (bool? value) {
                       setState(() {
-                        global.globalDeviceList[global.selectedMapMarkerIndex].extDevice1 = value!;
+                        global.itemsManager.getSelectedDevice()!.extDevice1 = value!;
                       });
                     }),
               ),
@@ -1793,10 +1805,10 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: SizedBox(
                 width: 200,
                 child: Checkbox(
-                    value: global.selectedMapMarkerIndex > -1 ? global.globalDeviceList[global.selectedMapMarkerIndex].extDevice2 : false,
+                    value: global.itemsManager.getSelectedDevice() != null ? global.itemsManager.getSelectedDevice()!.extDevice2 : false,
                     onChanged: (bool? value) {
                       setState(() {
-                        global.globalDeviceList[global.selectedMapMarkerIndex].extDevice2 = value!;
+                        global.itemsManager.getSelectedDevice()!.extDevice2 = value!;
                       });
                     }),
               ),
@@ -1809,7 +1821,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconButton(
-                      onPressed: () => TakeInternalDeviceParamClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                      onPressed: () => TakeInternalDeviceParamClick(global.itemsManager.getSelectedDevice()!.id),
                       icon: const Icon(
                         Icons.refresh,
                         color: Colors.blue,
@@ -1817,9 +1829,9 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                     ),
                     IconButton(
                       onPressed: () => SetInternalDeviceParamClick(
-                          global.globalDeviceList[global.selectedMapMarkerIndex].id,
-                          global.globalDeviceList[global.selectedMapMarkerIndex].extDevice1,
-                          global.globalDeviceList[global.selectedMapMarkerIndex].extDevice2,
+                          global.itemsManager.getSelectedDevice()!.id,
+                          global.itemsManager.getSelectedDevice()!.extDevice1,
+                          global.itemsManager.getSelectedDevice()!.extDevice2,
                           false,
                           false),
                       icon: const Icon(Icons.check),
@@ -1849,14 +1861,14 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 child: Text("Вн. устр. 1:"),
               ),
             ),
-            global.selectedMapMarkerIndex > -1
+            global.itemsManager.getSelectedDevice() != null
                 ? Flexible(
                     flex: 3,
                     child: SizedBox(
                       width: 200,
                       child: Checkbox(
-                        value: global.selectedMapMarkerIndex > -1
-                            ? global.globalDeviceList[global.selectedMapMarkerIndex].deviceExtDev1State
+                        value: global.itemsManager.getSelectedDevice() != null
+                            ? global.itemsManager.getSelectedDevice()!.deviceExtDev1State
                             : false,
                         onChanged: null,
                       ),
@@ -1886,14 +1898,14 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 child: Text("Вн. устр. 2:"),
               ),
             ),
-            global.selectedMapMarkerIndex > -1
+            global.itemsManager.getSelectedDevice() != null
                 ? Flexible(
                     flex: 3,
                     child: SizedBox(
                       width: 200,
                       child: Checkbox(
-                        value: global.selectedMapMarkerIndex > -1
-                            ? global.globalDeviceList[global.selectedMapMarkerIndex].deviceExtDev2State
+                        value: global.itemsManager.getSelectedDevice() != null
+                            ? global.itemsManager.getSelectedDevice()!.deviceExtDev2State
                             : false,
                         onChanged: null,
                       ),
@@ -1913,7 +1925,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconButton(
-                      onPressed: () => TakeInternalDeviceStateClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                      onPressed: () => TakeInternalDeviceStateClick(global.itemsManager.getSelectedDevice()!.id),
                       icon: const Icon(
                         Icons.refresh,
                         color: Colors.blue,
@@ -1960,10 +1972,10 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: SizedBox(
                 width: 200,
                 child: Checkbox(
-                    value: global.selectedMapMarkerIndex > -1 ? global.globalDeviceList[global.selectedMapMarkerIndex].extDevice1 : false,
+                    value: global.itemsManager.getSelectedDevice() != null ? global.itemsManager.getSelectedDevice()!.extDevice1 : false,
                     onChanged: (bool? value) {
                       setState(() {
-                        global.globalDeviceList[global.selectedMapMarkerIndex].extDevice1 = value!;
+                        global.itemsManager.getSelectedDevice()!.extDevice1 = value!;
                       });
                     }),
               ),
@@ -1991,10 +2003,10 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: SizedBox(
                 width: 200,
                 child: Checkbox(
-                    value: global.selectedMapMarkerIndex > -1 ? global.globalDeviceList[global.selectedMapMarkerIndex].extDevice2 : false,
+                    value: global.itemsManager.getSelectedDevice() != null ? global.itemsManager.getSelectedDevice()!.extDevice2 : false,
                     onChanged: (bool? value) {
                       setState(() {
-                        global.globalDeviceList[global.selectedMapMarkerIndex].extDevice2 = value!;
+                        global.itemsManager.getSelectedDevice()!.extDevice2 = value!;
                       });
                     }),
               ),
@@ -2023,10 +2035,10 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 width: 200,
                 child: Checkbox(
                     value:
-                        global.selectedMapMarkerIndex > -1 ? global.globalDeviceList[global.selectedMapMarkerIndex].deviceGeophone : false,
+                        global.itemsManager.getSelectedDevice() != null ? global.itemsManager.getSelectedDevice()!.deviceGeophone : false,
                     onChanged: (bool? value) {
                       setState(() {
-                        global.globalDeviceList[global.selectedMapMarkerIndex].deviceGeophone = value!;
+                        global.itemsManager.getSelectedDevice()!.deviceGeophone = value!;
                       });
                     }),
               ),
@@ -2039,7 +2051,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconButton(
-                      onPressed: () => TakeInternalDeviceParamClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                      onPressed: () => TakeInternalDeviceParamClick(global.itemsManager.getSelectedDevice()!.id),
                       icon: const Icon(
                         Icons.refresh,
                         color: Colors.blue,
@@ -2047,10 +2059,10 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                     ),
                     IconButton(
                       onPressed: () => SetInternalDeviceParamClick(
-                          global.globalDeviceList[global.selectedMapMarkerIndex].id,
-                          global.globalDeviceList[global.selectedMapMarkerIndex].extDevice1,
-                          global.globalDeviceList[global.selectedMapMarkerIndex].extDevice2,
-                          global.globalDeviceList[global.selectedMapMarkerIndex].deviceGeophone,
+                          global.itemsManager.getSelectedDevice()!.id,
+                          global.itemsManager.getSelectedDevice()!.extDevice1,
+                          global.itemsManager.getSelectedDevice()!.extDevice2,
+                          global.itemsManager.getSelectedDevice()!.deviceGeophone,
                           false),
                       icon: const Icon(Icons.check),
                       color: Colors.green,
@@ -2082,14 +2094,14 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 child: Text("Вн. устр. 1:"),
               ),
             ),
-            global.selectedMapMarkerIndex > -1
+            global.itemsManager.getSelectedDevice() != null
                 ? Flexible(
                     flex: 3,
                     child: SizedBox(
                       width: 200,
                       child: Checkbox(
-                        value: global.selectedMapMarkerIndex > -1
-                            ? global.globalDeviceList[global.selectedMapMarkerIndex].deviceExtDev1State
+                        value: global.itemsManager.getSelectedDevice() != null
+                            ? global.itemsManager.getSelectedDevice()!.deviceExtDev1State
                             : false,
                         onChanged: null,
                       ),
@@ -2119,14 +2131,14 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 child: Text("Вн. устр. 2:"),
               ),
             ),
-            global.selectedMapMarkerIndex > -1
+            global.itemsManager.getSelectedDevice() != null
                 ? Flexible(
                     flex: 3,
                     child: SizedBox(
                       width: 200,
                       child: Checkbox(
-                        value: global.selectedMapMarkerIndex > -1
-                            ? global.globalDeviceList[global.selectedMapMarkerIndex].deviceExtDev2State
+                        value: global.itemsManager.getSelectedDevice() != null
+                            ? global.itemsManager.getSelectedDevice()!.deviceExtDev2State
                             : false,
                         onChanged: null,
                       ),
@@ -2146,7 +2158,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconButton(
-                      onPressed: () => TakeInternalDeviceStateClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                      onPressed: () => TakeInternalDeviceStateClick(global.itemsManager.getSelectedDevice()!.id),
                       icon: const Icon(
                         Icons.refresh,
                         color: Colors.blue,
@@ -2193,10 +2205,10 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: SizedBox(
                 width: 200,
                 child: Checkbox(
-                    value: global.selectedMapMarkerIndex > -1 ? global.globalDeviceList[global.selectedMapMarkerIndex].extDevice1 : false,
+                    value: global.itemsManager.getSelectedDevice() != null ? global.itemsManager.getSelectedDevice()!.extDevice1 : false,
                     onChanged: (bool? value) {
                       setState(() {
-                        global.globalDeviceList[global.selectedMapMarkerIndex].extDevice1 = value!;
+                        global.itemsManager.getSelectedDevice()!.extDevice1 = value!;
                       });
                     }),
               ),
@@ -2224,10 +2236,10 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: SizedBox(
                 width: 200,
                 child: Checkbox(
-                    value: global.selectedMapMarkerIndex > -1 ? global.globalDeviceList[global.selectedMapMarkerIndex].extDevice2 : false,
+                    value: global.itemsManager.getSelectedDevice() != null ? global.itemsManager.getSelectedDevice()!.extDevice2 : false,
                     onChanged: (bool? value) {
                       setState(() {
-                        global.globalDeviceList[global.selectedMapMarkerIndex].extDevice2 = value!;
+                        global.itemsManager.getSelectedDevice()!.extDevice2 = value!;
                       });
                     }),
               ),
@@ -2255,12 +2267,12 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: SizedBox(
                 width: 200,
                 child: Checkbox(
-                    value: global.selectedMapMarkerIndex > -1
-                        ? global.globalDeviceList[global.selectedMapMarkerIndex].deviceExtPhototrapState
+                    value: global.itemsManager.getSelectedDevice() != null
+                        ? global.itemsManager.getSelectedDevice()!.deviceExtPhototrapState
                         : false,
                     onChanged: (bool? value) {
                       setState(() {
-                        global.globalDeviceList[global.selectedMapMarkerIndex].deviceExtPhototrapState = value!;
+                        global.itemsManager.getSelectedDevice()!.deviceExtPhototrapState = value!;
                       });
                     }),
               ),
@@ -2273,7 +2285,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconButton(
-                      onPressed: () => TakeInternalDeviceParamClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                      onPressed: () => TakeInternalDeviceParamClick(global.itemsManager.getSelectedDevice()!.id),
                       icon: const Icon(
                         Icons.refresh,
                         color: Colors.blue,
@@ -2281,11 +2293,11 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                     ),
                     IconButton(
                       onPressed: () => SetInternalDeviceParamClick(
-                          global.globalDeviceList[global.selectedMapMarkerIndex].id,
-                          global.globalDeviceList[global.selectedMapMarkerIndex].extDevice1,
-                          global.globalDeviceList[global.selectedMapMarkerIndex].extDevice2,
+                          global.itemsManager.getSelectedDevice()!.id,
+                          global.itemsManager.getSelectedDevice()!.extDevice1,
+                          global.itemsManager.getSelectedDevice()!.extDevice2,
                           false,
-                          global.globalDeviceList[global.selectedMapMarkerIndex].deviceExtPhototrapState),
+                          global.itemsManager.getSelectedDevice()!.deviceExtPhototrapState),
                       icon: const Icon(Icons.check),
                       color: Colors.green,
                     ),
@@ -2316,14 +2328,14 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 child: Text("Вн. устр. 1:"),
               ),
             ),
-            global.selectedMapMarkerIndex > -1
+            global.itemsManager.getSelectedDevice() != null
                 ? Flexible(
                     flex: 3,
                     child: SizedBox(
                       width: 200,
                       child: Checkbox(
-                        value: global.selectedMapMarkerIndex > -1
-                            ? global.globalDeviceList[global.selectedMapMarkerIndex].deviceExtDev1State
+                        value: global.itemsManager.getSelectedDevice() != null
+                            ? global.itemsManager.getSelectedDevice()!.deviceExtDev1State
                             : false,
                         onChanged: null,
                       ),
@@ -2353,14 +2365,14 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 child: Text("Вн. устр. 2:"),
               ),
             ),
-            global.selectedMapMarkerIndex > -1
+            global.itemsManager.getSelectedDevice() != null
                 ? Flexible(
                     flex: 3,
                     child: SizedBox(
                       width: 200,
                       child: Checkbox(
-                        value: global.selectedMapMarkerIndex > -1
-                            ? global.globalDeviceList[global.selectedMapMarkerIndex].deviceExtDev2State
+                        value: global.itemsManager.getSelectedDevice() != null
+                            ? global.itemsManager.getSelectedDevice()!.deviceExtDev2State
                             : false,
                         onChanged: null,
                       ),
@@ -2390,14 +2402,14 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 child: Text("Камера:"),
               ),
             ),
-            global.selectedMapMarkerIndex > -1
+            global.itemsManager.getSelectedDevice() != null
                 ? Flexible(
                     flex: 3,
                     child: SizedBox(
                       width: 200,
                       child: Checkbox(
-                        value: global.selectedMapMarkerIndex > -1
-                            ? global.globalDeviceList[global.selectedMapMarkerIndex].devicePhototrap
+                        value: global.itemsManager.getSelectedDevice() != null
+                            ? global.itemsManager.getSelectedDevice()!.devicePhototrap
                             : false,
                         onChanged: null,
                       ),
@@ -2417,7 +2429,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconButton(
-                      onPressed: () => TakeInternalDeviceStateClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                      onPressed: () => TakeInternalDeviceStateClick(global.itemsManager.getSelectedDevice()!.id),
                       icon: const Icon(
                         Icons.refresh,
                         color: Colors.blue,
@@ -2450,7 +2462,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
             child: SizedBox(
               width: 200,
               child: Checkbox(
-                  value: global.selectedMapMarkerIndex > -1 ? bufSafety : false,
+                  value: global.itemsManager.getSelectedDevice() != null ? bufSafety : false,
                   onChanged: (bool? value) {
                     setState(() {
                       bufSafety = value!;
@@ -2466,15 +2478,15 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   IconButton(
-                    onPressed: () => TakeSafetyCatch(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                    onPressed: () => TakeSafetyCatch(global.itemsManager.getSelectedDevice()!.id),
                     icon: const Icon(
                       Icons.refresh,
                       color: Colors.blue,
                     ),
                   ),
                   IconButton(
-                    onPressed: () => SetSafetyCatch(global.globalDeviceList[global.selectedMapMarkerIndex].id,
-                        global.globalDeviceList[global.selectedMapMarkerIndex].extPowerSafetyCatchState),
+                    onPressed: () => SetSafetyCatch(
+                        global.itemsManager.getSelectedDevice()!.id, global.itemsManager.getSelectedDevice()!.extPowerSafetyCatchState),
                     icon: const Icon(Icons.check),
                     color: Colors.green,
                   ),
@@ -2517,8 +2529,8 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                     child: Text('$value сек'),
                   );
                 }).toList(),
-                onChanged: global.selectedMapMarkerIndex > -1
-                    ? global.globalDeviceList[global.selectedMapMarkerIndex].extPowerSafetyCatchState
+                onChanged: global.itemsManager.getSelectedDevice() != null
+                    ? global.itemsManager.getSelectedDevice()!.extPowerSafetyCatchState
                         ? (int? value) {
                             bufSafetyDelay = value!;
                           }
@@ -2570,8 +2582,8 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                     child: Text('$value сек'),
                   );
                 }).toList(),
-                onChanged: global.selectedMapMarkerIndex > -1
-                    ? global.globalDeviceList[global.selectedMapMarkerIndex].extPowerSafetyCatchState
+                onChanged: global.itemsManager.getSelectedDevice() != null
+                    ? global.itemsManager.getSelectedDevice()!.extPowerSafetyCatchState
                         ? (int? value) {
                             bufImpulse = value!;
                           }
@@ -2605,10 +2617,9 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
             child: SizedBox(
               width: 200,
               child: Checkbox(
-                value:
-                    global.selectedMapMarkerIndex > -1 ? global.globalDeviceList[global.selectedMapMarkerIndex].autoExtPowerState : false,
-                onChanged: global.selectedMapMarkerIndex > -1
-                    ? global.globalDeviceList[global.selectedMapMarkerIndex].extPowerSafetyCatchState
+                value: global.itemsManager.getSelectedDevice() != null ? global.itemsManager.getSelectedDevice()!.autoExtPowerState : false,
+                onChanged: global.itemsManager.getSelectedDevice() != null
+                    ? global.itemsManager.getSelectedDevice()!.extPowerSafetyCatchState
                         ? (bool? value) {
                             setState(() {
                               bufAutoExt = value!;
@@ -2627,15 +2638,14 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   IconButton(
-                    onPressed: () => TakeAutoExtPower(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                    onPressed: () => TakeAutoExtPower(global.itemsManager.getSelectedDevice()!.id),
                     icon: const Icon(
                       Icons.refresh,
                       color: Colors.blue,
                     ),
                   ),
                   IconButton(
-                    onPressed: () => SetAutoExtPower(
-                        global.globalDeviceList[global.selectedMapMarkerIndex].id, bufAutoExt, bufSafetyDelay!, bufImpulse!),
+                    onPressed: () => SetAutoExtPower(global.itemsManager.getSelectedDevice()!.id, bufAutoExt, bufSafetyDelay!, bufImpulse!),
                     icon: const Icon(Icons.check),
                     color: Colors.green,
                   ),
@@ -2660,7 +2670,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
             child: SizedBox(
               width: 200,
               child: Checkbox(
-                  value: global.selectedMapMarkerIndex > -1 ? bufExtPower.index != 0 : false,
+                  value: global.itemsManager.getSelectedDevice() != null ? bufExtPower.index != 0 : false,
                   onChanged: (bool? value) {
                     setState(() {
                       if (value == false) {
@@ -2680,7 +2690,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   IconButton(
-                    onPressed: () => TakeInternalDeviceParamClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                    onPressed: () => TakeInternalDeviceParamClick(global.itemsManager.getSelectedDevice()!.id),
                     icon: const Icon(
                       Icons.refresh,
                       color: Colors.blue,
@@ -2688,9 +2698,9 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   IconButton(
                     onPressed: () => SetInternalDeviceParamClick(
-                        global.globalDeviceList[global.selectedMapMarkerIndex].id,
-                        global.globalDeviceList[global.selectedMapMarkerIndex].extDevice1,
-                        global.globalDeviceList[global.selectedMapMarkerIndex].extDevice2,
+                        global.itemsManager.getSelectedDevice()!.id,
+                        global.itemsManager.getSelectedDevice()!.extDevice1,
+                        global.itemsManager.getSelectedDevice()!.extDevice2,
                         false,
                         false),
                     icon: const Icon(Icons.check),
@@ -2724,8 +2734,8 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               flex: 3,
               child: SizedBox(
                 width: 200,
-                child: global.selectedMapMarkerIndex > -1
-                    ? Text(global.globalDeviceList[global.selectedMapMarkerIndex].batMonVoltage.toString(), textAlign: TextAlign.center)
+                child: global.itemsManager.getSelectedDevice() != null
+                    ? Text(global.itemsManager.getSelectedDevice()!.batMonVoltage.toString(), textAlign: TextAlign.center)
                     : const Text(
                         'null',
                         textAlign: TextAlign.center,
@@ -2754,8 +2764,8 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               flex: 3,
               child: SizedBox(
                 width: 200,
-                child: global.selectedMapMarkerIndex > -1
-                    ? Text(global.globalDeviceList[global.selectedMapMarkerIndex].batMonTemperature.toString(), textAlign: TextAlign.center)
+                child: global.itemsManager.getSelectedDevice() != null
+                    ? Text(global.itemsManager.getSelectedDevice()!.batMonTemperature.toString(), textAlign: TextAlign.center)
                     : const Text(
                         'null',
                         textAlign: TextAlign.center,
@@ -2770,7 +2780,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconButton(
-                      onPressed: () => TakeBatteryMonitorClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                      onPressed: () => TakeBatteryMonitorClick(global.itemsManager.getSelectedDevice()!.id),
                       icon: const Icon(
                         Icons.refresh,
                         color: Colors.blue,
@@ -2803,10 +2813,10 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
             child: SizedBox(
               width: 200,
               child: Checkbox(
-                  value: global.selectedMapMarkerIndex > -1 ? global.globalDeviceList[global.selectedMapMarkerIndex].humanAlarm : false,
+                  value: global.itemsManager.getSelectedDevice() != null ? global.itemsManager.getSelectedDevice()!.humanAlarm : false,
                   onChanged: (bool? value) {
                     setState(() {
-                      global.globalDeviceList[global.selectedMapMarkerIndex].humanAlarm = value!;
+                      global.itemsManager.getSelectedDevice()!.humanAlarm = value!;
                     });
                   }),
             ),
@@ -2834,10 +2844,10 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
             child: SizedBox(
               width: 200,
               child: Checkbox(
-                  value: global.selectedMapMarkerIndex > -1 ? global.globalDeviceList[global.selectedMapMarkerIndex].transportAlarm : false,
+                  value: global.itemsManager.getSelectedDevice() != null ? global.itemsManager.getSelectedDevice()!.transportAlarm : false,
                   onChanged: (bool? value) {
                     setState(() {
-                      global.globalDeviceList[global.selectedMapMarkerIndex].transportAlarm = value!;
+                      global.itemsManager.getSelectedDevice()!.transportAlarm = value!;
                     });
                   }),
             ),
@@ -2850,17 +2860,15 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   IconButton(
-                    onPressed: () => TakeStateHumanTransportSensitivityClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                    onPressed: () => TakeStateHumanTransportSensitivityClick(global.itemsManager.getSelectedDevice()!.id),
                     icon: const Icon(
                       Icons.refresh,
                       color: Colors.blue,
                     ),
                   ),
                   IconButton(
-                    onPressed: () => SetStateHumanTransportSensitivityClick(
-                        global.globalDeviceList[global.selectedMapMarkerIndex].id,
-                        global.globalDeviceList[global.selectedMapMarkerIndex].humanAlarm,
-                        global.globalDeviceList[global.selectedMapMarkerIndex].transportAlarm),
+                    onPressed: () => SetStateHumanTransportSensitivityClick(global.itemsManager.getSelectedDevice()!.id,
+                        global.itemsManager.getSelectedDevice()!.humanAlarm, global.itemsManager.getSelectedDevice()!.transportAlarm),
                     icon: const Icon(Icons.check),
                     color: Colors.green,
                   ),
@@ -2884,8 +2892,8 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
             flex: 3,
             child: SizedBox(
               width: 200,
-              child: global.selectedMapMarkerIndex > -1
-                  ? Text(global.globalDeviceList[global.selectedMapMarkerIndex].signalSwing.toString(), textAlign: TextAlign.center)
+              child: global.itemsManager.getSelectedDevice() != null
+                  ? Text(global.itemsManager.getSelectedDevice()!.signalSwing.toString(), textAlign: TextAlign.center)
                   : const Text(
                       'null',
                       textAlign: TextAlign.center,
@@ -2900,7 +2908,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   IconButton(
-                    onPressed: () => TakeSignalSwingClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                    onPressed: () => TakeSignalSwingClick(global.itemsManager.getSelectedDevice()!.id),
                     icon: const Icon(
                       Icons.refresh,
                       color: Colors.blue,
@@ -2929,7 +2937,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: TextFormField(
                 key: Key(bufHumanSens.toString()),
                 textAlign: TextAlign.center,
-                initialValue: global.selectedMapMarkerIndex > -1 ? bufHumanSens.toString() : 'null',
+                initialValue: global.itemsManager.getSelectedDevice() != null ? bufHumanSens.toString() : 'null',
                 keyboardType: TextInputType.number,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly,
@@ -2958,7 +2966,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () => TakeHumanSensitivityClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                    onPressed: () => TakeHumanSensitivityClick(global.itemsManager.getSelectedDevice()!.id),
                     icon: const Icon(
                       Icons.refresh,
                       color: Colors.blue,
@@ -2966,10 +2974,10 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   IconButton(
                     onPressed: () => bufHumanSens! > 24 && bufHumanSens! < 256
-                        ? SetHumanSensitivityClick(global.globalDeviceList[global.selectedMapMarkerIndex].id, bufHumanSens!)
+                        ? SetHumanSensitivityClick(global.itemsManager.getSelectedDevice()!.id, bufHumanSens!)
                         : {
                             showError('Чувствительность от 25 до 255'),
-                            global.globalDeviceList[global.selectedMapMarkerIndex].humanSensitivity = 25,
+                            global.itemsManager.getSelectedDevice()!.humanSensitivity = 25,
                             bufHumanSens = 25,
                           },
                     icon: const Icon(Icons.check),
@@ -2998,7 +3006,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: TextFormField(
                 textAlign: TextAlign.center,
                 key: Key(bufAutoSens.toString()),
-                initialValue: global.selectedMapMarkerIndex > -1 ? bufAutoSens.toString() : 'null',
+                initialValue: global.itemsManager.getSelectedDevice() != null ? bufAutoSens.toString() : 'null',
                 keyboardType: TextInputType.number,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly,
@@ -3027,7 +3035,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () => TakeTransportSensitivityClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                    onPressed: () => TakeTransportSensitivityClick(global.itemsManager.getSelectedDevice()!.id),
                     icon: const Icon(
                       Icons.refresh,
                       color: Colors.blue,
@@ -3035,7 +3043,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   IconButton(
                     onPressed: () => bufAutoSens! > 24 && bufAutoSens! < 256
-                        ? SetTransportSensitivityClick(global.globalDeviceList[global.selectedMapMarkerIndex].id, bufAutoSens!)
+                        ? SetTransportSensitivityClick(global.itemsManager.getSelectedDevice()!.id, bufAutoSens!)
                         : showError('Чувствительность от 25 до 255'),
                     icon: const Icon(Icons.check),
                     color: Colors.green,
@@ -3068,12 +3076,12 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                     child: Text(critFilter[value.index]),
                   );
                 }).toList(),
-                onChanged: global.selectedMapMarkerIndex > -1
+                onChanged: global.itemsManager.getSelectedDevice() != null
                     ? (CriterionFilter? value) {
-                        global.globalDeviceList[global.selectedMapMarkerIndex].criterionFilter = value!;
+                        global.itemsManager.getSelectedDevice()!.criterionFilter = value!;
                       }
                     : null,
-                value: global.selectedMapMarkerIndex > -1 ? global.globalDeviceList[global.selectedMapMarkerIndex].criterionFilter : null,
+                value: global.itemsManager.getSelectedDevice() != null ? global.itemsManager.getSelectedDevice()!.criterionFilter : null,
                 icon: const Icon(Icons.keyboard_double_arrow_down),
               ),
             ),
@@ -3085,15 +3093,15 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () => TakeCriterionFilterClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                    onPressed: () => TakeCriterionFilterClick(global.itemsManager.getSelectedDevice()!.id),
                     icon: const Icon(
                       Icons.refresh,
                       color: Colors.blue,
                     ),
                   ),
                   IconButton(
-                    onPressed: () => SetCriterionFilterClick(global.globalDeviceList[global.selectedMapMarkerIndex].id,
-                        global.globalDeviceList[global.selectedMapMarkerIndex].criterionFilter),
+                    onPressed: () => SetCriterionFilterClick(
+                        global.itemsManager.getSelectedDevice()!.id, global.itemsManager.getSelectedDevice()!.criterionFilter),
                     icon: const Icon(Icons.check),
                     color: Colors.green,
                   ),
@@ -3120,7 +3128,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: TextFormField(
                 textAlign: TextAlign.center,
                 key: Key(bufSnr.toString()),
-                initialValue: global.selectedMapMarkerIndex > -1 ? bufSnr.toString() : 'null',
+                initialValue: global.itemsManager.getSelectedDevice() != null ? bufSnr.toString() : 'null',
                 keyboardType: TextInputType.number,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly,
@@ -3149,7 +3157,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () => TakeSignalToNoiseClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                    onPressed: () => TakeSignalToNoiseClick(global.itemsManager.getSelectedDevice()!.id),
                     icon: const Icon(
                       Icons.refresh,
                       color: Colors.blue,
@@ -3157,7 +3165,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   IconButton(
                     onPressed: () => bufSnr! > 4 && bufSnr! < 41
-                        ? SetSignalToNoiseClick(global.globalDeviceList[global.selectedMapMarkerIndex].id, bufSnr!)
+                        ? SetSignalToNoiseClick(global.itemsManager.getSelectedDevice()!.id, bufSnr!)
                         : showError('Отношение от 5 до 40'),
                     icon: const Icon(Icons.check),
                     color: Colors.green,
@@ -3188,7 +3196,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: TextFormField(
                 textAlign: TextAlign.center,
                 key: Key(bufRecogniZero.toString()),
-                initialValue: global.selectedMapMarkerIndex > -1 ? bufRecogniZero.toString() : 'null',
+                initialValue: global.itemsManager.getSelectedDevice() != null ? bufRecogniZero.toString() : 'null',
                 keyboardType: TextInputType.number,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly,
@@ -3235,7 +3243,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: TextFormField(
                 textAlign: TextAlign.center,
                 key: Key(bufRecogniFirst.toString()),
-                initialValue: global.selectedMapMarkerIndex > -1 ? bufRecogniFirst.toString() : 'null',
+                initialValue: global.itemsManager.getSelectedDevice() != null ? bufRecogniFirst.toString() : 'null',
                 keyboardType: TextInputType.number,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly,
@@ -3264,7 +3272,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () => TakeCriterionRecognitionClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                    onPressed: () => TakeCriterionRecognitionClick(global.itemsManager.getSelectedDevice()!.id),
                     icon: const Icon(
                       Icons.refresh,
                       color: Colors.blue,
@@ -3273,12 +3281,12 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   IconButton(
                     onPressed: () => bufRecogniZero! > -1 && bufRecogniZero! < 256 && bufRecogniFirst! > -1 && bufRecogniFirst! < 256
                         ? {
-                            global.globalDeviceList[global.selectedMapMarkerIndex].recognitionParameters[0] = bufRecogniZero!,
-                            global.globalDeviceList[global.selectedMapMarkerIndex].recognitionParameters[1] = bufRecogniFirst!,
+                            global.itemsManager.getSelectedDevice()!.recognitionParameters[0] = bufRecogniZero!,
+                            global.itemsManager.getSelectedDevice()!.recognitionParameters[1] = bufRecogniFirst!,
                             SetCriterionRecognitionClick(
-                                global.globalDeviceList[global.selectedMapMarkerIndex].id,
-                                global.globalDeviceList[global.selectedMapMarkerIndex].recognitionParameters.length,
-                                global.globalDeviceList[global.selectedMapMarkerIndex].recognitionParameters)
+                                global.itemsManager.getSelectedDevice()!.id,
+                                global.itemsManager.getSelectedDevice()!.recognitionParameters.length,
+                                global.itemsManager.getSelectedDevice()!.recognitionParameters)
                           }
                         : showError('Параметры от 0 до 255'),
                     icon: const Icon(Icons.check),
@@ -3307,17 +3315,17 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
             flex: 2,
             child: SizedBox(
               width: 100,
-              child: global.selectedMapMarkerIndex > -1
+              child: global.itemsManager.getSelectedDevice() != null
                   ? TextFormField(
                       textAlign: TextAlign.center,
-                      key: Key(global.globalDeviceList[global.selectedMapMarkerIndex].humanSignalsTreshold.toString()),
-                      initialValue: global.globalDeviceList[global.selectedMapMarkerIndex].humanSignalsTreshold.toString(),
+                      key: Key(global.itemsManager.getSelectedDevice()!.humanSignalsTreshold.toString()),
+                      initialValue: global.itemsManager.getSelectedDevice()!.humanSignalsTreshold.toString(),
                       keyboardType: TextInputType.number,
                       inputFormatters: <TextInputFormatter>[
                         FilteringTextInputFormatter.digitsOnly,
                         TextInputFormatter.withFunction((oldValue, newValue) {
                           String value = newValue.text;
-                          global.globalDeviceList[global.selectedMapMarkerIndex].humanSignalsTreshold = int.parse(value);
+                          global.itemsManager.getSelectedDevice()!.humanSignalsTreshold = int.parse(value);
                           if (value.length > 3) {
                             return TextEditingValue(
                               text: oldValue.text,
@@ -3325,9 +3333,9 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                             );
                           }
                           return TextEditingValue(
-                            text: global.globalDeviceList[global.selectedMapMarkerIndex].humanSignalsTreshold.toString(),
+                            text: global.itemsManager.getSelectedDevice()!.humanSignalsTreshold.toString(),
                             selection: TextSelection.collapsed(
-                                offset: global.globalDeviceList[global.selectedMapMarkerIndex].humanSignalsTreshold.toString().length),
+                                offset: global.itemsManager.getSelectedDevice()!.humanSignalsTreshold.toString().length),
                           );
                         })
                       ],
@@ -3357,7 +3365,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
             flex: 3,
             child: SizedBox(
               width: 200,
-              child: global.selectedMapMarkerIndex > -1
+              child: global.itemsManager.getSelectedDevice() != null
                   ? DropdownButton<int>(
                       selectedItemBuilder: (BuildContext context) {
                         return global.serialHuman.map((int value) {
@@ -3378,9 +3386,9 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                         );
                       }).toList(),
                       onChanged: (int? value) {
-                        global.globalDeviceList[global.selectedMapMarkerIndex].seriesHumanFilterTreshold = value!;
+                        global.itemsManager.getSelectedDevice()!.seriesHumanFilterTreshold = value!;
                       },
-                      value: global.globalDeviceList[global.selectedMapMarkerIndex].seriesHumanFilterTreshold,
+                      value: global.itemsManager.getSelectedDevice()!.seriesHumanFilterTreshold,
                       icon: const Icon(Icons.keyboard_double_arrow_down),
                     )
                   : const Text('null'),
@@ -3408,17 +3416,17 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
             flex: 2,
             child: SizedBox(
               width: 100,
-              child: global.selectedMapMarkerIndex > -1
+              child: global.itemsManager.getSelectedDevice() != null
                   ? TextFormField(
                       textAlign: TextAlign.center,
-                      key: Key(global.globalDeviceList[global.selectedMapMarkerIndex].transportSignalsTreshold.toString()),
-                      initialValue: global.globalDeviceList[global.selectedMapMarkerIndex].transportSignalsTreshold.toString(),
+                      key: Key(global.itemsManager.getSelectedDevice()!.transportSignalsTreshold.toString()),
+                      initialValue: global.itemsManager.getSelectedDevice()!.transportSignalsTreshold.toString(),
                       keyboardType: TextInputType.number,
                       inputFormatters: <TextInputFormatter>[
                         FilteringTextInputFormatter.digitsOnly,
                         TextInputFormatter.withFunction((oldValue, newValue) {
                           String value = newValue.text;
-                          global.globalDeviceList[global.selectedMapMarkerIndex].transportSignalsTreshold = int.parse(value);
+                          global.itemsManager.getSelectedDevice()!.transportSignalsTreshold = int.parse(value);
                           if (value.length > 3) {
                             return TextEditingValue(
                               text: oldValue.text,
@@ -3426,9 +3434,9 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                             );
                           }
                           return TextEditingValue(
-                            text: global.globalDeviceList[global.selectedMapMarkerIndex].transportSignalsTreshold.toString(),
+                            text: global.itemsManager.getSelectedDevice()!.transportSignalsTreshold.toString(),
                             selection: TextSelection.collapsed(
-                                offset: global.globalDeviceList[global.selectedMapMarkerIndex].transportSignalsTreshold.toString().length),
+                                offset: global.itemsManager.getSelectedDevice()!.transportSignalsTreshold.toString().length),
                           );
                         })
                       ],
@@ -3458,7 +3466,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
             flex: 2,
             child: SizedBox(
               width: 100,
-              child: global.selectedMapMarkerIndex > -1
+              child: global.itemsManager.getSelectedDevice() != null
                   ? DropdownButton<int>(
                       selectedItemBuilder: (BuildContext context) {
                         return global.serialTransport.map((int value) {
@@ -3479,9 +3487,9 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                         );
                       }).toList(),
                       onChanged: (int? value) {
-                        global.globalDeviceList[global.selectedMapMarkerIndex].seriesTransportFilterTreshold = value!;
+                        global.itemsManager.getSelectedDevice()!.seriesTransportFilterTreshold = value!;
                       },
-                      value: global.globalDeviceList[global.selectedMapMarkerIndex].seriesTransportFilterTreshold,
+                      value: global.itemsManager.getSelectedDevice()!.seriesTransportFilterTreshold,
                       icon: const Icon(Icons.keyboard_double_arrow_down),
                     )
                   : const Text('null'),
@@ -3494,25 +3502,25 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () => TakeEEPROMClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                    onPressed: () => TakeEEPROMClick(global.itemsManager.getSelectedDevice()!.id),
                     icon: const Icon(
                       Icons.refresh,
                       color: Colors.blue,
                     ),
                   ),
                   IconButton(
-                    onPressed: () => global.globalDeviceList[global.selectedMapMarkerIndex].humanSignalsTreshold > -1 &&
-                            global.globalDeviceList[global.selectedMapMarkerIndex].humanSignalsTreshold < 256 &&
-                            global.globalDeviceList[global.selectedMapMarkerIndex].transportSignalsTreshold > -1 &&
-                            global.globalDeviceList[global.selectedMapMarkerIndex].transportSignalsTreshold < 256
+                    onPressed: () => global.itemsManager.getSelectedDevice()!.humanSignalsTreshold > -1 &&
+                            global.itemsManager.getSelectedDevice()!.humanSignalsTreshold < 256 &&
+                            global.itemsManager.getSelectedDevice()!.transportSignalsTreshold > -1 &&
+                            global.itemsManager.getSelectedDevice()!.transportSignalsTreshold < 256
                         ? {
-                            global.globalDeviceList[global.selectedMapMarkerIndex].eepromInitialized
+                            global.itemsManager.getSelectedDevice()!.eepromInitialized
                                 ? SetEEPROMClick(
-                                    global.globalDeviceList[global.selectedMapMarkerIndex].id,
-                                    global.globalDeviceList[global.selectedMapMarkerIndex].humanSignalsTreshold,
-                                    global.globalDeviceList[global.selectedMapMarkerIndex].transportSignalsTreshold,
-                                    global.globalDeviceList[global.selectedMapMarkerIndex].seriesHumanFilterTreshold,
-                                    global.globalDeviceList[global.selectedMapMarkerIndex].seriesTransportFilterTreshold)
+                                    global.itemsManager.getSelectedDevice()!.id,
+                                    global.itemsManager.getSelectedDevice()!.humanSignalsTreshold,
+                                    global.itemsManager.getSelectedDevice()!.transportSignalsTreshold,
+                                    global.itemsManager.getSelectedDevice()!.seriesHumanFilterTreshold,
+                                    global.itemsManager.getSelectedDevice()!.seriesTransportFilterTreshold)
                                 : showError('Сначала запросите данные'),
                           }
                         : showError('Параметры от 0 до 255'),
@@ -3547,15 +3555,15 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 width: 200,
                 child: TextFormField(
                   textAlign: TextAlign.center,
-                  initialValue: global.selectedMapMarkerIndex > -1
-                      ? global.globalDeviceList[global.selectedMapMarkerIndex].cameraSensitivity.toString()
+                  initialValue: global.itemsManager.getSelectedDevice() != null
+                      ? global.itemsManager.getSelectedDevice()!.cameraSensitivity.toString()
                       : 'null',
                   keyboardType: TextInputType.number,
                   inputFormatters: <TextInputFormatter>[
                     FilteringTextInputFormatter.digitsOnly,
                     TextInputFormatter.withFunction((oldValue, newValue) {
                       String value = newValue.text;
-                      global.globalDeviceList[global.selectedMapMarkerIndex].cameraSensitivity = int.parse(value);
+                      global.itemsManager.getSelectedDevice()!.cameraSensitivity = int.parse(value);
                       if (value.length > 3) {
                         return TextEditingValue(
                           text: oldValue.text,
@@ -3563,9 +3571,9 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                         );
                       }
                       return TextEditingValue(
-                        text: global.globalDeviceList[global.selectedMapMarkerIndex].cameraSensitivity.toString(),
-                        selection: TextSelection.collapsed(
-                            offset: global.globalDeviceList[global.selectedMapMarkerIndex].cameraSensitivity.toString().length),
+                        text: global.itemsManager.getSelectedDevice()!.cameraSensitivity.toString(),
+                        selection:
+                            TextSelection.collapsed(offset: global.itemsManager.getSelectedDevice()!.cameraSensitivity.toString().length),
                       );
                     }),
                   ],
@@ -3602,13 +3610,13 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                       child: Text(value.name),
                     );
                   }).toList(),
-                  onChanged: global.selectedMapMarkerIndex > -1
+                  onChanged: global.itemsManager.getSelectedDevice() != null
                       ? (PhotoImageCompression? value) {
-                          global.globalDeviceList[global.selectedMapMarkerIndex].cameraCompression = value!;
+                          global.itemsManager.getSelectedDevice()!.cameraCompression = value!;
                         }
                       : null,
                   value:
-                      global.selectedMapMarkerIndex > -1 ? global.globalDeviceList[global.selectedMapMarkerIndex].cameraCompression : null,
+                      global.itemsManager.getSelectedDevice() != null ? global.itemsManager.getSelectedDevice()!.cameraCompression : null,
                   icon: const Icon(Icons.keyboard_double_arrow_down),
                 ),
               ),
@@ -3620,23 +3628,20 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 child: Row(
                   children: [
                     IconButton(
-                      onPressed: () => TakePhotoParametersClick(global.globalDeviceList[global.selectedMapMarkerIndex].id),
+                      onPressed: () => TakePhotoParametersClick(global.itemsManager.getSelectedDevice()!.id),
                       icon: const Icon(
                         Icons.refresh,
                         color: Colors.blue,
                       ),
                     ),
                     IconButton(
-                      onPressed: () => global.globalDeviceList[global.selectedMapMarkerIndex].cameraSensitivity > -1 &&
-                              global.globalDeviceList[global.selectedMapMarkerIndex].cameraSensitivity < 256
+                      onPressed: () => global.itemsManager.getSelectedDevice()!.cameraSensitivity > -1 &&
+                              global.itemsManager.getSelectedDevice()!.cameraSensitivity < 256
                           ? SetPhotoParametersClick(
-                              global.globalDeviceList[global.selectedMapMarkerIndex].id,
-                              global.globalDeviceList[global.selectedMapMarkerIndex].cameraSensitivity,
-                              global.globalDeviceList[global.selectedMapMarkerIndex].cameraCompression)
-                          : {
-                              showError('Чувствительность от 0 до 255'),
-                              global.globalDeviceList[global.selectedMapMarkerIndex].cameraSensitivity = 25
-                            },
+                              global.itemsManager.getSelectedDevice()!.id,
+                              global.itemsManager.getSelectedDevice()!.cameraSensitivity,
+                              global.itemsManager.getSelectedDevice()!.cameraCompression)
+                          : {showError('Чувствительность от 0 до 255'), global.itemsManager.getSelectedDevice()!.cameraSensitivity = 25},
                       icon: const Icon(Icons.check),
                       color: Colors.green,
                     ),
@@ -3669,16 +3674,13 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               setState(() {
                 widget.dropdownValue = value!;
                 setDevId(widget.dropdownValue);
-                for (int i = 0; i < global.globalMapMarker.length; i++) {
-                  if (global.globalDeviceList[i].id == deviceId) {
-                    global.selectedMapMarkerIndex = i;
-                    global.pageWithMap.SelectedMapMarker(global.globalDeviceList[i].id);
-                    global.mainBottomSelectedDev = Text(
-                      '${global.globalDeviceList[i].type.name} #${global.globalDeviceList[i].id}',
-                      textScaleFactor: 1.4,
-                    );
-                  }
-                }
+                global.pageWithMap.UnselectedMapMarker();
+                global.itemsManager.setSelectedItem(deviceId!);
+                global.pageWithMap.SelectedMapMarker(global.itemsManager.getSelectedDevice()!.id);
+                global.mainBottomSelectedDev = Text(
+                  '${global.itemsManager.getSelectedDevice()!.type.name} #${global.itemsManager.getSelectedDevice()!.id}',
+                  textScaleFactor: 1.4,
+                );
               });
             },
           ),
@@ -3688,7 +3690,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
         child: Column(
           children: [
             Visibility(
-              visible: chooseDeviceType == global.deviceTypeList[0],
+              visible: chooseDeviceType == DeviceType.STD,
               child: ExpansionPanelList(
                 elevation: 2,
                 expansionCallback: (int index, bool isExpanded) {
@@ -3709,7 +3711,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Координаты'),
                       );
                     },
@@ -3719,7 +3721,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Радиосеть'),
                       );
                     },
@@ -3729,7 +3731,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Сохранение/Сброс настроек'),
                       );
                     },
@@ -3741,7 +3743,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               ),
             ),
             Visibility(
-              visible: chooseDeviceType == global.deviceTypeList[3],
+              visible: chooseDeviceType == DeviceType.RT,
               child: ExpansionPanelList(
                 elevation: 2,
                 expansionCallback: (int index, bool isExpanded) {
@@ -3752,7 +3754,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 children: [
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Основные'),
                       );
                     },
@@ -3762,7 +3764,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Координаты'),
                       );
                     },
@@ -3772,7 +3774,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Подключенные устройства'),
                       );
                     },
@@ -3782,7 +3784,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Внешнее питание'),
                       );
                     },
@@ -3792,7 +3794,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Радиосеть'),
                       );
                     },
@@ -3802,7 +3804,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Источник питания'),
                       );
                     },
@@ -3812,7 +3814,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Сохранение/Сброс настроек'),
                       );
                     },
@@ -3824,7 +3826,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               ),
             ),
             Visibility(
-              visible: chooseDeviceType == global.deviceTypeList[1],
+              visible: chooseDeviceType == DeviceType.CSD,
               child: ExpansionPanelList(
                 elevation: 2,
                 expansionCallback: (int index, bool isExpanded) {
@@ -3835,7 +3837,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 children: [
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Основные'),
                       );
                     },
@@ -3845,7 +3847,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Координаты'),
                       );
                     },
@@ -3855,7 +3857,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Подключенные устройства'),
                       );
                     },
@@ -3865,7 +3867,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Внешнее питание'),
                       );
                     },
@@ -3875,7 +3877,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Радиосеть'),
                       );
                     },
@@ -3885,7 +3887,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Источник питания'),
                       );
                     },
@@ -3895,7 +3897,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Сейсмика'),
                       );
                     },
@@ -3905,7 +3907,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Сохранение/Сброс настроек'),
                       );
                     },
@@ -3917,7 +3919,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
               ),
             ),
             Visibility(
-              visible: chooseDeviceType == global.deviceTypeList[2],
+              visible: chooseDeviceType == DeviceType.CPD,
               child: ExpansionPanelList(
                 elevation: 2,
                 expansionCallback: (int index, bool isExpanded) {
@@ -3928,7 +3930,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                 children: [
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Основные'),
                       );
                     },
@@ -3938,7 +3940,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Координаты'),
                       );
                     },
@@ -3948,7 +3950,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Подключенные устройства'),
                       );
                     },
@@ -3958,7 +3960,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Внешнее питание'),
                       );
                     },
@@ -3968,7 +3970,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Радиосеть'),
                       );
                     },
@@ -3978,7 +3980,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Источник питания'),
                       );
                     },
@@ -3988,7 +3990,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Камера'),
                       );
                     },
@@ -3998,7 +4000,7 @@ class _TestPage extends State<TestPage> with AutomaticKeepAliveClientMixin<TestP
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return ListTile(
+                      return const ListTile(
                         title: Text('Сохранение/Сброс настроек'),
                       );
                     },

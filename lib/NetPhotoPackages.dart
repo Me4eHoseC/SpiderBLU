@@ -249,20 +249,17 @@ class PhototrapFilesPackage extends BasePackage {
     success &= super.unpackHeader(unpackMan);
 
     int bodySize = getSize() - BasePackage.minExpectedSize;
-    int count = bodySize ~/ _files.length;
-
+    int count = bodySize ~/ 4;
     if (count < 0) count = 0;
 
     for (int i = 0; i < count; ++i) {
-      DateTime file;
       var value = unpackMan.unpack<DateTime>(4);
       success &= (value != null);
       if (success) {
-        file = value!;
+        _files.add(value!);
       } else {
         break;
       }
-      _files.add(file);
     }
     return success;
   }

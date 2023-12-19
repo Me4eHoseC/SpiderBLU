@@ -1167,19 +1167,19 @@ class EEPROMFactorsPackage extends BasePackage {
 
     success &= super.unpackHeader(unpackMan);
 
-    var valueWakeNetworkResendTimeMs = unpackMan.unpack<int>(4);
+    var valueWakeNetworkResendTimeMs = unpackMan.unpack<int>(4, true);
     success &= (valueWakeNetworkResendTimeMs != null);
     if (success) _wakeNetworkResendTimeMs = valueWakeNetworkResendTimeMs!;
-    var valueAlarmResendTimeMs = unpackMan.unpack<int>(4);
+    var valueAlarmResendTimeMs = unpackMan.unpack<int>(4, true);
     success &= (valueAlarmResendTimeMs != null);
     if (success) _alarmResendTimeMs = valueAlarmResendTimeMs!;
-    var valueSeismicResendTimeMs = unpackMan.unpack<int>(4);
+    var valueSeismicResendTimeMs = unpackMan.unpack<int>(4, true);
     success &= (valueSeismicResendTimeMs != null);
     if (success) _seismicResendTimeMs = valueSeismicResendTimeMs!;
-    var valueFilter1A = unpackMan.unpack<int>(4);
+    var valueFilter1A = unpackMan.unpack<int>(4, true);
     success &= (valueFilter1A != null);
     if (success) _transportSignalsTreshold = valueFilter1A!;
-    var valuePhotoResendTimeMs = unpackMan.unpack<int>(4);
+    var valuePhotoResendTimeMs = unpackMan.unpack<int>(4, true);
     success &= (valuePhotoResendTimeMs != null);
     if (success) _photoResendTimeMs = valuePhotoResendTimeMs!;
 

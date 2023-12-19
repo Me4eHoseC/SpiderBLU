@@ -7,6 +7,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:projects/NetCommonPackages.dart';
 import 'package:projects/PostManager.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:projects/core/Device.dart';
 import 'package:projects/core/Uint8Vector.dart';
 import 'AllEnum.dart';
 import 'global.dart' as global;
@@ -68,6 +69,10 @@ class Application {
       global.imagePage.dataReceived(tid, basePackage);
     }
 
+    if (global.seismicPage.isMyTransaction(tid)) {
+      global.seismicPage.dataReceived(tid, basePackage);
+    }
+
     if (tid == -1) {
       global.testPage.alarmReceived(basePackage);
     }
@@ -84,7 +89,13 @@ class Application {
   }
 
   static void fileDownloadStarted(int sender, FilePartPackage filePartPackage){
-    global.imagePage.clearImage(filePartPackage.getCreationTime());
+    if (global.itemsManager.getDevice(sender)!.type == DeviceType.CPD){
+      global.imagePage.clearImage(filePartPackage.getCreationTime());
+    }
+
+    if (global.itemsManager.getDevice(sender)!.type == DeviceType.CSD){
+      global.seismicPage.clearSeismic(filePartPackage.getCreationTime());
+    }
 
   }
 
@@ -98,10 +109,29 @@ class Application {
       global.imagePage.addImagePart(fp.getPartData());
       global.imagePage.redrawImage();
     }
+
+    if (fp.getType() == PackageType.SEISMIC_WAVE){
+      global.seismicPage.addSeismicPart(fp.getPartData());
+      global.seismicPage.plot();
+      print ('Seismic part received');
+    }
+
+    if (fp.getType() == PackageType.ADPCM_SEISMIC_WAVE){
+      global.seismicPage.addSeismicPart(fp.getPartData());
+      global.seismicPage.plot();
+      print ('Seismic ADPCM part received');
+
+    }
   }
 
   static void fileDownloaded(int sender) {
-    global.imagePage.lastPartCome();
+    if (global.itemsManager.getDevice(sender)!.type == DeviceType.CPD){
+      global.imagePage.lastPartCome();
+    }
+
+    if (global.itemsManager.getDevice(sender)!.type == DeviceType.CSD){
+      print('END');
+    }
     //global.imagePage.redrawImage();
   }
 

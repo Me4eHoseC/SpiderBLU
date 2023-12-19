@@ -62,8 +62,7 @@ class PackMan {
       }
       DateTime value = object;
 
-      int secondsSinceEpoch =
-          value.millisecondsSinceEpoch ~/ Duration.millisecondsPerSecond;
+      int secondsSinceEpoch = value.millisecondsSinceEpoch ~/ Duration.millisecondsPerSecond;
 
       d.setUint32(_offset, secondsSinceEpoch, PROTOCOL_BYTE_ORDER);
     } else if (object is String) {
@@ -104,7 +103,7 @@ class UnpackMan {
     _data = initData;
   }
 
-  T? unpack<T>([int byteSize = 0]) {
+  T? unpack<T>([int byteSize = 0, bool isSigned = false]) {
     if (_data!.length < _offset + byteSize) {
       return null;
     }
@@ -115,11 +114,11 @@ class UnpackMan {
     _offset += byteSize;
     if (T == int) {
       if (byteSize == 1) {
-        return d.getUint8(pos) as T;
+        return (isSigned ? d.getInt8(pos) : d.getUint8(pos)) as T;
       } else if (byteSize == 2) {
-        return d.getUint16(pos, PROTOCOL_BYTE_ORDER) as T;
+        return (isSigned ? d.getInt16(pos, PROTOCOL_BYTE_ORDER) : d.getUint16(pos, PROTOCOL_BYTE_ORDER)) as T;
       } else if (byteSize == 4) {
-        return d.getUint32(pos, PROTOCOL_BYTE_ORDER) as T;
+        return (isSigned ? d.getInt32(pos, PROTOCOL_BYTE_ORDER) : d.getUint32(pos, PROTOCOL_BYTE_ORDER)) as T;
       }
     } else if (T == double) {
       if (byteSize == 4) {
@@ -129,9 +128,7 @@ class UnpackMan {
       }
     } else if (T == DateTime) {
       int seconds = d.getUint32(pos, PROTOCOL_BYTE_ORDER);
-      return DateTime.fromMillisecondsSinceEpoch(
-          seconds * Duration.millisecondsPerSecond,
-          isUtc: true) as T;
+      return DateTime.fromMillisecondsSinceEpoch(seconds * Duration.millisecondsPerSecond, isUtc: true) as T;
     } else if (T == String) {
       return utf8.decode(_data!.sublist(pos, _offset)) as T;
     }
@@ -139,10 +136,10 @@ class UnpackMan {
     return null;
   }
 
-  List<T>? unpackAll<T>(int amount, [int elementByteSize = 0]) {
+  List<T>? unpackAll<T>(int amount, [int elementByteSize = 0, bool isSigned = false]) {
     List<T> list = List<T>.empty(growable: true);
     for (int i = 0; i < amount; i++) {
-      var tmp = unpack<T>(elementByteSize);
+      var tmp = unpack<T>(elementByteSize, isSigned);
       if (tmp == null) {
         return null;
       } else {

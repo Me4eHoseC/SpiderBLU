@@ -193,7 +193,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 },
               ),
               ListTile(
-                title: const Text('TEST'),
+                title: const Text('seismic page'),
                 onTap: () {
                   global.flagMapPage = false;
                   changePage(4);

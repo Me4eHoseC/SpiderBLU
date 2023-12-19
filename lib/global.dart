@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:projects/BluetoothPage.dart';
 import 'package:projects/PackagesParser.dart';
 import 'package:projects/PostManager.dart';
+import 'package:projects/SeismicPage.dart';
 import 'package:projects/TestPage.dart';
 import 'package:projects/core/Device.dart';
 import 'package:projects/ISTD.dart';
@@ -30,6 +31,7 @@ final BluetoothPage bluetoothPage = BluetoothPage();
 final PageWithMap pageWithMap = PageWithMap();
 final TestPage testPage = TestPage();
 final ImagePage imagePage = ImagePage();
+final SeismicPage seismicPage = SeismicPage();
 
 //final AlarmCounterPage alarmCounterPage = AlarmCounterPage();
 
@@ -38,6 +40,7 @@ final List<StatefulWidget> pages = [
   pageWithMap,
   testPage,
   imagePage,
+  seismicPage,
 ];
 
 PackagesParser packagesParser = PackagesParser();

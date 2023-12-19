@@ -131,9 +131,9 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
   void save() async {
     Directory? root = await getDownloadsDirectory();
     String directoryPath = root!.path + '/photoTests';
-    await Directory(directoryPath).create(recursive: false);
+    await Directory(directoryPath).create(recursive: true);
     String filePath = '$directoryPath/${_dateLastPhoto!.toLocal().toString().substring(0,19)}.jpeg';
-      File(filePath).writeAsBytes(bufSecondImage!.bytes);
+    File(filePath).writeAsBytes(bufSecondImage!.bytes);
     GallerySaver.saveImage(filePath, albumName: 'photoTest');
   }
 
@@ -202,8 +202,8 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
       key: _scaffoldKey,
       appBar: AppBar(
         title: _dateLastPhoto != null
-        ?Text(_dateLastPhoto!.toLocal().toString().substring(0,19))
-            :Text('none'),
+        ?Text( '# ${global.itemsManager.getSelectedDevice()!.id} - ${_dateLastPhoto!.toLocal().toString().substring(0,19)}')
+            :Text('null'),
       ),
       endDrawer: Drawer(
         width: 250,
@@ -231,7 +231,6 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
                 ),
               ],
             )
-
           ],
         ),
       ),

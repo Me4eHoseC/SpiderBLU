@@ -3,17 +3,15 @@ import 'package:projects/Application.dart';
 
 import 'global.dart' as global;
 
-class BluetoothPage extends StatefulWidget{
+class BluetoothPage extends StatefulWidget {
   final bool start;
   BluetoothPage({super.key, this.start = true});
 
   @override
   _BluetoothPage createState() => new _BluetoothPage();
-
 }
 
-class _BluetoothPage extends State<BluetoothPage>
-    with TickerProviderStateMixin {
+class _BluetoothPage extends State<BluetoothPage> with TickerProviderStateMixin {
   bool get wantKeepAlive => true;
 
   @override
@@ -44,9 +42,7 @@ class _BluetoothPage extends State<BluetoothPage>
     return Scaffold(
         appBar: AppBar(
           toolbarHeight: 80,
-          title: global.flagConnect
-              ? Text(global.deviceName)
-              : Text('None device'),
+          title: global.flagConnect ? Text(global.deviceName) : Text('None device'),
           actions: <Widget>[
             global.flagConnect
                 ? IconButton(
@@ -58,8 +54,7 @@ class _BluetoothPage extends State<BluetoothPage>
                         child: Container(
                           margin: const EdgeInsets.all(16.0),
                           child: const CircularProgressIndicator(
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.red),
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
                           ),
                         ),
                       )
@@ -69,24 +64,20 @@ class _BluetoothPage extends State<BluetoothPage>
                       )),
           ],
         ),
-        body:
-
-      Visibility(
+        body: Visibility(
             visible: global.std != null,
-            child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [],
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [],
-                  ),
-                  Container(width: 200, height: 500),
-                ])));
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+              const Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [],
+              ),
+               Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [],
+              ),
+              SizedBox(width: 200, height: 500),
+            ])));
   }
 }

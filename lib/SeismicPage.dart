@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:intl/intl.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +13,7 @@ import 'package:projects/adpcmprocessor.dart';
 import 'package:projects/core/Uint8Vector.dart';
 import 'package:projects/seismogramfunctions.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 
 import 'AllEnum.dart';
 import 'RoutesManager.dart';
@@ -51,8 +53,6 @@ class SeismicPage extends StatefulWidget with TIDManagement {
   double min = 0, max = 0;
   final List<Point> mainSeries = [];
 
-  var seicmicFile = Uint8Vector(0);
-
   void addSeismicPart(Uint8List filePart) {
     if (filePart.isEmpty) return;
 
@@ -74,8 +74,8 @@ class SeismicPage extends StatefulWidget with TIDManagement {
         unzipped.removeRange(header.samplesCount, unzipped.length);
       }
 
-      //wave.splineFactor = header.rarify;
-      //init = wave.init(pair.first, pair.second);
+      rawValues = unzipped;
+
     } else {
       var valuesCount = filePart.length / 2;
 
@@ -83,31 +83,20 @@ class SeismicPage extends StatefulWidget with TIDManagement {
 
       for (int i = 0; i < valuesCount; ++i){
         var value = unpackMan.unpack<int>(2,true);
-        print('values  ${value}');
         rawValues.add(value!);
       }
-    //init = wave.init(rawValues.data(), rawValues.size());
     }
-    //if (!init) return;
-    //spline(wave);
-
-    //seismicValues.clear();
-    //seismicValues.insert(seismicValues.end(), wave.splineWave, wave.splineWave + wave.splineSize);
 
     seismicValues = rawValues;
-
-    seicmicFile.add(filePart);
-    print('Seismic part received ${filePart.length}');
     _page.drawChart();
-
-  }
-
-  void setSeismicFileSize(int fileSize) {
-    seicmicFile = Uint8Vector(fileSize);
   }
 
   void lastPartCome() {
     //global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]?.markerData.downloadPhoto = false;
+  }
+
+  void setADPCMMode(bool isADPCM){
+    _isADPCM = isADPCM;
   }
 
   void clearSeismic(DateTime time) {
@@ -149,8 +138,8 @@ class SeismicPage extends StatefulWidget with TIDManagement {
       if (min > y) min = y.toDouble();
       if (max < y) max = y.toDouble();
 
-      double x = calculateSampleTimeMs(i + 1) / 1000;
-
+      double x = calculateSampleTimeMs(i + 1) * 8 / 1000;
+      print (x);
       mainSeries.add(Point(x, y));
     }
   }
@@ -191,6 +180,7 @@ class SeismicPage extends StatefulWidget with TIDManagement {
 
 class _SeismicPage extends State<SeismicPage> with TickerProviderStateMixin {
   bool get wantKeepAlive => true;
+  bool flag = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   Widget firstSeismic = Container(), secondSeismic = Container();
 
@@ -201,7 +191,7 @@ class _SeismicPage extends State<SeismicPage> with TickerProviderStateMixin {
     cc.setType(PackageType.GET_LAST_SEISMIC_WAVE);
     cc.setReceiver(id);
     cc.setSender(RoutesManager.getLaptopAddress());
-    cc.setZippedFlag(false);
+    cc.setZippedFlag(true);
 
     var tid = global.postManager.sendPackage(cc);
   }
@@ -212,20 +202,42 @@ class _SeismicPage extends State<SeismicPage> with TickerProviderStateMixin {
     var cc = SeismicRequestPackage();
     cc.setReceiver(id);
     cc.setSender(RoutesManager.getLaptopAddress());
-    cc.setZippedFlag(false);
+    cc.setZippedFlag(true);
 
     var tid = global.postManager.sendPackage(cc);
+  }
+
+  void zoom(ZoomPanArgs args) {
+    print(args.currentZoomPosition);
   }
 
   void drawChart(){
     setState(() {
       firstSeismic = SfCartesianChart(
-        primaryXAxis: CategoryAxis(),
-        series: <LineSeries<Point, String>>[
-          LineSeries<Point, String>(
+        enableAxisAnimation: false,
+        zoomPanBehavior: ZoomPanBehavior(
+            enablePinching: true,
+            enableDoubleTapZooming: true,
+            enableSelectionZooming: true,
+            selectionRectBorderColor: Colors.red,
+            selectionRectBorderWidth: 2,
+            selectionRectColor: Colors.grey,
+            enablePanning: true,
+            zoomMode: ZoomMode.x,
+            maximumZoomLevel: 0.5
+        ),
+        margin: EdgeInsets.zero,
+        primaryXAxis: NumericAxis(
+          edgeLabelPlacement: EdgeLabelPlacement.shift,
+          anchorRangeToVisiblePoints: false,
+          maximumLabels: 5,
+          minimum: 0,
+        ),
+        series: <LineSeries<Point, double>>[
+          LineSeries<Point, double>(
+            animationDuration: 0,
             dataSource: widget.mainSeries,
-
-            xValueMapper: (Point p, _) => (p.x * 8).toStringAsFixed(4),
+            xValueMapper: (Point p, _) => p.x.toDouble(),
             yValueMapper: (Point p, _) => p.y,
           ),
         ],
@@ -242,12 +254,13 @@ class _SeismicPage extends State<SeismicPage> with TickerProviderStateMixin {
         title: Text('Seismic'),
       ),
       body: InteractiveViewer(
+        boundaryMargin: const EdgeInsets.all(20.0),
         trackpadScrollCausesScale: true,
         maxScale: 5,
         child: Center(
           child: SizedBox(
-            height: 300,
-            width: 300,
+            height: 250,
+            width: 350,
             child: firstSeismic,
           ),
         ),

@@ -95,8 +95,12 @@ class Application {
 
     if (global.itemsManager.getDevice(sender)!.type == DeviceType.CSD){
       global.seismicPage.clearSeismic(filePartPackage.getCreationTime());
+      if (filePartPackage.getType() == PackageType.SEISMIC_WAVE){
+        global.seismicPage.setADPCMMode(false);
+      } else if(filePartPackage.getType() == PackageType.ADPCM_SEISMIC_WAVE){
+        global.seismicPage.setADPCMMode(true);
+      }
     }
-
   }
 
   static void filePartReceived(FilePartPackage filePartPackage) {
@@ -120,7 +124,6 @@ class Application {
       global.seismicPage.addSeismicPart(fp.getPartData());
       global.seismicPage.plot();
       print ('Seismic ADPCM part received');
-
     }
   }
 

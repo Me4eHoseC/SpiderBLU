@@ -26,7 +26,7 @@ class PackMan {
     _data = Uint8List(initialSize);
   }
 
-  bool pack(var object, [int byteSize = 0]) {
+  bool pack(var object, [int byteSize = 0, bool isSigned = false]) {
     if (byteSize + _offset > _data!.length) {
       return false;
     }
@@ -37,11 +37,11 @@ class PackMan {
       int value = object;
 
       if (byteSize == 1) {
-        d.setUint8(_offset, value);
+        isSigned ? d.setInt8(_offset, value) : d.setUint8(_offset, value);
       } else if (byteSize == 2) {
-        d.setUint16(_offset, value, PROTOCOL_BYTE_ORDER);
+        isSigned ? d.setInt16(_offset, value, PROTOCOL_BYTE_ORDER) : d.setUint16(_offset, value, PROTOCOL_BYTE_ORDER);
       } else if (byteSize == 4) {
-        d.setUint32(_offset, value, PROTOCOL_BYTE_ORDER);
+        isSigned ? d.setInt32(_offset, value, PROTOCOL_BYTE_ORDER) : d.setUint32(_offset, value, PROTOCOL_BYTE_ORDER);
       } else {
         return false;
       }

@@ -67,7 +67,9 @@ class ADPCMProcessor {
         }
       }
 
-      amp[samples++] = _decode(j);
+      amp.add(_decode(j));
+      samples += 1;
+
       code <<= vdviDecode[j].bits;
       _s.bits -= vdviDecode[j].bits;
     }
@@ -85,7 +87,9 @@ class ADPCMProcessor {
 
       if (vdviDecode[j].bits > _s.bits) break;
 
-      amp[samples++] = _decode(j);
+      amp.add(_decode(j));
+      samples += 1;
+
       code <<= vdviDecode[j].bits;
       _s.bits -= vdviDecode[j].bits;
     }

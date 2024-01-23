@@ -1,15 +1,13 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:projects/NetCommonPackages.dart';
 import 'package:projects/PostManager.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:projects/core/Device.dart';
-import 'package:projects/core/Uint8Vector.dart';
+import 'package:projects/core/CPD.dart';
 import 'AllEnum.dart';
+import 'RoutesManager.dart';
+import 'core/CSD.dart';
 import 'global.dart' as global;
 import 'package:projects/BasePackage.dart';
 
@@ -37,16 +35,10 @@ class Application {
     global.fileManager.fileDownloadStarted = fileDownloadStarted;
     global.fileManager.messageReceived = messageReceived;
 
-
     global.postManager.packageSendingAttempt = packageSendingAttempt;
     global.postManager.ranOutOfSendAttempts = ranOutOfSendAttempts;
-  }
 
-  static Uint8List _readFileByteSync(String filePath){
-    Uint8List bytes;
-    var file = File(filePath);
-    bytes = file.readAsBytesSync();
-    return bytes;
+    global.stdConnectionManager.stdConnected = global.deviceParametersPage.stdConnected;
   }
 
   static void dataReceived(BasePackage basePackage) {
@@ -57,8 +49,8 @@ class Application {
       global.postManager.responseReceived(basePackage);
     }
 
-    if (global.testPage.isMyTransaction(tid)) {
-      global.testPage.dataReceived(tid, basePackage);
+    if (global.deviceParametersPage.isMyTransaction(tid)) {
+      global.deviceParametersPage.dataReceived(tid, basePackage);
     }
 
     if (global.pageWithMap.isMyTransaction(tid)) {
@@ -74,7 +66,7 @@ class Application {
     }
 
     if (tid == -1) {
-      global.testPage.alarmReceived(basePackage);
+      global.deviceParametersPage.alarmReceived(basePackage);
     }
   }
 
@@ -83,17 +75,17 @@ class Application {
         global.postManager.getRequestTransactionId(basePackage.getInvId());
     global.postManager.responseReceived(basePackage);
 
-    if (global.testPage.isMyTransaction(tid)) {
-      global.testPage.acknowledgeReceived(tid, basePackage);
+    if (global.deviceParametersPage.isMyTransaction(tid)) {
+      global.deviceParametersPage.acknowledgeReceived(tid, basePackage);
     }
   }
 
   static void fileDownloadStarted(int sender, FilePartPackage filePartPackage){
-    if (global.itemsManager.getDevice(sender)!.type == DeviceType.CPD){
+    if (global.itemsMan.get(sender)!.typeName(global.transLang) == CPD.Name()){
       global.imagePage.clearImage(filePartPackage.getCreationTime());
     }
 
-    if (global.itemsManager.getDevice(sender)!.type == DeviceType.CSD){
+    if (global.itemsMan.get(sender)!.typeName(global.transLang) == CSD.Name()){
       global.seismicPage.clearSeismic(filePartPackage.getCreationTime());
       if (filePartPackage.getType() == PackageType.SEISMIC_WAVE){
         global.seismicPage.setADPCMMode(false);
@@ -109,7 +101,6 @@ class Application {
       if (global.imagePage.isImageEmpty) {
         global.imagePage.setImageSize(fp.getFileSize());
       }
-
       global.imagePage.addImagePart(fp.getPartData());
       global.imagePage.redrawImage();
     }
@@ -128,11 +119,11 @@ class Application {
   }
 
   static void fileDownloaded(int sender) {
-    if (global.itemsManager.getDevice(sender)!.type == DeviceType.CPD){
+    if (global.itemsMan.get(sender)!.typeName(global.transLang) == CPD.Name()){
       global.imagePage.lastPartCome();
     }
 
-    if (global.itemsManager.getDevice(sender)!.type == DeviceType.CSD){
+    if (global.itemsMan.get(sender)!.typeName(global.transLang) == CSD.Name()){
       print('END');
     }
     //global.imagePage.redrawImage();
@@ -145,7 +136,7 @@ class Application {
   static void ranOutOfSendAttempts(BasePackage? pb, int transactionId) {
     //global.globalMapMarker[id].markerData.deviceAvailable = false;
     print('RanOutOfSendAttempts');
-    global.testPage.ranOutOfSendAttempts(transactionId, pb);
+    global.deviceParametersPage.ranOutOfSendAttempts(transactionId, pb);
   }
 
   static void packageSendingAttempt(PackageSendingStatus sendingStatus) {
@@ -165,12 +156,12 @@ class Application {
     if (global.timer != null){
       print(global.timer);
       global.timer!.cancel();
-      global.timer = Timer(Duration(seconds: 5), () {
+      global.timer = Timer(const Duration(seconds: 5), () {
         global.statusBarString = " ";
       });
     }
     else{
-      global.timer = Timer(Duration(seconds: 5), () {
+      global.timer = Timer(const Duration(seconds: 5), () {
         global.statusBarString = " ";
       });
     }

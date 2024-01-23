@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:intl/intl.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,36 +8,36 @@ import 'package:projects/BasePackage.dart';
 import 'package:projects/NetCommonFunctions.dart';
 import 'package:projects/NetCommonPackages.dart';
 import 'package:projects/NetSeismicPackage.dart';
-import 'package:projects/adpcmprocessor.dart';
-import 'package:projects/core/Uint8Vector.dart';
-import 'package:projects/seismogramfunctions.dart';
+import 'package:projects/adpcmProcessor.dart';
+import 'package:projects/core/Marker.dart';
+import 'package:projects/seismogramFunctions.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 
 import 'AllEnum.dart';
 import 'RoutesManager.dart';
+import 'core/CSD.dart';
 import 'global.dart' as global;
 
 class SeismicHeader {
-int flags = 0x0;
-int rarify = 8;
-int samplesCount = 0;
-int discreteFreq = 2000; // Hz
-int maxAmp = 0;
+  int flags = 0x0;
+  int rarify = 8;
+  int samplesCount = 0;
+  int discreteFreq = 2000; // Hz
+  int maxAmp = 0;
 
 // Parse values from char data. Changes pointer position and dataSize value
-bool init(Uint8List data){
-  if (data.length < 8){
-    return false;
-  }
-  var unpackMan = UnpackMan(data);
-  flags = unpackMan.unpack<int>(1)!;
-  rarify = unpackMan.unpack<int>(1)!;
-  samplesCount = unpackMan.unpack<int>(2)!;
-  discreteFreq = unpackMan.unpack<int>(2)!;
-  maxAmp = unpackMan.unpack<int>(2)!;
+  bool init(Uint8List data) {
+    if (data.length < 8) {
+      return false;
+    }
+    var unpackMan = UnpackMan(data);
+    flags = unpackMan.unpack<int>(1)!;
+    rarify = unpackMan.unpack<int>(1)!;
+    samplesCount = unpackMan.unpack<int>(2)!;
+    discreteFreq = unpackMan.unpack<int>(2)!;
+    maxAmp = unpackMan.unpack<int>(2)!;
 
-  return true;
+    return true;
   }
 }
 
@@ -52,6 +51,8 @@ class SeismicPage extends StatefulWidget with TIDManagement {
   List<int> rawValues = [], seismicValues = [];
   double min = 0, max = 0;
   final List<Point> mainSeries = [];
+
+  int downloadingCsdId = -1;
 
   void addSeismicPart(Uint8List filePart) {
     if (filePart.isEmpty) return;
@@ -75,14 +76,13 @@ class SeismicPage extends StatefulWidget with TIDManagement {
       }
 
       rawValues = unzipped;
-
     } else {
       var valuesCount = filePart.length / 2;
 
       UnpackMan unpackMan = UnpackMan(filePart);
 
-      for (int i = 0; i < valuesCount; ++i){
-        var value = unpackMan.unpack<int>(2,true);
+      for (int i = 0; i < valuesCount; ++i) {
+        var value = unpackMan.unpack<int>(2, true);
         rawValues.add(value!);
       }
     }
@@ -95,7 +95,7 @@ class SeismicPage extends StatefulWidget with TIDManagement {
     //global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]?.markerData.downloadPhoto = false;
   }
 
-  void setADPCMMode(bool isADPCM){
+  void setADPCMMode(bool isADPCM) {
     _isADPCM = isADPCM;
   }
 
@@ -126,7 +126,40 @@ class SeismicPage extends StatefulWidget with TIDManagement {
     return (ms / 1000.0 * getSamplingFrequency()).round();
   }
 
-  void plot(){
+  bool getLastSeismic() {
+    if (downloadingCsdId != -1) return false;
+
+    var csd = global.itemsMan.getSelected<CSD>();
+    if (csd == null) return false;
+
+    var cc = SeismicRequestPackage();
+    cc.setType(PackageType.GET_LAST_SEISMIC_WAVE);
+    cc.setReceiver(csd.id);
+    cc.setSender(RoutesManager.getLaptopAddress());
+    cc.setZippedFlag(true);
+
+    var tid = global.postManager.sendPackage(cc);
+    tits.add(tid);
+    return true;
+  }
+
+  bool getSeismic() {
+    if (downloadingCsdId != -1) return false;
+
+    var csd = global.itemsMan.getSelected<CSD>();
+    if (csd == null) return false;
+
+    var cc = SeismicRequestPackage();
+    cc.setReceiver(csd.id);
+    cc.setSender(RoutesManager.getLaptopAddress());
+    cc.setZippedFlag(true);
+
+    var tid = global.postManager.sendPackage(cc);
+    tits.add(tid);
+    return true;
+  }
+
+  void plot() {
     List<int> centredSeismicValues = List<int>.from(seismicValues);
     alignCenter(centredSeismicValues);
 
@@ -139,7 +172,6 @@ class SeismicPage extends StatefulWidget with TIDManagement {
       if (max < y) max = y.toDouble();
 
       double x = calculateSampleTimeMs(i + 1) * 8 / 1000;
-      print (x);
       mainSeries.add(Point(x, y));
     }
   }
@@ -156,16 +188,14 @@ class SeismicPage extends StatefulWidget with TIDManagement {
     tits.remove(tid);
     if (basePackage.getType() == PackageType.SEISMIC_WAVE) {
       var package = basePackage as FilePartPackage;
-      var bufDev = package.getSender();
     }
   }
 
   @override
   void ranOutOfSendAttempts(int tid, BasePackage? pb) {
     tits.remove(tid);
-    if (global.itemsManager.getItemsIds().contains(pb!.getReceiver()) &&
-        global.listMapMarkers[pb.getReceiver()]!.markerData.notifier.active) {
-      global.pageWithMap.DeactivateMapMarker(global.listMapMarkers[pb.getReceiver()]!.markerData.id!);
+    if (global.itemsMan.getAllIds().contains(pb!.getReceiver()) && global.listMapMarkers[pb.getReceiver()]!.markerData.notifier.active) {
+      global.pageWithMap.deactivateMapMarker(global.listMapMarkers[pb.getReceiver()]!.markerData.id!);
       array.add('RanOutOfSendAttempts');
       global.dataComeFlag = true;
     }
@@ -184,34 +214,7 @@ class _SeismicPage extends State<SeismicPage> with TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   Widget firstSeismic = Container(), secondSeismic = Container();
 
-  void getLastSeismic(int id) {
-    global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]?.markerData.downloadPhoto = true;
-
-    var cc = SeismicRequestPackage();
-    cc.setType(PackageType.GET_LAST_SEISMIC_WAVE);
-    cc.setReceiver(id);
-    cc.setSender(RoutesManager.getLaptopAddress());
-    cc.setZippedFlag(true);
-
-    var tid = global.postManager.sendPackage(cc);
-  }
-
-  void getSeismic(int id) {
-    global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]?.markerData.downloadPhoto = true;
-
-    var cc = SeismicRequestPackage();
-    cc.setReceiver(id);
-    cc.setSender(RoutesManager.getLaptopAddress());
-    cc.setZippedFlag(true);
-
-    var tid = global.postManager.sendPackage(cc);
-  }
-
-  void zoom(ZoomPanArgs args) {
-    print(args.currentZoomPosition);
-  }
-
-  void drawChart(){
+  void drawChart() {
     setState(() {
       firstSeismic = SfCartesianChart(
         enableAxisAnimation: false,
@@ -224,8 +227,7 @@ class _SeismicPage extends State<SeismicPage> with TickerProviderStateMixin {
             selectionRectColor: Colors.grey,
             enablePanning: true,
             zoomMode: ZoomMode.x,
-            maximumZoomLevel: 0.5
-        ),
+            maximumZoomLevel: 0.5),
         margin: EdgeInsets.zero,
         primaryXAxis: NumericAxis(
           edgeLabelPlacement: EdgeLabelPlacement.shift,
@@ -245,13 +247,12 @@ class _SeismicPage extends State<SeismicPage> with TickerProviderStateMixin {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
-        title: Text('Seismic'),
+        title: const Text('Seismic'),
       ),
       body: InteractiveViewer(
         boundaryMargin: const EdgeInsets.all(20.0),
@@ -269,8 +270,9 @@ class _SeismicPage extends State<SeismicPage> with TickerProviderStateMixin {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            onPressed: () => {
-              getLastSeismic(global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]!.markerData.id!),
+            onPressed: () {
+              widget.getLastSeismic();
+              drawChart();
             },
             icon: const Icon(
               Icons.show_chart,
@@ -278,9 +280,9 @@ class _SeismicPage extends State<SeismicPage> with TickerProviderStateMixin {
             ),
           ),
           IconButton(
-            onPressed: () => {
-              getSeismic(global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]!.markerData.id!),
-              drawChart(),
+            onPressed: () {
+              widget.getSeismic();
+              drawChart();
             },
             icon: const Icon(Icons.show_chart),
           ),

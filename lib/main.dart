@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter_gif/flutter_gif.dart';
+import 'package:projects/core/NetDevice.dart';
 import 'package:provider/provider.dart';
 
+import 'core/CPD.dart';
+import 'core/CSD.dart';
 import 'global.dart' as global;
 
 void main() {
@@ -63,7 +66,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   Widget list = Container();
   late FlutterGifController controller;
 
-  int selectedBodyWidget = 0;
+  int selectedBodyWidget = 1;
 
   @override
   void initState() {
@@ -98,25 +101,6 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     setState(() {
       statusBarString = global.statusBarString;
     });
-  }
-
-  void alert() {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text("ДАЙТЕ ДЕНЯХ"),
-            actions: [
-              Image.asset("assets/320x240.jpeg"),
-              Center(child: Text("ДАЙТЕ ДЕНЯХ, ПАМИРАЮ!!!!")),
-              TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('ДАТЬ ДЕНЕГ'))
-            ],
-          );
-        });
   }
 
   @override
@@ -161,7 +145,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           child: ListView(
             children: [
               ListTile(
-                title: const Text('bluetooth page'),
+                title: const Text('Settings page'),
                 onTap: () {
                   global.flagMapPage = false;
                   changePage(0);
@@ -169,7 +153,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 },
               ),
               ListTile(
-                title: const Text('map page'),
+                title: const Text('Map page'),
                 onTap: () {
                   global.flagMapPage = true;
                   changePage(1);
@@ -177,7 +161,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 },
               ),
               ListTile(
-                title: const Text('test page'),
+                title: const Text('Device parameters page'),
                 onTap: () {
                   global.flagMapPage = false;
                   changePage(2);
@@ -185,7 +169,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 },
               ),
               ListTile(
-                title: const Text('image page'),
+                title: const Text('Photo page'),
                 onTap: () {
                   global.flagMapPage = false;
                   changePage(3);
@@ -193,7 +177,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 },
               ),
               ListTile(
-                title: const Text('seismic page'),
+                title: const Text('Seismic page'),
                 onTap: () {
                   global.flagMapPage = false;
                   changePage(4);
@@ -226,9 +210,12 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 global.flagMapPage
                     ? Builder(builder: (context) {
                         return FloatingActionButton(
-                          onPressed: () => {
-                            changePage(2),
-                            global.flagMapPage = false,
+                          onPressed: () {
+                            if (global.itemsMan.getSelected<NetDevice>() == null) {
+                              return;
+                            }
+                            changePage(2);
+                            global.flagMapPage = false;
                           },
                           child: const Icon(
                             Icons.settings,

@@ -4,7 +4,6 @@ import 'dart:async';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:projects/ISTD.dart';
 
-
 class BluSTD extends ISTD {
   BluetoothConnection? _connection;
   String? _deviceAddress;

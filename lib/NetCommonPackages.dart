@@ -2,14 +2,14 @@ import 'dart:typed_data';
 
 import 'package:projects/BasePackage.dart';
 import 'package:projects/AllEnum.dart';
-import 'package:projects/core/Device.dart';
 
 import 'NetCommonFunctions.dart';
 import 'NetPackagesDataTypes.dart';
+import 'core/NetDevice.dart';
 
 class InformationPackage extends BasePackage {
   int _battery = 0, _rssi = 0;
-  ObjState _state = ObjState.Offline;
+  NDState _state = NDState.Offline;
 
   InformationPackage() {
     setType(PackageType.INFORMATION);
@@ -26,7 +26,7 @@ class InformationPackage extends BasePackage {
     }
   }
 
-  ObjState getState() {
+  NDState getState() {
     return _state;
   }
 
@@ -52,7 +52,7 @@ class InformationPackage extends BasePackage {
     success &= (valueBattery != null);
     success &= (valueRssi != null);
     if (success) {
-      _state = ObjState.values[valueState!];
+      _state = NDState.values[valueState!];
       _battery = valueBattery!;
       _rssi = valueRssi!;
     }
@@ -702,6 +702,20 @@ class ExternalPowerPackage extends BasePackage {
 
   ExternalPower getExternalPowerState() {
     return ExternalPower.values[_state];
+  }
+
+  @override
+  bool tryParse(Uint8List rawData) {
+    bool success = true;
+    UnpackMan unpackMan = UnpackMan(rawData);
+
+    success &= super.unpackHeader(unpackMan);
+
+    var value = unpackMan.unpack<int>(1);
+    success &= (value != null);
+    if (success) _state = value!;
+
+    return success;
   }
 
   @override

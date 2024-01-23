@@ -7,8 +7,7 @@ import 'package:projects/BluetoothPage.dart';
 import 'package:projects/PackagesParser.dart';
 import 'package:projects/PostManager.dart';
 import 'package:projects/SeismicPage.dart';
-import 'package:projects/TestPage.dart';
-import 'package:projects/core/Device.dart';
+import 'package:projects/DeviceParametersPage.dart';
 import 'package:projects/ISTD.dart';
 import 'package:projects/STDConnectionManager.dart';
 import 'core/ItemsManager.dart';
@@ -18,9 +17,8 @@ import 'PageWithMap.dart';
 import 'main.dart';
 
 
-const String deviceName = 'HC-05-DMRS1';
+String deviceName = 'HC-05-DMRS1', STDNum = '195';
 String selectedPage = '', statusBarString = '', selectedDevice = '', deleteStr = '';
-//int  selectedMapMarkerIndex = -1;
 
 Text mainBottomSelectedDev = Text('');
 Timer? timer;
@@ -29,16 +27,15 @@ Widget list = Container();
 
 final BluetoothPage bluetoothPage = BluetoothPage();
 final PageWithMap pageWithMap = PageWithMap();
-final TestPage testPage = TestPage();
+final DeviceParametersPage deviceParametersPage = DeviceParametersPage();
 final ImagePage imagePage = ImagePage();
 final SeismicPage seismicPage = SeismicPage();
 
-//final AlarmCounterPage alarmCounterPage = AlarmCounterPage();
 
 final List<StatefulWidget> pages = [
   bluetoothPage,
   pageWithMap,
-  testPage,
+  deviceParametersPage,
   imagePage,
   seismicPage,
 ];
@@ -61,25 +58,26 @@ class Pair<T1, T2> {
 
 //List<String> globalDevicesListFromMap = [];
 
-bool flagConnect = false, dataComeFlag = false, flagMapPage = false,
+bool flagConnect = false, dataComeFlag = false, flagMapPage = true,
     flagCheckSPPU = false, allowedHopsCame = false, unallowedHopsCame = false,
-    flagMoveMarker = false;
+    flagMoveMarker = false, transLang = false;
 
 List<int> globalActiveDevices = List<int>.empty(growable: true),
     globalAlarmDevices = List<int>.empty(growable: true);
 
 Map<int, MapMarker> listMapMarkers = {};
 
-//List<MapMarker> globalMapMarker = List<MapMarker>.empty(growable: true);
-List<int> retransmissionRequests = List<int>.empty(growable: true);
+List<int> retransmissionRequests = [];
+List<int> stdHopsCheckRequests = [];
+
 List<int> delayList = [60, 180, 300];
 List<int> impulseList = [1, 2, 3];
-List<String> deviceTypeList = ["STD", "CSD", "CPD", "RT"];
+List<String> deviceTypeList = [];
 List<String> photoCompression = ["Min", "Low", "Mid", "High", "Max"];
+List<String> critFilter = ['1 of 3', '2 of 3', '3 of 3', '2 of 4', '3 of 4', '4 of 4'];
 List<int> serialHuman = [1, 2, 3];
 List<int> serialTransport = [1, 2, 3];
 GlobalKey<HomePageState> globalKey = GlobalKey<HomePageState>();
-Device bufDevice = Device();
-ItemsManager itemsManager = ItemsManager();
+ItemsManager itemsMan = ItemsManager();
 
 int testCounter = 0;

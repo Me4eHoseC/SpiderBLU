@@ -105,6 +105,61 @@ class HumanSensitivityPackage extends BasePackage{
   }
 }
 
+class HumanFreqThresholdPackage extends BasePackage{
+  int _freqThreshold = 0;
+
+  HumanFreqThresholdPackage(){
+    setType(PackageType.SET_HUMAN_FREQ_THRESHOLD);
+  }
+
+  @override
+  copyWith(BasePackage other) {
+    super.copyWith(other);
+
+    if (other is HumanFreqThresholdPackage) {
+      _freqThreshold = other._freqThreshold;
+    }
+  }
+
+  int getHumanFreqThresholdPackage(){
+    return _freqThreshold;
+  }
+  void setHumanFreqThresholdPackage(int value){
+    _freqThreshold = value;
+  }
+
+  @override
+  bool tryParse(Uint8List rawData) {
+    bool success = true;
+    UnpackMan unpackMan = UnpackMan(rawData);
+
+    success &= super.unpackHeader(unpackMan);
+
+    var value = unpackMan.unpack<int>(2);
+    success &= (value != null);
+    if (success) _freqThreshold = value!;
+
+    return success;
+  }
+
+  @override
+  Uint8List toBytesArray() {
+    bool success = true;
+    PackMan packMan = PackMan();
+
+    success &= super.packHeader(packMan);
+    success &= packMan.pack(_freqThreshold, 2);
+
+    if (!success) return Uint8List(0);
+
+    var rawData = packMan.getRawData();
+
+    fillSizeAndCrc(rawData!);
+
+    return rawData;
+  }
+}
+
 class TransportSensitivityPackage extends BasePackage{
   int _sensitivity = 0;
 

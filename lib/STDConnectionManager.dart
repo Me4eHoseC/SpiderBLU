@@ -11,6 +11,7 @@ class STDConnectionManager {
   String _stdAddress = '';
   bool isDiscovering = true;
   late void Function() setStateOnDone;
+  late void Function(int) stdConnected;
   Timer? timer;
 
   void searchAndConnect() {
@@ -53,6 +54,7 @@ class STDConnectionManager {
   void onConnected() {
     global.flagConnect = true;
     Timer.run(setStateOnDone);
+    Timer.run(() => stdConnected(global.std!.stdId));
   }
 
   void onDisconnected() {

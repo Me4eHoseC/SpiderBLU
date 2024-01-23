@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:projects/Application.dart';
 
+import 'core/CPD.dart';
+import 'core/CSD.dart';
+import 'core/MCD.dart';
+import 'core/RT.dart';
 import 'global.dart' as global;
 
 class BluetoothPage extends StatefulWidget {
@@ -18,20 +23,66 @@ class _BluetoothPage extends State<BluetoothPage> with TickerProviderStateMixin 
   void initState() {
     super.initState();
     Application.init();
+    global.deviceTypeList = [];
+    global.deviceTypeList.add(STD.Name());
+    global.deviceTypeList.add(RT.Name());
+    global.deviceTypeList.add(CSD.Name());
+    global.deviceTypeList.add(CPD.Name());
+    global.deviceTypeList.add(MCD.Name());
     _startDiscovery();
+  }
+
+  void alert() {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Enter bluetooth name"),
+            actions: [
+              TextField(
+                controller: TextEditingController(text: global.deviceName),
+                maxLength: 20,
+                onChanged: (string) => global.deviceName = string,
+                onSubmitted: (string) => global.deviceName = string,
+              ),
+              TextField(
+                controller: TextEditingController(text: global.STDNum),
+                keyboardType: TextInputType.number,
+                maxLength: 3,
+                inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
+                onChanged: (string) => global.STDNum = string,
+                onSubmitted: (string) => global.STDNum = string,
+              ),
+              TextButton(
+                onPressed: () {
+                  global.stdConnectionManager.searchAndConnect();
+                  Navigator.pop(context);
+                  global.stdConnectionManager.isDiscovering = true;
+                },
+                child: Text('Accept'),
+              ),
+            ],
+          );
+        });
+    setState(() {});
   }
 
   void _startDiscovery() {
     global.stdConnectionManager.setStateOnDone = () {
       setState(() {});
     };
-
     setState(() {
       global.stdConnectionManager.searchAndConnect();
     });
   }
 
-  void Disconnect() {
+  void repeatDiscovery() {
+    alert();
+    global.stdConnectionManager.isDiscovering = true;
+    print (global.stdConnectionManager.isDiscovering);
+  }
+
+  void disconnect() {
     setState(() {
       global.stdConnectionManager.disconnect();
     });
@@ -42,11 +93,11 @@ class _BluetoothPage extends State<BluetoothPage> with TickerProviderStateMixin 
     return Scaffold(
         appBar: AppBar(
           toolbarHeight: 80,
-          title: global.flagConnect ? Text(global.deviceName) : Text('None device'),
+          title: global.flagConnect ? Text(global.deviceName) : const Text('None device'),
           actions: <Widget>[
             global.flagConnect
                 ? IconButton(
-                    onPressed: Disconnect,
+                    onPressed: disconnect,
                     icon: const Icon(Icons.cancel),
                   )
                 : (global.stdConnectionManager.isDiscovering
@@ -59,20 +110,20 @@ class _BluetoothPage extends State<BluetoothPage> with TickerProviderStateMixin 
                         ),
                       )
                     : IconButton(
-                        onPressed: _startDiscovery,
+                        onPressed: repeatDiscovery,
                         icon: const Icon(Icons.replay),
                       )),
           ],
         ),
         body: Visibility(
             visible: global.std != null,
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-              const Column(
+            child: const Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+              Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [],
               ),
-               Column(
+              Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [],

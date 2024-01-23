@@ -95,6 +95,7 @@ flutter:
     - packages/assets/devices/std/
     - packages/assets/devices/cpd/
     - packages/assets/devices/rt/
+    - packages/assets/devices/mcd/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

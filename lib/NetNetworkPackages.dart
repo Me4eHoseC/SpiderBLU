@@ -6,7 +6,7 @@ import 'package:projects/AllEnum.dart';
 import 'NetCommonFunctions.dart';
 
 class HopsPackage extends BasePackage{
-  List<int> _hops = List<int>.empty(growable: true);
+  List<int> _hops = [];
 
   HopsPackage(){
     setType(PackageType.SET_ALLOWED_HOPS);
@@ -32,6 +32,13 @@ class HopsPackage extends BasePackage{
     _hops.add(hop);
   }
 
+  void fillZeroHops([int totalSize = MAX_NUM_HOP_ACTIVITY]){
+    var diff = totalSize - _hops.length;
+    for (int i = 0; i < diff; ++i) {
+      _hops.add(0);
+    }
+  }
+
   @override
   bool tryParse(Uint8List rawData) {
     bool success = true;
@@ -39,7 +46,10 @@ class HopsPackage extends BasePackage{
 
     success &= super.unpackHeader(unpackMan);
 
-    for (int i = 0; i < MAX_NUM_HOP_ACTIVITY; ++i){
+    int bodySize = getSize() - BasePackage.minExpectedSize;
+    int count = bodySize ~/ 2;
+
+    for (int i = 0; i < count; ++i){
       var value = unpackMan.unpack<int>(2);
       success &= (value != null);
       if (!success) break;
@@ -53,11 +63,6 @@ class HopsPackage extends BasePackage{
   Uint8List toBytesArray() {
     bool success = true;
     PackMan packMan = PackMan();
-
-    var diff = MAX_NUM_HOP_ACTIVITY - _hops.length;
-    for (int i = 0; i < diff; ++i) {
-      _hops.add(0);
-    }
 
     success &= super.packHeader(packMan);
     success &= packMan.packAll(_hops, 2);

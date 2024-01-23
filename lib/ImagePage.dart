@@ -5,6 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:projects/Application.dart';
 import 'package:projects/BasePackage.dart';
+import 'package:projects/core/CPD.dart';
+import 'package:projects/core/Marker.dart';
+import 'package:projects/core/NetDevice.dart';
 import 'package:projects/core/Uint8Vector.dart';
 import 'dart:io';
 import 'package:gallery_saver/gallery_saver.dart';
@@ -19,11 +22,37 @@ class ImagePage extends StatefulWidget with TIDManagement {
   ImagePage({super.key});
   List<String> array = [];
 
+  int downloadingCpdId = -1;
+
   late _ImagePage _page;
 
   var photoTest = Uint8Vector(0);
 
   bool get isImageEmpty => photoTest.isEmpty;
+
+  bool getPhoto(PhotoImageSize size) {
+    if (downloadingCpdId != -1) return false;
+
+    var cpd = global.itemsMan.getSelected<CPD>();
+    if (cpd == null) return false;
+
+    var photoComp = PhotoImageCompression.HIGH;
+    var cc = PhotoRequestPackage();
+
+    global.fileManager.setCameraImageProperty(cpd.id, size, photoComp);
+
+    global.imagePage.downloadingCpdId = cpd.id;
+
+    cc.setType(PackageType.GET_NEW_PHOTO);
+    cc.setParameters(140, photoComp, size);
+    cc.setBlackAndWhite(false);
+    cc.setReceiver(cpd.id);
+    cc.setSender(RoutesManager.getLaptopAddress());
+
+    var tid = global.postManager.sendPackage(cc);
+    tits.add(tid);
+    return true;
+  }
 
   void setImageSize(int fileSize) {
     photoTest = Uint8Vector(fileSize);
@@ -35,7 +64,9 @@ class ImagePage extends StatefulWidget with TIDManagement {
 
   void lastPartCome() {
     _page.save();
-    global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]?.markerData.downloadPhoto = false;
+    downloadingCpdId = -1;
+    var cpd = global.itemsMan.getSelected<CPD>();
+    if (cpd == null) return;
   }
 
   void clearImage(DateTime? photoTime) {
@@ -54,7 +85,7 @@ class ImagePage extends StatefulWidget with TIDManagement {
     return _page;
   }
 
-  void openListFromOther(){
+  void openListFromOther() {
     _page._scaffoldKey.currentState!.openEndDrawer();
   }
 
@@ -71,12 +102,12 @@ class ImagePage extends StatefulWidget with TIDManagement {
     if (basePackage.getType() == PackageType.TRAP_PHOTO_LIST) {
       var package = basePackage as PhototrapFilesPackage;
       var bufDev = package.getSender();
-      if (global.itemsManager.getItemsIds().contains(bufDev)) {
-        global.itemsManager.getDevice(bufDev)?.phototrapFiles = package.getPhototrapFiles();
+      if (global.itemsMan.getAllIds().contains(bufDev)) {
+        global.itemsMan.get<CPD>(bufDev)?.phototrapFiles = package.getPhototrapFiles();
         print(package.getPhototrapFiles());
-        _page.setPhotoList(global.itemsManager.getDevice(bufDev)!.id);
+        _page.setPhotoList(global.itemsMan.get<CPD>(bufDev)!.id);
         array.add('dataReceived: ${package.getPhototrapFiles()}');
-        global.pageWithMap.ActivateMapMarker(bufDev);
+        global.pageWithMap.activateMapMarker(bufDev);
       }
     }
   }
@@ -84,9 +115,8 @@ class ImagePage extends StatefulWidget with TIDManagement {
   @override
   void ranOutOfSendAttempts(int tid, BasePackage? pb) {
     tits.remove(tid);
-    if (global.itemsManager.getItemsIds().contains(pb!.getReceiver()) &&
-        global.listMapMarkers[pb.getReceiver()]!.markerData.notifier.active) {
-      global.pageWithMap.DeactivateMapMarker(global.listMapMarkers[pb.getReceiver()]!.markerData.id!);
+    if (global.itemsMan.getAllIds().contains(pb!.getReceiver()) && global.listMapMarkers[pb.getReceiver()]!.markerData.notifier.active) {
+      global.pageWithMap.deactivateMapMarker(global.listMapMarkers[pb.getReceiver()]!.markerData.id!);
       array.add('RanOutOfSendAttempts');
       global.dataComeFlag = true;
     }
@@ -132,13 +162,13 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
     Directory? root = await getDownloadsDirectory();
     String directoryPath = root!.path + '/photoTests';
     await Directory(directoryPath).create(recursive: true);
-    String filePath = '$directoryPath/${_dateLastPhoto!.toLocal().toString().substring(0,19)}.jpeg';
+    String filePath = '$directoryPath/${_dateLastPhoto!.toLocal().toString().substring(0, 19)}.jpeg';
     File(filePath).writeAsBytes(bufSecondImage!.bytes);
     GallerySaver.saveImage(filePath, albumName: 'photoTest');
   }
 
   void endDownload() {
-    global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]?.markerData.downloadPhoto = false;
+    widget.downloadingCpdId = -1;
     save();
   }
 
@@ -150,12 +180,16 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
 
   void setPhotoList(int id) {
     setState(() {
-      for (int i = 0; i < global.itemsManager.getSelectedDevice()!.phototrapFiles.length; i++) {
+      var cpd = global.itemsMan.getSelected<CPD>();
+      if (cpd == null) return;
+      for (int i = 0; i < cpd.phototrapFiles.length; i++) {
         listOfPhotoButton[i] = RadioListTile(
-          title: Text('#${i+1} - ${global.itemsManager.getSelectedDevice()!.phototrapFiles[i].toLocal().toString().substring(0,19)}',),
-          value: global.itemsManager.getSelectedDevice()!.phototrapFiles[i],
+          title: Text(
+            '#${i + 1} - ${cpd.phototrapFiles[i].toLocal().toString().substring(0, 19)}',
+          ),
+          value: cpd.phototrapFiles[i],
           groupValue: _selectDateOfPhoto,
-          onChanged: (DateTime? value){
+          onChanged: (DateTime? value) {
             setState(() {
               _selectDateOfPhoto = value;
               setPhotoList(id);
@@ -166,8 +200,8 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
     });
   }
 
-  void getPhotoFromTrap(int id, DateTime time) {
-    global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]?.markerData.downloadPhoto = true;
+  void getPhototrapImage(int id, DateTime time) {
+    widget.downloadingCpdId = id;
 
     global.fileManager.setCameraImageProperty(id, PhotoImageSize.IMAGE_SIZE_TRAP, PhotoImageCompression.HIGH);
 
@@ -180,58 +214,41 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
     var tid = global.postManager.sendPackage(cc);
   }
 
-  void getPhoto(PhotoImageSize photoImageSize, int deviceId) {
-    global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]?.markerData.downloadPhoto = true;
-    var photoComp = PhotoImageCompression.HIGH;
-
-    global.fileManager.setCameraImageProperty(deviceId, photoImageSize, photoComp);
-
-    var cc = PhotoRequestPackage();
-    cc.setType(PackageType.GET_NEW_PHOTO);
-    cc.setParameters(140, photoComp, photoImageSize);
-    cc.setBlackAndWhite(false);
-    cc.setReceiver(deviceId);
-    cc.setSender(RoutesManager.getLaptopAddress());
-
-    var tid = global.postManager.sendPackage(cc);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
         title: _dateLastPhoto != null
-        ?Text( '# ${global.itemsManager.getSelectedDevice()!.id} - ${_dateLastPhoto!.toLocal().toString().substring(0,19)}')
-            :Text('null'),
+            ? Text('# ${global.itemsMan.getSelected<CPD>()!.id} - ${_dateLastPhoto!.toLocal().toString().substring(0, 19)}')
+            : const Text('null'),
       ),
       endDrawer: Drawer(
         width: 250,
         child: ListView(
-          children:listOfPhotoButton + [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                IconButton(
-                  onPressed: () => {
-                    global.itemsManager.getSelectedDevice() != null
-                        ? {getPhotoList(global.itemsManager.getSelectedDevice()!.id)}
-                        : null,
-                  },
-                  icon: const Icon(Icons.refresh),
-                ),
-                IconButton(
-                  onPressed: () => {
-                    global.itemsManager.getSelectedDevice() != null && _selectDateOfPhoto != null
-                        ? {getPhotoFromTrap(global.itemsManager.getSelectedDevice()!.id, _selectDateOfPhoto!)}
-                        : null,
-                  },
-                  icon: const Icon(Icons.check),
-                ),
+          children: listOfPhotoButton +
+              [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      onPressed: () => {
+                        global.itemsMan.getSelected<CPD>() != null ? {getPhotoList(global.itemsMan.getSelected<CPD>()!.id)} : null,
+                      },
+                      icon: const Icon(Icons.refresh),
+                    ),
+                    IconButton(
+                      onPressed: () => {
+                        global.itemsMan.getSelected<CPD>() != null && _selectDateOfPhoto != null
+                            ? {getPhototrapImage(global.itemsMan.getSelected<CPD>()!.id, _selectDateOfPhoto!)}
+                            : null,
+                      },
+                      icon: const Icon(Icons.check),
+                    ),
+                  ],
+                )
               ],
-            )
-          ],
         ),
       ),
       body: InteractiveViewer(
@@ -252,30 +269,15 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            onPressed: () => {
-              global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]?.markerData.downloadPhoto == true
-                  ? null
-                  : getPhoto(
-                      PhotoImageSize.IMAGE_160X120, global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]!.markerData.id!),
-            },
+            onPressed: () => widget.getPhoto(PhotoImageSize.IMAGE_160X120),
             icon: const Icon(Icons.photo_size_select_small),
           ),
           IconButton(
-            onPressed: () => {
-              global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]?.markerData.downloadPhoto == true
-                  ? null
-                  : getPhoto(
-                      PhotoImageSize.IMAGE_320X240, global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]!.markerData.id!),
-            },
+            onPressed: () => widget.getPhoto(PhotoImageSize.IMAGE_320X240),
             icon: const Icon(Icons.photo_size_select_large),
           ),
           IconButton(
-            onPressed: () => {
-              global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]?.markerData.downloadPhoto == true
-                  ? null
-                  : getPhoto(
-                      PhotoImageSize.IMAGE_640X480, global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]!.markerData.id!),
-            },
+            onPressed: () => widget.getPhoto(PhotoImageSize.IMAGE_640X480),
             icon: const Icon(Icons.photo_size_select_actual),
           ),
           IconButton(

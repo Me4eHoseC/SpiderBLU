@@ -42,9 +42,9 @@ class DeviceParametersPage extends StatefulWidget with TIDManagement {
 
   void stdConnected(int stdId) {
     Timer(Duration(seconds: 4), () {
-
-      if (global.listMapMarkers.isEmpty && global.pageWithMap.coord() != null){
-        global.pageWithMap.createFirstSTDAutomatically(int.parse(global.STDNum), global.pageWithMap.coord()!.latitude, global.pageWithMap.coord()!.longitude);
+      if (global.listMapMarkers.isEmpty && global.pageWithMap.coord() != null) {
+        global.pageWithMap.createFirstSTDAutomatically(
+            int.parse(global.STDNum), global.pageWithMap.coord()!.latitude, global.pageWithMap.coord()!.longitude);
       }
       var req = BasePackage.makeBaseRequest(stdId, PackageType.GET_MODEM_FREQUENCY);
       var tid = global.postManager.sendPackage(req);
@@ -65,9 +65,7 @@ class DeviceParametersPage extends StatefulWidget with TIDManagement {
       global.stdHopsCheckRequests.add(tid);
 
       print('std init');
-
     });
-
 
     // TODO PollMan.startPollRoutines();
   }
@@ -139,9 +137,9 @@ class DeviceParametersPage extends StatefulWidget with TIDManagement {
     }
     if (setRequests[tid] is ExternalPowerPackage) {
       var package = setRequests[tid] as ExternalPowerPackage;
-      if (nd is RT){
+      if (nd is RT) {
         nd.extPower = package.getExternalPowerState();
-      }else if (nd is MCD){
+      } else if (nd is MCD) {
         nd.GPSState = package.getExternalPowerState() == ExternalPower.ON;
       }
     }

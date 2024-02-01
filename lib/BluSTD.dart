@@ -10,7 +10,7 @@ class BluSTD extends ISTD {
 
   BluSTD(int stdId, void Function(Uint8List) onData) {
     super.stdId = stdId;
-    super.onData = onData;
+    super.onReadyRead = onData;
   }
 
   void setBTHost(String deviceAddress) {
@@ -27,7 +27,7 @@ class BluSTD extends ISTD {
         .then((value) {
         _connection = value;
 
-        _connection!.input?.listen(onData);
+        _connection!.input?.listen(onReadyRead);
 
         Timer.run(onConnected);
         return true;
@@ -40,8 +40,9 @@ class BluSTD extends ISTD {
   }
 
   @override
-  void disconnect() {
+  Future disconnect() async {
     if (_connection != null) {
+      await _connection!.finish();
       _connection!.close();
       _connection = null;
     }

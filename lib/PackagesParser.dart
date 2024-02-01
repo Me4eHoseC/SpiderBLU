@@ -7,6 +7,7 @@ import 'package:projects/NetCommonPackages.dart';
 import 'package:projects/NetNetworkPackages.dart';
 import 'package:projects/NetPhotoPackages.dart';
 import 'package:projects/NetSeismicPackage.dart';
+import 'package:projects/PackageProcessor.dart';
 import 'package:projects/PostManager.dart';
 import 'package:projects/RoutesManager.dart';
 
@@ -15,7 +16,6 @@ import 'global.dart' as global;
 
 class Reference<T> {
   T value;
-
   Reference(this.value);
 }
 
@@ -44,50 +44,36 @@ class PackagesParser {
           break;
         }
       }
+
       BasePackage package = pair.first!;
       PackageType type = package.getType();
 
-      if (package.getId() != 0) {
-        if ((type == PackageType.ALARM || FileManager.isFileType(type)) &&
-            !package.isAnswer()) {
+      if (package.getId() != 0 && !package.isAnswer()) {
+        if (type == PackageType.ALARM || FileManager.isFileType(type)) {
           BasePackage answer = BasePackage.makeAcknowledge(package);
-
           global.postManager.sendAcknowledge(answer);
         }
       }
 
+      // exception case
+      if (package.isAnswer() && type == PackageType.PRESENCE) {
+        global.postManager.sendAcknowledge(BasePackage.makeAcknowledge(package));
+      }
+
       bool isDuplicate = _checkDuplicate(package);
+      if (isDuplicate) continue;
 
-      if (isDuplicate) {
-        continue;
-      }
-
-      if (package.getSize() == BasePackage.minExpectedSize) {
-        if (package.isAnswer()) {
-          Timer.run(() => acknowledgeReceived(package));
-        } else {
-          Timer.run(() => requestReceived(package));
-        }
-        continue;
-      }
-
-      if (FileManager.isFileType(type)) {
-        Timer.run(() => filePartReceived(package as FilePartPackage));
-      } else {
-        Timer.run(() => dataReceived(package));
-      }
+      Timer.run(() => global.packageProcessor.packageReceived(package));
     }
   }
 
-  static global.Pair<BasePackage?, bool> tryFindAndParsePackage(
-      Reference<Uint8List> dataRef) {
+  static global.Pair<BasePackage?, bool> tryFindAndParsePackage(Reference<Uint8List> dataRef) {
     var pair = global.Pair<BasePackage?, bool>(null, false);
 
     int index = _indexOfPackageHeader(dataRef.value, PACKAGE_HEAD_CODE);
     if (index == -1) return pair;
 
-    dataRef.value =
-        _reduceFixedList(dataRef.value, index, dataRef.value.length - index);
+    dataRef.value = _reduceFixedList(dataRef.value, index, dataRef.value.length - index);
 
     int size = BasePackage.extractSize(dataRef.value);
 
@@ -99,15 +85,13 @@ class PackagesParser {
     bool isCorrectCrc = BasePackage.checkCrc(dataRef.value);
 
     if (!isCorrectCrc) {
-      dataRef.value =
-          _reduceFixedList(dataRef.value, 2, dataRef.value.length - 2);
+      dataRef.value = _reduceFixedList(dataRef.value, 2, dataRef.value.length - 2);
       return pair;
     }
 
     PackageType type = BasePackage.extractType(dataRef.value);
     if (type == PackageType.NICE_ERROR_CODE) {
-      dataRef.value =
-          _reduceFixedList(dataRef.value, size, dataRef.value.length - size);
+      dataRef.value = _reduceFixedList(dataRef.value, size, dataRef.value.length - size);
       return pair;
     }
 
@@ -121,8 +105,7 @@ class PackagesParser {
     bool parsed = package.tryParse(dataRef.value);
 
     if (!parsed) {
-      dataRef.value =
-          _reduceFixedList(dataRef.value, size, dataRef.value.length - size);
+      dataRef.value = _reduceFixedList(dataRef.value, size, dataRef.value.length - size);
       return pair;
     }
 
@@ -131,26 +114,22 @@ class PackagesParser {
 
     int receiver = package.getReceiver();
     if (receiver != myId && receiver != broadcast) {
-      dataRef.value =
-          _reduceFixedList(dataRef.value, size, dataRef.value.length - size);
+      dataRef.value = _reduceFixedList(dataRef.value, size, dataRef.value.length - size);
       return pair;
     }
 
     int sender = package.getSender();
     if (sender == myId) {
-      dataRef.value =
-          _reduceFixedList(dataRef.value, size, dataRef.value.length - size);
+      dataRef.value = _reduceFixedList(dataRef.value, size, dataRef.value.length - size);
       return pair;
     }
-    dataRef.value =
-        _reduceFixedList(dataRef.value, size, dataRef.value.length - size);
+    dataRef.value = _reduceFixedList(dataRef.value, size, dataRef.value.length - size);
     pair.first = package;
 
     return pair;
   }
 
-  static Uint8List _reduceFixedList(
-      Uint8List data, int skipCount, int newSize) {
+  static Uint8List _reduceFixedList(Uint8List data, int skipCount, int newSize) {
     var newData = Uint8List(newSize);
     newData.setRange(0, newSize, data, skipCount);
     return newData;
@@ -224,7 +203,7 @@ class PackagesParser {
       case PackageType.UNALLOWED_HOPS:
         return HopsPackage();
 
-        //files packages
+      //files packages
       case PackageType.PHOTO:
       case PackageType.SEISMIC_WAVE:
       case PackageType.ADPCM_SEISMIC_WAVE:
@@ -298,9 +277,4 @@ class PackagesParser {
   }
 
   Uint8List _buffer = Uint8List(0);
-
-  late void Function(BasePackage) requestReceived;
-  late void Function(BasePackage) acknowledgeReceived;
-  late void Function(BasePackage) dataReceived;
-  late void Function(FilePartPackage) filePartReceived;
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter_gif/flutter_gif.dart';
@@ -6,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import 'core/CPD.dart';
 import 'core/CSD.dart';
+import 'core/RT.dart';
 import 'global.dart' as global;
 
 void main() {
@@ -142,47 +144,67 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         drawerEdgeDragWidth: 0,
         drawer: Drawer(
           width: 200,
-          child: ListView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              ListTile(
-                title: const Text('Settings page'),
-                onTap: () {
-                  global.flagMapPage = false;
-                  changePage(0);
-                  Navigator.pop(context);
-                },
+              Padding(
+                padding: EdgeInsets.only(top: 50),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.circle,
+                      color: global.std != null ? Colors.green : Colors.red,
+                    ),
+                    global.std != null && global.itemsMan.get<STD>(int.parse(global.STDNum)) != null
+                        ? Text('${STD().typeName()} #${global.STDNum} - ${global.itemsMan.get<STD>(int.parse(global.STDNum))?.channel}'
+                        '${global.itemsMan.get<STD>(int.parse(global.STDNum))!.isMain ? '' :'r'}')
+                        : Text('${STD().typeName()} #${global.STDNum}'),
+                  ],
+                ),
               ),
-              ListTile(
-                title: const Text('Map page'),
-                onTap: () {
-                  global.flagMapPage = true;
-                  changePage(1);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: const Text('Device parameters page'),
-                onTap: () {
-                  global.flagMapPage = false;
-                  changePage(2);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: const Text('Photo page'),
-                onTap: () {
-                  global.flagMapPage = false;
-                  changePage(3);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: const Text('Seismic page'),
-                onTap: () {
-                  global.flagMapPage = false;
-                  changePage(4);
-                  Navigator.pop(context);
-                },
+              Column(
+                children: [
+                  ListTile(
+                    title: const Text('Settings'),
+                    onTap: () {
+                      global.flagMapPage = false;
+                      changePage(0);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('Map'),
+                    onTap: () {
+                      global.flagMapPage = true;
+                      changePage(1);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('Device parameters'),
+                    onTap: () {
+                      global.flagMapPage = false;
+                      changePage(2);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('Photo'),
+                    onTap: () {
+                      global.flagMapPage = false;
+                      changePage(3);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('Seismic'),
+                    onTap: () {
+                      global.flagMapPage = false;
+                      changePage(4);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
               ),
             ],
           ),

@@ -1,14 +1,16 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:projects/BasePackage.dart';
 import 'package:projects/NetPackagesDataTypes.dart';
 import 'package:projects/RoutesManager.dart';
-import 'package:projects/Application.dart';
 import 'package:projects/core/NetDevice.dart';
 
 import 'AllEnum.dart';
@@ -135,6 +137,13 @@ class MarkerData {
   int? id;
   String? type;
   LatLng? cord;
+
+  MarkerData(this.id, this.type, this.cord);
+  factory MarkerData.fromJson(Map<String, Object?> jsonMap) {
+    return MarkerData(
+        jsonMap["id"] as int, jsonMap["type"] as String, LatLng(jsonMap["latitude"] as double, jsonMap["longitude"] as double));
+  }
+  Map toJson() => {'id': id, 'type': type, 'latitude': cord?.latitude, 'longitude': cord?.longitude};
   HomeNotifier notifier = HomeNotifier();
 }
 
@@ -183,7 +192,7 @@ class MapMarker extends Marker {
         );
 }
 
-class PageWithMap extends StatefulWidget with TIDManagement {
+class PageWithMap extends StatefulWidget with global.TIDManagement {
   PageWithMap({super.key});
 
   List<String> array = [];
@@ -212,14 +221,67 @@ class PageWithMap extends StatefulWidget with TIDManagement {
     }
   }
 
-  void createFirstSTDAutomatically(int id , double latitude, double longitude){
+  void saveMapMarkersInFile() async {
+    var status1 = await Permission.storage.status;
+    var status2 = await Permission.manageExternalStorage.status;
+    if (!status1.isGranted || !status2.isGranted) {
+      await Permission.storage.request();
+      await Permission.manageExternalStorage.request();
+    }
+    var dir = Directory('/storage/emulated/0/SpiderNet');
+    if (!await dir.exists()){
+      await dir.create();
+    }
+    File file = File('/storage/emulated/0/SpiderNet/file.json');
+    if (!await file.exists()) {
+      await file.create();
+    }
+    var bufJson = '[';
+    for (int i in global.listMapMarkers.keys) {
+      if (i != global.listMapMarkers.keys.last) {
+        bufJson += '${json.encode(global.listMapMarkers[i]!.markerData)},';
+      } else {
+        bufJson += json.encode(global.listMapMarkers[i]!.markerData);
+      }
+    }
+    bufJson += ']';
+    await file.writeAsString(bufJson);
+  }
+
+  void loadMapMarkersFromFile() async {
+    var status1 = await Permission.storage.status;
+    var status2 = await Permission.manageExternalStorage.status;
+    if (!status1.isGranted || !status2.isGranted) {
+      await Permission.storage.request();
+      await Permission.manageExternalStorage.request();
+    }
+    var dir = Directory('/storage/emulated/0/SpiderNet');
+    if (!await dir.exists()){
+      await dir.create();
+    }
+
+    File file = File('/storage/emulated/0/SpiderNet/file.json');
+
+    if (!await file.exists()) {
+      await file.create(recursive: true);
+    } else {
+      final data = await File('/storage/emulated/0/SpiderNet/file.json').readAsString();
+      final decoded = json.decode(data);
+      for (final item in decoded) {
+        createMapMarker(MarkerData.fromJson(item).id!, MarkerData.fromJson(item).type!, MarkerData.fromJson(item));
+      }
+    }
+  }
+
+  void createFirstSTDAutomatically(int id, double latitude, double longitude) {
     bufferDeviceType = setImagePackage(STD().typeName());
-    MarkerData data = MarkerData();
+    MarkerData data = MarkerData(id, STD().typeName(), LatLng(latitude, longitude));
     data.id = id;
     data.cord = LatLng(latitude, longitude);
     data.type = STD().typeName();
     var localMarker = MapMarker(_page, data, data.cord!, data.id.toString(), data.type!, null, bufferDeviceType!);
     global.listMapMarkers[id] = localMarker;
+    global.flagCheckSPPU = true;
 
     mark.Marker pin;
     pin = STD();
@@ -234,6 +296,7 @@ class PageWithMap extends StatefulWidget with TIDManagement {
 
     global.deviceParametersPage.addDeviceInDropdown(id, data.type!);
     selectMapMarker(id);
+    saveMapMarkersInFile();
   }
 
   void createMapMarker(int id, String type, MarkerData data) {
@@ -251,6 +314,7 @@ class PageWithMap extends StatefulWidget with TIDManagement {
       pin = mark.Marker();
     } else if (type == STD.Name()) {
       pin = STD();
+      global.flagCheckSPPU = true;
       //_page.startDiscovery();
     } else if (type == CPD.Name()) {
       pin = CPD();
@@ -268,14 +332,17 @@ class PageWithMap extends StatefulWidget with TIDManagement {
     global.itemsMan.addItem(pin);
     global.itemsMan.itemAdded = addItem;
     global.itemsMan.selectionChanged = selectedItem;
+    global.itemsMan.itemRemoved = itemRemoved;
     indexMapMarker++;
 
     global.deviceParametersPage.addDeviceInDropdown(id, type);
     selectMapMarker(id);
+    saveMapMarkersInFile();
   }
 
   void selectedItem() {
-    print(global.itemsMan.getSelected<NetDevice>()?.id);
+    if (global.itemsMan.getSelected<NetDevice>() == null) return;
+    _page.changeBottomBarWidget(1, global.itemsMan.getSelected<NetDevice>()!.id, null);
     /*print(global.itemsMan.getAllIds());
     print(global.itemsMan.get<STD>(195)?.typeName);
     print(global.itemsMan.getSelectedItem()?.id);*/
@@ -285,6 +352,10 @@ class PageWithMap extends StatefulWidget with TIDManagement {
     /*print(global.itemsMan.get(195)?.id);
     print('$id ${global.itemsMan.get<NetDevice>(id)?.typeName(global.transLang)}');
     print(global.itemsMan.getSelectedItem()?.id);*/
+  }
+
+  void itemRemoved(int id) {
+    print('delete device $id');
   }
 
   void changeMapMarkerID(int oldId, int newId) {
@@ -302,6 +373,7 @@ class PageWithMap extends StatefulWidget with TIDManagement {
       global.listMapMarkers.remove(oldId);
 
       global.deviceParametersPage.changeDeviceInDropdown(newId, buf.markerData.type!, oldId.toString());
+      saveMapMarkersInFile();
     }
   }
 
@@ -343,6 +415,7 @@ class PageWithMap extends StatefulWidget with TIDManagement {
 
       global.itemsMan.blockSignals = false;
       global.deviceParametersPage.changeDeviceInDropdown(id, newType, id.toString());
+      saveMapMarkersInFile();
     }
   }
 
@@ -359,12 +432,15 @@ class PageWithMap extends StatefulWidget with TIDManagement {
     global.itemsMan.removeItem(id);
     global.listMapMarkers.remove(id);
     global.deviceParametersPage.deleteDeviceInDropdown(id);
+    saveMapMarkersInFile();
   }
 
   void selectMapMarker(int id) {
     if (!global.itemsMan.isSelected(id)) {
       unselectMapMarker();
     }
+
+    print('true');
 
     global.itemsMan.setSelected(id);
     global.deviceParametersPage.selectDeviceInDropdown(id);
@@ -388,6 +464,10 @@ class PageWithMap extends StatefulWidget with TIDManagement {
       global.listMapMarkers[selected.id]!.markerData.notifier.changeSelected();
     }
     global.itemsMan.clearSelection();
+    global.mainBottomSelectedDev = const Text(
+      '',
+      textScaleFactor: 1.4,
+    );
   }
 
   void alarmMapMarker(int id, AlarmReason reason) {
@@ -467,7 +547,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
   bool get wantKeepAlive => true;
   Marker? myLocalPosition;
   Location location = Location();
-  LatLng? myCords, currentLocation;
+  LatLng? myCords;
   MapController mapController = MapController();
   Widget bottomBarWidget = Container(height: 0);
   int bufferId = 195;
@@ -476,6 +556,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
   @override
   void initState() {
     super.initState();
+    widget.loadMapMarkersFromFile();
     Timer.periodic(Duration.zero, (timer) {
       setState(() {});
     });
@@ -528,7 +609,6 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
 
   void selectMapMarker(int id) {
     widget.selectMapMarker(id);
-    changeBottomBarWidget(1, id);
   }
 
   void askDeleteMapMarker(int id) {
@@ -562,39 +642,39 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
 
   void openBottomMenu(var tap, LatLng cord) {
     setState(() {
-      changeBottomBarWidget(0, null);
-      currentLocation = cord;
+      changeBottomBarWidget(0, null, cord);
+      //currentLocation = cord;
     });
   }
 
   void clearBottomMenu(var tap, LatLng cord) {
     setState(() {
-      changeBottomBarWidget(-1, null);
+      changeBottomBarWidget(-1, null, null);
       widget.unselectMapMarker();
     });
   }
 
-  void createNewMapMarker(int id, String type) {
+  void createNewMapMarker(int id, String type, LatLng cord) {
     setState(() {
-      widget.createMapMarker(id, type, createMarkerData(id, type));
-      changeBottomBarWidget(-1, null);
+      widget.createMapMarker(id, type, createMarkerData(id, type, cord));
+      changeBottomBarWidget(-1, null, null);
     });
   }
 
-  void changeMarkerData(int id, String type) {
+  void changeMarkerData(int id, String type, LatLng cord) {
     setState(() {
       global.listMapMarkers[id]!.markerData.id = id;
       global.listMapMarkers[id]!.markerData.type = type;
-      global.listMapMarkers[id]!.markerData.cord = currentLocation;
+      global.listMapMarkers[id]!.markerData.cord = cord;
       global.listMapMarkers[id]!.markerData.notifier = HomeNotifier();
     });
   }
 
-  MarkerData createMarkerData(int id, String type) {
-    MarkerData markerData = MarkerData();
+  MarkerData createMarkerData(int id, String type, LatLng cord) {
+    MarkerData markerData = MarkerData(id, type, cord);
     markerData.id = id;
     markerData.type = type;
-    markerData.cord = currentLocation;
+    markerData.cord = cord;
     return markerData;
   }
 
@@ -665,7 +745,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
     );
   }
 
-  void checkCorrectIdAndType(int idForCheck, String typeForCheck) {
+  void checkCorrectIdAndType(int idForCheck, String typeForCheck, LatLng cord) {
     setState(() {
       if (idForCheck < 1 || idForCheck > 255) {
         showError("Invalid ID \n"
@@ -693,7 +773,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
         print('flag');
       }
 
-      createNewMapMarker(idForCheck, typeForCheck);
+      createNewMapMarker(idForCheck, typeForCheck, cord);
       global.mainBottomSelectedDev = Text(
         '$typeForCheck #$idForCheck',
         textScaleFactor: 1.4,
@@ -701,7 +781,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
     });
   }
 
-  void addNewDeviceOnMap() {
+  void addNewDeviceOnMap(LatLng cord) {
     setState(() {
       bottomBarWidget = SizedBox(
         height: 100,
@@ -730,7 +810,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
             icon: const Icon(Icons.keyboard_double_arrow_down),
             onChanged: (String? value) {
               bufferType = value!;
-              addNewDeviceOnMap();
+              addNewDeviceOnMap(cord);
             },
             value: bufferType,
             items: global.deviceTypeList.map<DropdownMenuItem<String>>((String value) {
@@ -740,16 +820,16 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
               );
             }).toList(),
           ),
-          TextButton(onPressed: () => checkCorrectIdAndType(bufferId, bufferType), child: const Text('Add device'))
+          TextButton(onPressed: () => checkCorrectIdAndType(bufferId, bufferType, cord), child: const Text('Add device'))
         ]),
       );
     });
   }
 
-  void changeBottomBarWidget(int counter, int? id) {
+  void changeBottomBarWidget(int counter, int? id, LatLng? point) {
     setState(() {
       if (counter == 0) {
-        addNewDeviceOnMap();
+        addNewDeviceOnMap(point!);
       }
       if (counter == -1) {
         bottomBarWidget = Container(
@@ -759,7 +839,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
       if (counter == 1) {
         var bufMark = global.listMapMarkers[id!];
         //global.testPage.selectDeviceInDropdown(int.parse(id!));
-        widget.selectMapMarker(id);
+        //widget.selectMapMarker(id);
         global.mainBottomSelectedDev = Text(
           '${bufMark?.type} #$id',
           textScaleFactor: 1.4,
@@ -772,7 +852,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                 Text(global.listMapMarkers[id]!.markerData.type!),
                 IconButton(
                     onPressed: () {
-                      changeBottomBarWidget(-1, null);
+                      changeBottomBarWidget(-1, null, null);
                       if (global.listMapMarkers[id]!.markerData.notifier.alarm) {
                         global.listMapMarkers[id]!.markerData.notifier.changeAlarm();
                       }
@@ -791,7 +871,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                 Text(bufMark!.markerData.id.toString()),
                 IconButton(
                     onPressed: () {
-                      changeBottomBarWidget(-1, null);
+                      changeBottomBarWidget(-1, null, null);
                       if (bufMark.markerData.notifier.alarm) {
                         bufMark.markerData.notifier.changeAlarm();
                       }
@@ -831,7 +911,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                 ),
                 IconButton(
                   onPressed: () {
-                    changeBottomBarWidget(-1, null);
+                    changeBottomBarWidget(-1, null, null);
                     if (bufMark!.markerData.notifier.alarm) {
                       bufMark.markerData.notifier.changeAlarm();
                     }
@@ -880,7 +960,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                 IconButton(
                   onPressed: () {
                     global.flagMoveMarker = true;
-                    changeBottomBarWidget(-1, null);
+                    changeBottomBarWidget(-1, null, null);
                     if (bufMark!.markerData.notifier.alarm) {
                       bufMark.markerData.notifier.changeAlarm();
                     }
@@ -899,7 +979,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
     global.flagMoveMarker
         ? {
             global.flagMoveMarker = false,
-            //global.testPage.updateCordDeviceFromOther(),
+            widget.saveMapMarkersInFile(),
           }
         : global.flagMoveMarker = true;
   }
@@ -911,6 +991,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
       global.listMapMarkers[global.itemsMan.getSelected<mark.Marker>()!.id]!.point.latitude = pos.center!.latitude;
       global.listMapMarkers[global.itemsMan.getSelected<mark.Marker>()!.id]!.point.longitude = pos.center!.longitude;
       global.itemsMan.getSelected<mark.Marker>()!.setCoordinates(pos.center!.latitude, pos.center!.longitude);
+      global.deviceParametersPage.updateDevice();
     }
   }
 

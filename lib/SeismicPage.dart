@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:projects/Application.dart';
 import 'package:projects/BasePackage.dart';
 import 'package:projects/NetCommonFunctions.dart';
 import 'package:projects/NetCommonPackages.dart';
@@ -41,7 +40,7 @@ class SeismicHeader {
   }
 }
 
-class SeismicPage extends StatefulWidget with TIDManagement {
+class SeismicPage extends StatefulWidget with global.TIDManagement {
   SeismicPage({super.key});
   late _SeismicPage _page;
   List<String> array = [];

@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:projects/Application.dart';
 import 'package:projects/BasePackage.dart';
 import 'package:projects/NetCommonPackages.dart';
 import 'package:projects/NetPackagesDataTypes.dart';
@@ -21,14 +20,13 @@ import 'core/Marker.dart';
 import 'core/RT.dart';
 import 'global.dart' as global;
 
-class DeviceParametersPage extends StatefulWidget with TIDManagement {
+class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
   List<String> array = [];
   List<DropdownMenuItem<String>> dropdownItems = [];
   String dropdownValue = '';
   late _DeviceParametersPage _page;
 
   Marker _cloneItem = Marker();
-  Map<int, BasePackage> setRequests = {};
 
   void addDeviceInDropdown(int id, String type) {
     dropdownValue = id.toString();
@@ -42,7 +40,7 @@ class DeviceParametersPage extends StatefulWidget with TIDManagement {
 
   void stdConnected(int stdId) {
     Timer(Duration(seconds: 4), () {
-      if (global.listMapMarkers.isEmpty && global.pageWithMap.coord() != null) {
+      if ((global.listMapMarkers.isEmpty || global.flagCheckSPPU == false) && global.pageWithMap.coord() != null) {
         global.pageWithMap.createFirstSTDAutomatically(
             int.parse(global.STDNum), global.pageWithMap.coord()!.latitude, global.pageWithMap.coord()!.longitude);
       }
@@ -100,103 +98,89 @@ class DeviceParametersPage extends StatefulWidget with TIDManagement {
     }
   }
 
+  void updateDevice(){
+    _page.setAllNums();
+  }
+
   @override
   void acknowledgeReceived(int tid, BasePackage basePackage) {
     tits.remove(tid);
+
     var sender = basePackage.getSender();
     var nd = global.itemsMan.get<NetDevice>(sender);
 
     if (nd == null) return;
-
     if (!global.listMapMarkers.containsKey(sender)) return;
 
-    if (!setRequests.containsKey(tid)) return;
+    var pk = setRequests[tid];
+    if (pk == null) return;
 
-    if (setRequests[tid] is TimePackage) {
-      var package = setRequests[tid] as TimePackage;
-      nd.time = package.getTime();
-    }
-    if (setRequests[tid] is CoordinatesPackage) {
-      var package = setRequests[tid] as CoordinatesPackage;
-      nd.setStoredCoordinates(package.getLatitude(), package.getLongitude());
-      nd.setCoordinates(package.getLatitude(), package.getLongitude());
-    }
-    if (setRequests[tid] is StatePackage && nd is RT) {
-      var package = setRequests[tid] as StatePackage;
-      nd.stateMask = package.getStateMask();
-    }
-    if (setRequests[tid] is ExternalPowerSafetyCatchPackage && nd is RT) {
-      var package = setRequests[tid] as ExternalPowerSafetyCatchPackage;
-      nd.extPowerSafetyCatchState = package.getSafetyCatchState();
-    }
-    if (setRequests[tid] is AutoExternalPowerPackage && nd is RT) {
-      var package = setRequests[tid] as AutoExternalPowerPackage;
-      nd.autoExtPowerActivationDelaySec = package.getActivationDelay();
-      nd.extPowerImpulseDurationSec = package.getImpulseDuration();
-      nd.autoExtPowerState = package.getAutoExternalPowerModeState();
-    }
-    if (setRequests[tid] is ExternalPowerPackage) {
-      var package = setRequests[tid] as ExternalPowerPackage;
+    if (pk is TimePackage) {
+      nd.time = pk.getTime();
+    } else if (pk is CoordinatesPackage) {
+      nd.setStoredCoordinates(pk.getLatitude(), pk.getLongitude());
+      nd.setCoordinates(pk.getLatitude(), pk.getLongitude());
+    } else if (pk is StatePackage && nd is RT) {
+      nd.stateMask = pk.getStateMask();
+    } else if (pk is ExternalPowerSafetyCatchPackage && nd is RT) {
+      nd.extPowerSafetyCatchState = pk.getSafetyCatchState();
+    } else if (pk is AutoExternalPowerPackage && nd is RT) {
+      nd.autoExtPowerActivationDelaySec = pk.getActivationDelay();
+      nd.extPowerImpulseDurationSec = pk.getImpulseDuration();
+      nd.autoExtPowerState = pk.getAutoExternalPowerModeState();
+    } else if (pk is ExternalPowerPackage) {
       if (nd is RT) {
-        nd.extPower = package.getExternalPowerState();
+        nd.extPower = pk.getExternalPowerState();
       } else if (nd is MCD) {
-        nd.GPSState = package.getExternalPowerState() == ExternalPower.ON;
+        nd.GPSState = pk.getExternalPowerState() == ExternalPower.ON;
       }
-    }
-    if (setRequests[tid] is AlarmReasonMaskPackage && nd is CSD) {
-      var package = setRequests[tid] as AlarmReasonMaskPackage;
-      nd.alarmReasonMask = package.getAlarmReasonMask();
-    }
-    if (setRequests[tid] is HumanSensitivityPackage && nd is CSD) {
-      var package = setRequests[tid] as HumanSensitivityPackage;
-      nd.humanSensitivity = package.getHumanSensitivity();
-    }
-    if (setRequests[tid] is TransportSensitivityPackage && nd is CSD) {
-      var package = setRequests[tid] as TransportSensitivityPackage;
-      nd.transportSensitivity = package.getTransportSensitivity();
-    }
-    if (setRequests[tid] is CriterionFilterPackage && nd is CSD) {
-      var package = setRequests[tid] as CriterionFilterPackage;
-      nd.criterionFilter = package.getCriterionFilter();
-    }
-    if (setRequests[tid] is SignalToNoiseRatioPackage && nd is CSD) {
-      var package = setRequests[tid] as SignalToNoiseRatioPackage;
-      nd.snr = package.getSignalToNoiseRatio();
-    }
-    if (setRequests[tid] is CriterionRecognitionPackage && nd is CSD) {
-      var package = setRequests[tid] as CriterionRecognitionPackage;
-      nd.recognitionParameters = package.getCriteria();
-    }
-    if (setRequests[tid] is EEPROMFactorsPackage && nd is RT) {
-      var package = setRequests[tid] as EEPROMFactorsPackage;
-      nd.wakeNetworkResendTimeMs = package.getWakeNetworkResendTimeMs();
-      nd.alarmResendTimeMs = package.getAlarmResendTimeMs();
-      nd.seismicResendTimeMs = package.getSeismicResendTimeMs();
-      nd.photoResendTimeMs = package.getPhotoResendTimeMs();
-      nd.alarmTriesResend = package.getAlarmTriesResend();
-      nd.seismicTriesResend = package.getSeismicTriesResend();
-      nd.photoTriesResend = package.getPhotoTriesResend();
-      nd.periodicSendTelemetryTime10s = package.getPeriodicSendTelemetryTime10S();
-      nd.afterSeismicAlarmPauseS = package.getAfterSeismicAlarmPauseS();
-      nd.afterLineAlarmPauseS = package.getAfterLineAlarmPauseS();
-      nd.batteryPeriodicUpdate10min = package.getBatteryPeriodicUpdate10Min();
-      nd.batteryVoltageThresholdAlarm100mV = package.getBatteryVoltageThresholdAlarm100mV();
-      nd.batteryResidueThresholdAlarmPC = package.getBatteryResidueThresholdAlarmPC();
-      nd.batteryPeriodicAlarmH = package.getBatteryPeriodicAlarmH();
-      nd.deviceType = package.getDeviceType();
+    } else if (pk is AlarmReasonMaskPackage && nd is CSD) {
+      nd.alarmReasonMask = pk.getAlarmReasonMask();
+    } else if (pk is HumanSensitivityPackage && nd is CSD) {
+      nd.humanSensitivity = pk.getHumanSensitivity();
+    } else if (pk is TransportSensitivityPackage && nd is CSD) {
+      nd.transportSensitivity = pk.getTransportSensitivity();
+    } else if (pk is CriterionFilterPackage && nd is CSD) {
+      nd.criterionFilter = pk.getCriterionFilter();
+    } else if (pk is SignalToNoiseRatioPackage && nd is CSD) {
+      nd.snr = pk.getSignalToNoiseRatio();
+    } else if (pk is CriterionRecognitionPackage && nd is CSD) {
+      nd.recognitionParameters = pk.getCriteria();
+    } else if (pk is EEPROMFactorsPackage && nd is RT) {
+      nd.wakeNetworkResendTimeMs = pk.getWakeNetworkResendTimeMs();
+      nd.alarmResendTimeMs = pk.getAlarmResendTimeMs();
+      nd.seismicResendTimeMs = pk.getSeismicResendTimeMs();
+      nd.photoResendTimeMs = pk.getPhotoResendTimeMs();
+      nd.alarmTriesResend = pk.getAlarmTriesResend();
+      nd.seismicTriesResend = pk.getSeismicTriesResend();
+      nd.photoTriesResend = pk.getPhotoTriesResend();
+      nd.periodicSendTelemetryTime10s = pk.getPeriodicSendTelemetryTime10S();
+      nd.afterSeismicAlarmPauseS = pk.getAfterSeismicAlarmPauseS();
+      nd.afterLineAlarmPauseS = pk.getAfterLineAlarmPauseS();
+      nd.batteryPeriodicUpdate10min = pk.getBatteryPeriodicUpdate10Min();
+      nd.batteryVoltageThresholdAlarm100mV = pk.getBatteryVoltageThresholdAlarm100mV();
+      nd.batteryResidueThresholdAlarmPC = pk.getBatteryResidueThresholdAlarmPC();
+      nd.batteryPeriodicAlarmH = pk.getBatteryPeriodicAlarmH();
+      nd.deviceType = pk.getDeviceType();
 
-      nd.humanSignalsTreshold = package.getHumanSignalsTreshold();
-      nd.humanIntervalsCount = package.getHumanIntervalsCount();
-      nd.transportSignalsTreshold = package.getTransportSignalsTreshold();
-      nd.transportIntervalsCount = package.getTransportIntervalsCount();
-    }
-    if (setRequests[tid] is PhotoParametersPackage && nd is CPD) {
-      var package = setRequests[tid] as PhotoParametersPackage;
-      nd.setCameraParameters(package.getInvLightSensitivity(), package.getCompressRatio());
+      nd.humanSignalsTreshold = pk.getHumanSignalsTreshold();
+      nd.humanIntervalsCount = pk.getHumanIntervalsCount();
+      nd.transportSignalsTreshold = pk.getTransportSignalsTreshold();
+      nd.transportIntervalsCount = pk.getTransportIntervalsCount();
+    } else if (pk is PhotoParametersPackage && nd is CPD) {
+      nd.setCameraParameters(pk.getInvLightSensitivity(), pk.getCompressRatio());
+    } else if (pk is HopsPackage) {
+      if (pk.getType() == PackageType.SET_ALLOWED_HOPS) {
+        if (nd is RT) {
+          nd.allowedHops = pk.getHops();
+        } else if (nd is MCD) {
+          var rtMode = RoutesManager.getRtMode(pk.getHops());
+          nd.priority = rtMode == RtMode.ToAll;
+        }
+      }
     }
 
     setRequests.remove(tid);
-    print(basePackage.getType());
     global.pageWithMap.activateMapMarker(sender);
     array.add('acknowledgeReceived');
     global.dataComeFlag = true;
@@ -206,7 +190,6 @@ class DeviceParametersPage extends StatefulWidget with TIDManagement {
 
   @override
   void dataReceived(int tid, BasePackage basePackage) {
-    tits.remove(tid);
     var type = basePackage.getType();
     var sender = basePackage.getSender();
     var nd = global.itemsMan.get<NetDevice>(sender);
@@ -214,108 +197,43 @@ class DeviceParametersPage extends StatefulWidget with TIDManagement {
     if (nd == null) return;
 
     print('dataReceived');
+    global.pageWithMap.activateMapMarker(sender);
 
-    if (type == PackageType.VERSION) {
-      var package = basePackage as VersionPackage;
-      nd.firmwareVersion = package.getVersion();
-      global.pageWithMap.activateMapMarker(sender);
-      array.add('dataReceived: ${package.getVersion()}');
-    }
+    if (basePackage is VersionPackage) {
+      array.add('dataReceived: ${nd.firmwareVersion}');
+    } else if (basePackage is TimePackage) {
 
-    if (type == PackageType.TIME) {
-      var package = basePackage as TimePackage;
-      nd.time = package.getTime();
-      global.pageWithMap.activateMapMarker(sender);
-      array.add('dataReceived: ${package.getTime()}');
-    }
+      array.add('dataReceived: ${nd.time}');
+    } else if (basePackage is AllInformationPackage && nd is RT) {
 
-    if (type == PackageType.ALL_INFORMATION) {
-      var package = basePackage as AllInformationPackage;
-      if (nd is RT) {
-        nd.setStoredCoordinates(package.getLatitude(), package.getLongitude());
-        nd.setCoordinates(nd.storedLatitude, nd.storedLongitude);
-        nd.time = package.getTime();
-        nd.stateMask = package.getStateMask();
-        nd.batMonVoltage = package.getBattery();
-        nd.state = NDState.Online;
-        switch (package.getLastAlarmType()) {
-          case AlarmType.SEISMIC:
-            nd.state = NDState.SeismicAlarm;
-            break;
-          case AlarmType.TRAP:
-            nd.state = NDState.PhototrapAlarm;
-            break;
-          case AlarmType.LINE1:
-            nd.state = NDState.BreaklineAlarm;
-            break;
-          case AlarmType.LINE2:
-            nd.state = NDState.BreaklineAlarm;
-            break;
-          case AlarmType.RADIATION:
-            nd.state = NDState.RadiationAlarm;
-            break;
-          case AlarmType.BATTERY:
-            nd.state = NDState.LowBatteryAlarm;
-            break;
-          case AlarmType.NO:
-            nd.state = NDState.Online;
-            break;
-          case AlarmType.EXT_POWER_SAFETY_CATCH_OFF:
-            nd.state = NDState.ExternalPowerSafetyCatchOff;
-            break;
-          case AlarmType.AUTO_EXT_POWER_TRIGGERED:
-            nd.state = NDState.AutoExternalPowerTriggered;
-        }
-
-        global.pageWithMap.activateMapMarker(sender);
-        array.add('dataReceived: ${package.getLongitude()}');
-        array.add('dataReceived: ${package.getLatitude()}');
-        array.add('dataReceived: ${package.getTime()}');
-        array.add('dataReceived: ${package.getStateMask()}');
-        array.add('dataReceived: ${package.getBattery()}');
-      }
-    }
-
-    if (type == PackageType.COORDINATE) {
-      var package = basePackage as CoordinatesPackage;
-      nd.setStoredCoordinates(package.getLatitude(), package.getLongitude());
-      nd.setCoordinates(nd.storedLatitude, nd.storedLongitude);
+      array.add('dataReceived: ${nd.storedLongitude}');
+      array.add('dataReceived: ${nd.storedLatitude}');
+      array.add('dataReceived: ${nd.time}');
+      array.add('dataReceived: ${nd.stateMask}');
+      array.add('dataReceived: ${nd.batMonVoltage}');
+    } else if (basePackage is CoordinatesPackage) {
       global.listMapMarkers[sender]?.point.latitude = nd.latitude;
       global.listMapMarkers[sender]?.point.longitude = nd.longitude;
 
       array.add('dataReceived: ${nd.latitude}');
       array.add('dataReceived: ${nd.longitude}');
-      global.pageWithMap.activateMapMarker(sender);
-    }
 
-    if (type == PackageType.INFORMATION) {
-      var package = basePackage as InformationPackage;
+    } else if (basePackage is InformationPackage && nd is RT) {
+      array.add('dataReceived: ${nd.RSSI}');
+
+    } else if (basePackage is HopsPackage && type == PackageType.ALLOWED_HOPS) {
       if (nd is RT) {
-        nd.RSSI = package.getRssi();
-
-        array.add('dataReceived: ${package.getRssi()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
-    }
-
-    if (type == PackageType.ALLOWED_HOPS) {
-      var package = basePackage as HopsPackage;
-      if (nd is RT) {
-        nd.allowedHops = package.getHops();
         var rtMode = RoutesManager.getRtMode(nd.allowedHops);
-        global.allowedHopsCame = true;
 
-        print('enter');
         if (global.stdHopsCheckRequests.contains(tid)) {
           global.stdHopsCheckRequests.remove(tid);
           global.allowedHopsCame = false;
 
           if (rtMode == RtMode.NoOne) {
             var hp = HopsPackage();
-            print('switch On rtMode');
             hp.setType(PackageType.SET_ALLOWED_HOPS);
             hp.setSender(RoutesManager.getLaptopAddress());
-            hp.setReceiver(package.getPartner());
+            hp.setReceiver(basePackage.getPartner());
 
             hp.addHop(RoutesManager.getRtAllHop());
             hp.fillZeroHops();
@@ -324,265 +242,91 @@ class DeviceParametersPage extends StatefulWidget with TIDManagement {
           }
         } else if (global.retransmissionRequests.contains(tid)) {
           global.retransmissionRequests.remove(tid);
-          array.add('dataReceived: ${package.getHops()}');
-          global.pageWithMap.activateMapMarker(sender);
+          global.allowedHopsCame = false;
+
+          array.add('dataReceived: ${nd.allowedHops}');
+
+        } else {
+          _page.dialogAllowedHopsBuilder();
         }
-      } else if (nd is MCD) {
-        var rtMode = RoutesManager.getRtMode(package.getHops());
-        nd.priority = rtMode == RtMode.ToAll;
       }
-    }
+    } else if (basePackage is HopsPackage && type == PackageType.UNALLOWED_HOPS && nd is RT) {
+      array.add('dataReceived: ${nd.unallowedHops}');
 
-    if (type == PackageType.UNALLOWED_HOPS) {
-      if (nd is RT) {
-        var package = basePackage as HopsPackage;
-        nd.unallowedHops = package.getHops();
+      _page.dialogUnallowedHopsBuilder();
+    } else if (basePackage is ModemFrequencyPackage) {
+      array.add('dataReceived: ${nd.modemFrequency}');
+    } else if (basePackage is StatePackage && nd is RT) {
+      array.add('dataReceived: ${nd.stateMask}');
 
-        array.add('dataReceived: ${package.getHops()}');
-        global.pageWithMap.activateMapMarker(sender);
-        global.unallowedHopsCame = true;
-      }
-    }
+    } else if (basePackage is PeripheryMaskPackage && nd is RT) {
+      array.add('dataReceived: ${nd.peripheryMask}');
 
-    if (type == PackageType.MODEM_FREQUENCY) {
-      var package = basePackage as ModemFrequencyPackage;
-      nd.modemFrequency = package.getModemFrequency();
-      global.pageWithMap.activateMapMarker(sender);
-      array.add('dataReceived: ${package.getModemFrequency()}');
-    }
+    } else if (basePackage is ExternalPowerPackage) {
+      array.add('dataReceived: ${basePackage.getExternalPowerState()}');
 
-    if (type == PackageType.STATE) {
-      var package = basePackage as StatePackage;
-      if (nd is RT) {
-        nd.stateMask = package.getStateMask();
-        array.add('dataReceived: ${package.getStateMask()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
-    }
+    } else if (basePackage is BatteryMonitorPackage) {
+      array.add('dataReceived: ${basePackage.getTemperature()}');
+      array.add('dataReceived: ${basePackage.getVoltage()}');
+      array.add('dataReceived: ${basePackage.getCurrent()}');
+      array.add('dataReceived: ${basePackage.getElapsedTime()}');
+      array.add('dataReceived: ${basePackage.getUsedCapacity()}');
+      array.add('dataReceived: ${basePackage.getResidue()}');
 
-    if (type == PackageType.PERIPHERY) {
-      var package = basePackage as PeripheryMaskPackage;
-      if (nd is RT) {
-        nd.peripheryMask = package.getPeripheryMask();
-
-        array.add('dataReceived: ${package.getPeripheryMask()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
-    }
-
-    if (type == PackageType.EXTERNAL_POWER) {
-      var package = basePackage as ExternalPowerPackage;
-      if (nd is RT) {
-        nd.extPower = package.getExternalPowerState();
-      } else if (nd is MCD) {
-        nd.GPSState = package.getExternalPowerState() == ExternalPower.ON;
-      }
-      array.add('dataReceived: ${package.getExternalPowerState()}');
-      global.pageWithMap.activateMapMarker(sender);
-    }
-
-    if (type == PackageType.BATTERY_MONITOR) {
-      var package = basePackage as BatteryMonitorPackage;
-      if (nd is RT) {
-        nd.setBatMonParameters(package.getResidue(), package.getUsedCapacity(), package.getVoltage(), package.getCurrent(),
-            package.getTemperature(), package.getElapsedTime());
-      } else if (nd is MCD) {
-        nd.setBatMonParameters(package.getVoltage(), package.getTemperature());
-      }
-
-      array.add('dataReceived: ${package.getTemperature()}');
-      array.add('dataReceived: ${package.getVoltage()}');
-      array.add('dataReceived: ${package.getCurrent()}');
-      array.add('dataReceived: ${package.getElapsedTime()}');
-      array.add('dataReceived: ${package.getUsedCapacity()}');
-      array.add('dataReceived: ${package.getResidue()}');
-      global.pageWithMap.activateMapMarker(sender);
     }
 
     // TODO: add Battery state
-    if (type == PackageType.BATTERY_STATE) {
-      var package = basePackage as BatteryStatePackage;
-      if (nd is RT) {
-        var isWeakBattery = package.getBatteryState() == BatteryState.BAD;
+    else if (basePackage is BatteryStatePackage && nd is RT) {
+      array.add('dataReceived: ${basePackage.getBatteryState()}');
 
-        if (isWeakBattery && !nd.weakBattery) {
-          //AlarmWeaBattery(nd.id());
-        } else if (!isWeakBattery && nd.weakBattery) {
-          //DeviceSettingsEvent(nd.id(), BatteryChanged);
-        }
-        nd.weakBattery = isWeakBattery;
-        //deviceBatteryStateChanged(rt.id(), isWeakBattery);
+    } else if (basePackage is AlarmReasonMaskPackage && nd is CSD) {
+      array.add('dataReceived: ${nd.alarmReasonMask}');
 
-        array.add('dataReceived: ${package.getBatteryState()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
-    }
+    } else if (basePackage is SeismicSignalSwingPackage && nd is CSD) {
+      array.add('dataReceived: ${nd.signalSwing}');
 
-    if (type == PackageType.ALARM_REASON_MASK) {
-      var package = basePackage as AlarmReasonMaskPackage;
-      if (nd is CSD) {
-        nd.alarmReasonMask = package.getAlarmReasonMask();
-        array.add('dataReceived: ${package.getAlarmReasonMask()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
-    }
+    } else if (basePackage is HumanSensitivityPackage && nd is CSD) {
+      array.add('dataReceived: ${nd.humanSensitivity}');
 
-    if (type == PackageType.SIGNAL_SWING) {
-      var package = basePackage as SeismicSignalSwingPackage;
-      if (nd is CSD) {
-        nd.signalSwing = package.getSignalSwing();
+    } else if (basePackage is HumanFreqThresholdPackage && nd is CSD) {
+      array.add('dataReceived: ${nd.humanFreqThreshold}');
 
-        array.add('dataReceived: ${package.getSignalSwing()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
-    }
+    } else if (basePackage is TransportSensitivityPackage && nd is CSD) {
+      array.add('dataReceived: ${nd.transportSensitivity}');
 
-    if (type == PackageType.HUMAN_SENSITIVITY) {
-      var package = basePackage as HumanSensitivityPackage;
-      if (nd is CSD) {
-        nd.humanSensitivity = package.getHumanSensitivity();
+    } else if (basePackage is CriterionFilterPackage && nd is CSD) {
+      array.add('dataReceived: ${nd.criterionFilter}');
 
-        array.add('dataReceived: ${package.getHumanSensitivity()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
-    }
+    } else if (basePackage is SignalToNoiseRatioPackage && nd is CSD) {
+      array.add('dataReceived: ${nd.snr}');
 
-    if (type == PackageType.HUMAN_FREQ_THRESHOLD) {
-      var package = basePackage as HumanFreqThresholdPackage;
-      if (nd is CSD) {
-        nd.humanFreqThreshold = package.getHumanFreqThresholdPackage();
+    } else if (basePackage is CriterionRecognitionPackage && nd is CSD) {
+      array.add('dataReceived: ${nd.recognitionParameters}');
 
-        array.add('dataReceived: ${package.getHumanFreqThresholdPackage()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
-    }
+    } else if (basePackage is PhotoParametersPackage && nd is CPD) {
+      array.add('dataReceived: ${nd.cameraSensitivity}');
+      array.add('dataReceived: ${nd.cameraCompression}');
 
-    if (type == PackageType.TRANSPORT_SENSITIVITY) {
-      var package = basePackage as TransportSensitivityPackage;
-      if (nd is CSD) {
-        nd.transportSensitivity = package.getTransportSensitivity();
+    } else if (basePackage is PhototrapPackage && nd is CPD) {
+      array.add('dataReceived: ${nd.targetSensor}');
 
-        array.add('dataReceived: ${package.getTransportSensitivity()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
-    }
+    } else if (basePackage is EEPROMFactorsPackage && nd is RT) {
+      array.add('dataReceived: ${nd.humanSignalsTreshold}');
+      array.add('dataReceived: ${nd.humanIntervalsCount}');
+      array.add('dataReceived: ${nd.transportSignalsTreshold}');
+      array.add('dataReceived: ${nd.transportIntervalsCount}');
 
-    if (type == PackageType.CRITERION_FILTER) {
-      var package = basePackage as CriterionFilterPackage;
-      if (nd is CSD) {
-        nd.criterionFilter = package.getCriterionFilter();
+    } else if (basePackage is PhototrapFilesPackage && nd is CPD) {
+      array.add('dataReceived: ${nd.phototrapFiles}');
 
-        array.add('dataReceived: ${package.getCriterionFilter()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
-    }
+    } else if (basePackage is ExternalPowerSafetyCatchPackage && nd is RT) {
+      array.add('dataReceived: ${nd.extPowerSafetyCatchState}');
 
-    if (type == PackageType.SIGNAL_TO_NOISE_RATIO) {
-      var package = basePackage as SignalToNoiseRatioPackage;
-      if (nd is CSD) {
-        nd.snr = package.getSignalToNoiseRatio();
+    } else if (basePackage is AutoExternalPowerPackage && nd is RT) {
+      array.add('dataReceived: ${nd.autoExtPowerActivationDelaySec}');
+      array.add('dataReceived: ${nd.extPowerImpulseDurationSec}');
+      array.add('dataReceived: ${nd.autoExtPowerState}');
 
-        array.add('dataReceived: ${package.getSignalToNoiseRatio()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
-    }
-
-    if (type == PackageType.CRITERION_RECOGNITION) {
-      var package = basePackage as CriterionRecognitionPackage;
-      if (nd is CSD) {
-        nd.recognitionParameters = package.getCriteria();
-
-        array.add('dataReceived: ${package.getCriteria()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
-    }
-
-    if (type == PackageType.PHOTO_PARAMETERS) {
-      var package = basePackage as PhotoParametersPackage;
-      if (nd is CPD) {
-        nd.setCameraParameters(package.getInvLightSensitivity(), package.getCompressRatio());
-
-        array.add('dataReceived: ${package.getInvLightSensitivity()}');
-        array.add('dataReceived: ${package.getCompressRatio()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
-    }
-
-    if (type == PackageType.TRAP_ADDRESS) {
-      var package = basePackage as PhototrapPackage;
-      if (nd is CPD) {
-        nd.targetSensor = package.getCrossDevicesList().first;
-
-        array.add('dataReceived: ${package.getCrossDevicesList()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
-    }
-
-    if (type == PackageType.EEPROM_FACTORS) {
-      var package = basePackage as EEPROMFactorsPackage;
-      if (nd is RT) {
-        nd.EEPROMInitialized = true;
-        nd.wakeNetworkResendTimeMs = package.getWakeNetworkResendTimeMs();
-        nd.alarmResendTimeMs = package.getAlarmResendTimeMs();
-        nd.seismicResendTimeMs = package.getSeismicResendTimeMs();
-        nd.photoResendTimeMs = package.getPhotoResendTimeMs();
-        nd.alarmTriesResend = package.getAlarmTriesResend();
-        nd.seismicTriesResend = package.getSeismicTriesResend();
-        nd.photoTriesResend = package.getPhotoTriesResend();
-        nd.periodicSendTelemetryTime10s = package.getPeriodicSendTelemetryTime10S();
-        nd.afterSeismicAlarmPauseS = package.getAfterSeismicAlarmPauseS();
-        nd.afterLineAlarmPauseS = package.getAfterLineAlarmPauseS();
-        nd.batteryPeriodicUpdate10min = package.getBatteryPeriodicUpdate10Min();
-        nd.batteryVoltageThresholdAlarm100mV = package.getBatteryVoltageThresholdAlarm100mV();
-        nd.batteryResidueThresholdAlarmPC = package.getBatteryResidueThresholdAlarmPC();
-        nd.batteryPeriodicAlarmH = package.getBatteryPeriodicAlarmH();
-        nd.deviceType = package.getDeviceType();
-
-        nd.humanSignalsTreshold = package.getHumanSignalsTreshold();
-        nd.humanIntervalsCount = package.getHumanIntervalsCount();
-        nd.transportSignalsTreshold = package.getTransportSignalsTreshold();
-        nd.transportIntervalsCount = package.getTransportIntervalsCount();
-
-        array.add('dataReceived: ${package.getHumanSignalsTreshold()}');
-        array.add('dataReceived: ${package.getHumanIntervalsCount()}');
-        array.add('dataReceived: ${package.getTransportSignalsTreshold()}');
-        array.add('dataReceived: ${package.getTransportIntervalsCount()}');
-        global.pageWithMap.activateMapMarker(package.getSender());
-      }
-    }
-
-    if (type == PackageType.TRAP_PHOTO_LIST) {
-      var package = basePackage as PhototrapFilesPackage;
-      if (nd is CPD) {
-        nd.phototrapFiles = package.getPhototrapFiles();
-
-        array.add('dataReceived: ${package.getPhototrapFiles()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
-    }
-
-    if (type == PackageType.SAFETY_CATCH) {
-      var package = basePackage as ExternalPowerSafetyCatchPackage;
-      if (nd is RT) {
-        nd.extPowerSafetyCatchState = package.getSafetyCatchState();
-
-        array.add('dataReceived: ${package.getSafetyCatchState()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
-    }
-
-    if (type == PackageType.AUTO_EXT_POWER) {
-      var package = basePackage as AutoExternalPowerPackage;
-      if (nd is RT) {
-        nd.autoExtPowerActivationDelaySec = package.getActivationDelay();
-        nd.extPowerImpulseDurationSec = package.getImpulseDuration();
-        nd.autoExtPowerState = package.getAutoExternalPowerModeState();
-
-        array.add('dataReceived: ${package.getActivationDelay()}');
-        array.add('dataReceived: ${package.getImpulseDuration()}');
-        array.add('dataReceived: ${package.getAutoExternalPowerModeState()}');
-        global.pageWithMap.activateMapMarker(sender);
-      }
     }
 
     global.dataComeFlag = true;
@@ -590,7 +334,6 @@ class DeviceParametersPage extends StatefulWidget with TIDManagement {
     _page.checkNewIdDevice();
   }
 
-  @override
   void alarmReceived(BasePackage basePackage) {
     if (basePackage.getType() == PackageType.ALARM) {
       var package = basePackage as AlarmPackage;
@@ -657,17 +400,6 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
         }
         global.dataComeFlag = false;
-      }
-
-      if (global.allowedHopsCame == true) {
-        dialogAllowedHopsBuilder();
-        global.allowedHopsCame = false;
-        setAllNums();
-      }
-      if (global.unallowedHopsCame == true) {
-        dialogUnallowedHopsBuilder();
-        global.unallowedHopsCame = false;
-        setAllNums();
       }
     });
   }
@@ -1253,9 +985,6 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       if (item == null) return;
       widget._cloneItem = item.clone();
       bufferDeviceType = widget._cloneItem.typeName();
-      if (widget._cloneItem is RT) {
-        print((widget._cloneItem as RT).extPowerImpulseDurationSec);
-      }
     });
   }
 
@@ -1282,22 +1011,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               flex: 3,
               child: SizedBox(
                 width: 200,
-                child: /*TextFormField(
-                    key: Key(widget._cloneItem!.id.toString()),
-                    textAlign: TextAlign.center,
-                    initialValue: widget._cloneItem!.id.toString(),
-                    decoration: InputDecoration(helperText: widget._cloneItem!.id.toString()),
-                    keyboardType: TextInputType.number,
-                    inputFormatters: <TextInputFormatter>[
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                    maxLength: 3,
-                    onChanged: (string) => widget._cloneItem!.id = int.parse(string),
-                    onSaved: (string) => widget._cloneItem!.id = int.parse(string!),
-                    textInputAction: ,
-
-                  ),*/
-                    TextField(
+                child: TextField(
                   controller: TextEditingController(text: nd.id.toString()),
                   keyboardType: TextInputType.number,
                   maxLength: 3,
@@ -1466,19 +1180,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               flex: 3,
               child: SizedBox(
                 width: 200,
-                child: /*TextFormField(
-                    key: Key(global.listMapMarkers[global.itemsMan.getSelected<NetDevice>()!.id]!.point.latitude.toStringAsFixed(6)),
-                    textAlign: TextAlign.center,
-                    initialValue: global.listMapMarkers[global.itemsMan.getSelected<NetDevice>()!.id]!.point.latitude.toStringAsFixed(6),
-                    keyboardType: TextInputType.number,
-                    maxLength: 9,
-                    onChanged: (string) {
-                      global.listMapMarkers[global.itemsMan.getSelected<NetDevice>()!.id]!.point.latitude = double.parse(string);
-                      bufLatitude = double.parse(string);
-                    },
-                  ),*/
-                    TextField(
-                  controller: TextEditingController(text: global.listMapMarkers[nd.id]!.point.latitude.toStringAsFixed(6)),
+                child: TextField(
+                  controller: TextEditingController(text: nd.latitude.toStringAsFixed(6)),
                   keyboardType: TextInputType.number,
                   maxLength: 9,
                   inputFormatters: <TextInputFormatter>[
@@ -1521,19 +1224,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               flex: 3,
               child: SizedBox(
                 width: 200,
-                child: /*TextFormField(
-                    key: Key(global.listMapMarkers[global.itemsMan.getSelected<NetDevice>()!.id]!.point.longitude.toStringAsFixed(6)),
-                    textAlign: TextAlign.center,
-                    initialValue: global.listMapMarkers[global.itemsMan.getSelected<NetDevice>()!.id]!.point.longitude.toStringAsFixed(6),
-                    keyboardType: TextInputType.number,
-                    maxLength: 9,
-                    onChanged: (string) {
-                      global.listMapMarkers[global.itemsMan.getSelected<NetDevice>()!.id]!.point.longitude = double.parse(string);
-                      bufLongitude = double.parse(string);
-                    },
-                  ),*/
-                    TextField(
-                  controller: TextEditingController(text: global.listMapMarkers[nd.id]!.point.longitude.toStringAsFixed(6)),
+                child: TextField(
+                  controller: TextEditingController(text: nd.longitude.toStringAsFixed(6)),
                   keyboardType: TextInputType.number,
                   maxLength: 9,
                   inputFormatters: <TextInputFormatter>[
@@ -2358,13 +2050,16 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               width: 200,
               child: Checkbox(
                 value: rt.autoExtPowerState,
-                onChanged: global.itemsMan.getSelected<RT>()!.extPowerSafetyCatchState
+                onChanged:
+    global.itemsMan.getSelected<RT>() != null
+                ? global.itemsMan.getSelected<RT>()!.extPowerSafetyCatchState
                     ? (bool? value) {
                         setState(() {
                           rt.autoExtPowerState = value!;
                         });
                       }
-                    : null,
+                    : null
+        : null,
               ),
             ),
           ),

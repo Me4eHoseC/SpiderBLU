@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:projects/Application.dart';
 
 import 'core/CPD.dart';
 import 'core/CSD.dart';
@@ -22,7 +21,11 @@ class _BluetoothPage extends State<BluetoothPage> with TickerProviderStateMixin 
   @override
   void initState() {
     super.initState();
-    Application.init();
+
+    global.stdConnectionManager.stdConnected = global.deviceParametersPage.stdConnected;
+
+    global.packageProcessor.subscribers.addAll([global.deviceParametersPage, global.imagePage, global.seismicPage, global.pageWithMap]);
+
     global.deviceTypeList = [];
     global.deviceTypeList.add(STD.Name());
     global.deviceTypeList.add(RT.Name());
@@ -55,15 +58,21 @@ class _BluetoothPage extends State<BluetoothPage> with TickerProviderStateMixin 
               ),
               TextButton(
                 onPressed: () {
-                  global.stdConnectionManager.searchAndConnect();
+                  //global.stdConnectionManager.searchAndConnect();
                   Navigator.pop(context);
-                  global.stdConnectionManager.isDiscovering = true;
                 },
                 child: Text('Accept'),
               ),
             ],
           );
-        });
+        }).then(
+      (value) {
+        if (value == null) {
+          print('dialog closed with on barrier dismissal or android back button');
+          global.stdConnectionManager.searchAndConnect();
+        }
+      },
+    );
     setState(() {});
   }
 
@@ -78,8 +87,6 @@ class _BluetoothPage extends State<BluetoothPage> with TickerProviderStateMixin 
 
   void repeatDiscovery() {
     alert();
-    global.stdConnectionManager.isDiscovering = true;
-    print (global.stdConnectionManager.isDiscovering);
   }
 
   void disconnect() {

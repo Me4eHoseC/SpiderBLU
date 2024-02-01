@@ -3,11 +3,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:projects/Application.dart';
 import 'package:projects/BasePackage.dart';
 import 'package:projects/core/CPD.dart';
-import 'package:projects/core/Marker.dart';
-import 'package:projects/core/NetDevice.dart';
 import 'package:projects/core/Uint8Vector.dart';
 import 'dart:io';
 import 'package:gallery_saver/gallery_saver.dart';
@@ -18,7 +15,7 @@ import 'NetPhotoPackages.dart';
 import 'RoutesManager.dart';
 import 'global.dart' as global;
 
-class ImagePage extends StatefulWidget with TIDManagement {
+class ImagePage extends StatefulWidget with global.TIDManagement {
   ImagePage({super.key});
   List<String> array = [];
 

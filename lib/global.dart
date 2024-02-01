@@ -10,12 +10,27 @@ import 'package:projects/SeismicPage.dart';
 import 'package:projects/DeviceParametersPage.dart';
 import 'package:projects/ISTD.dart';
 import 'package:projects/STDConnectionManager.dart';
+import 'BasePackage.dart';
+import 'PackageProcessor.dart';
 import 'core/ItemsManager.dart';
 import 'FileManager.dart';
 import 'ImagePage.dart';
 import 'PageWithMap.dart';
 import 'main.dart';
 
+abstract class TIDManagement {
+  final List<int> tits = [];
+  Map<int, BasePackage> setRequests = {};
+
+  bool isMyTransaction(int tid) {
+    return tits.contains(tid);
+  }
+
+  void dataReceived(int tid, BasePackage basePackage) {}
+  void acknowledgeReceived(int tid, BasePackage basePackage) {}
+
+  void ranOutOfSendAttempts(int tid, BasePackage? pb) {}
+}
 
 String deviceName = 'HC-05-DMRS1', STDNum = '195';
 String selectedPage = '', statusBarString = '', selectedDevice = '', deleteStr = '';
@@ -40,6 +55,7 @@ final List<StatefulWidget> pages = [
   seismicPage,
 ];
 
+PackageProcessor packageProcessor = PackageProcessor();
 PackagesParser packagesParser = PackagesParser();
 
 FileManager fileManager = FileManager();
@@ -79,5 +95,9 @@ List<int> serialHuman = [1, 2, 3];
 List<int> serialTransport = [1, 2, 3];
 GlobalKey<HomePageState> globalKey = GlobalKey<HomePageState>();
 ItemsManager itemsMan = ItemsManager();
+
+const int baseFrequency = 432999960;         // Hz
+const int channelFrequencyStep = 1999946;    // Hz
+const int reserveFrequencyOffset = 2999980;  // Hz
 
 int testCounter = 0;

@@ -17,7 +17,7 @@ abstract class ISTD {
 
   int write(Uint8List data);
 
-  late void Function(Uint8List data) onData;
+  late void Function(Uint8List data) onReadyRead;
   late void Function() onConnected;
   late void Function() onDisconnected;
 }

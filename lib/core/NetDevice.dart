@@ -1,5 +1,7 @@
 import 'package:projects/core/Marker.dart';
 
+import '/global.dart' as global;
+
 enum NDState {
   Offline,
   Online,
@@ -28,6 +30,8 @@ abstract class NetDevice extends Marker {
   NDState _state = NDState.Offline;
   DateTime? _wasActiveDateTime;
   int _modemFrequency = 0;
+  int _channel = 0;
+  bool _isMain = false;
 
   @override
   void copyFrom(Marker other) {
@@ -35,6 +39,8 @@ abstract class NetDevice extends Marker {
     if (other is! NetDevice) {
       return;
     }
+    _channel = other._channel;
+    _isMain = other._isMain;
     _modemFrequency = other._modemFrequency;
     _stdMode = other._stdMode;
     _state = other._state;
@@ -48,7 +54,25 @@ abstract class NetDevice extends Marker {
   }
 
   int get modemFrequency => _modemFrequency;
-  set modemFrequency(int freq) => _modemFrequency = freq;
+  set modemFrequency(int frequency) {
+    _modemFrequency = frequency;
+
+    var frequencyDiff = frequency - global.baseFrequency;
+    var c = frequencyDiff / global.channelFrequencyStep;
+
+    _isMain = c - c.floor() == 0;
+
+    _channel = 0;
+    if (isMain) {
+      _channel = frequencyDiff ~/ global.channelFrequencyStep + 5;
+    } else {
+      _channel = (frequencyDiff - global.reserveFrequencyOffset) ~/ global.channelFrequencyStep + 5;
+    }
+  }
+
+  int get channel => _channel;
+
+  bool get isMain => _isMain;
 
   bool get stdMode => _stdMode;
   set stdMode(bool isStdMode) => _stdMode = isStdMode;
@@ -75,5 +99,4 @@ abstract class NetDevice extends Marker {
 
   int get firmwareVersion => _firmwareVersion;
   set firmwareVersion(int version) => _firmwareVersion = version;
-
 }

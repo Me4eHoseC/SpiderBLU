@@ -10,12 +10,15 @@ class STDConnectionManager {
   final String _stdName = global.deviceName;
   String _stdAddress = '';
   bool isDiscovering = true;
+
   late void Function() setStateOnDone;
   late void Function(int) stdConnected;
+
   Timer? timer;
 
   void searchAndConnect() {
     isDiscovering = true;
+    print (FlutterBluetoothSerial.instance.isDiscovering);
 
     FlutterBluetoothSerial.instance.startDiscovery().listen((r) {
       if (r.device.name == _stdName && global.std == null) {
@@ -37,7 +40,7 @@ class STDConnectionManager {
       }
     });
 
-    timer = Timer(const Duration(seconds: 20), () {
+    timer = Timer(const Duration(seconds: 10), () {
       isDiscovering = false;
       setStateOnDone();
     });

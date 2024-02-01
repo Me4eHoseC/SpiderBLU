@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'global.dart' as global;
 import 'package:projects/AllEnum.dart';
+import 'package:projects/PackageProcessor.dart';
 
 import 'NetCommonPackages.dart';
 import 'NetPackagesDataTypes.dart';
@@ -57,10 +59,10 @@ class FileManager {
 
   void addFilePart(FilePartPackage filePart) {
     if (filePart.getType() == PackageType.MESSAGE) {
-      Timer.run(() => messageReceived(filePart));
-
+      Timer.run(() => global.packageProcessor.messageReceived(filePart));
       return;
     }
+
     print('Part received: part pos: ${filePart.getCurrentPosition()}\tpart size: ${filePart.getPartSize()}\tfull size: ${filePart.getFileSize()}');
 
 
@@ -95,11 +97,11 @@ class FileManager {
         }
 
         Timer.run(() {
-          fileDownloadStarted(filePart.getSender(), filePart);
-          filePartReceived(filePart);
+          global.packageProcessor.fileDownloadStarted(filePart.getSender(), filePart);
+          global.packageProcessor.filePartReceived(filePart);
         });
 
-        //savePart(filePart);
+        //savePart(filePart); // TODO: uncomment when DB introduced
 
         startPartTimer(filePart.getSender());
       } else {
@@ -116,18 +118,13 @@ class FileManager {
     if (filePart.isNextAfter(lastPart)) {
       print("Next file part received");
 
-      Timer.run(() {
-        filePartReceived(filePart);
-      });
+      Timer.run(() => global.packageProcessor.filePartReceived(filePart));
       //savePart(filePart);
 
       if (filePart.isLastPart()) {
         print("File downloaded");
 
-        Timer.run(() {
-          print('HERE');
-          fileDownloaded(lastPart.getSender());
-        });
+        Timer.run(() => global.packageProcessor.fileDownloaded(lastPart.getSender()));
 
         stopPartTimer(lastPart.getSender());
       } else {
@@ -165,9 +162,7 @@ class FileManager {
       if (!part.isNextAfter(lastPart)) break;
 
       print("Restoring async parts order");
-      Timer.run(() {
-        filePartReceived(part);
-      });
+      Timer.run(() => global.packageProcessor.filePartReceived(part));
       //savePart(part);
 
       _fileParts.remove(part);
@@ -178,10 +173,7 @@ class FileManager {
 
     if (lastPart.isLastPart()) {
       print("File downloaded");
-      Timer.run(() {
-        print('HERE2');
-        fileDownloaded(lastPart.getSender());
-      });
+      Timer.run(() => global.packageProcessor.fileDownloaded(lastPart.getSender()));
       stopPartTimer(lastPart.getSender());
     } else {
       startPartTimer(lastPart.getSender());
@@ -194,7 +186,7 @@ class FileManager {
     timer?.cancel();
 
     timer = Timer(const Duration(milliseconds: _partAwaitMs), () {
-        Timer.run(() { fileDownloaded(sender); });
+        Timer.run(() => global.packageProcessor.fileDownloaded(sender));
         stopPartTimer(sender);
       });
 
@@ -214,11 +206,6 @@ class FileManager {
 
     _imageProperties[cameraId] = ip;
   }
-
-  late void Function(int sender, FilePartPackage filePartPackage) fileDownloadStarted;
-  late void Function(FilePartPackage filePart) filePartReceived;
-  late void Function(int sender) fileDownloaded;
-  late void Function(FilePartPackage message) messageReceived;
 
   Uint8List getPhotoImageHeader(int cameraId) {
     var item = _imageProperties[cameraId];

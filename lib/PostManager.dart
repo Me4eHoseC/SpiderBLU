@@ -4,7 +4,6 @@ import 'dart:math';
 
 import 'package:projects/BasePackage.dart';
 
-import 'AllEnum.dart';
 import 'global.dart' as global;
 
 class PackageSendingStatus {
@@ -61,9 +60,6 @@ class PostManager {
     _packagesIdCounter = _random.nextInt(32767) + 1;
   }
 
-  late void Function(BasePackage? pb, int transactionId) ranOutOfSendAttempts;
-  late void Function(PackageSendingStatus sendingStatus) packageSendingAttempt;
-
   void _send() {
     _offsetTimer?.cancel();
 
@@ -113,7 +109,7 @@ class PostManager {
     if (_currentRequest.attemptNumber >= _currentRequest.totalAttemptNumber) {
       if (_currentRequest.postType != PostType.Response) {
         int tid = _closeTransaction(req.getId());
-        Timer.run(() => ranOutOfSendAttempts(req, tid));
+        Timer.run(() => global.packageProcessor.ranOutOfSendAttempts(req, tid));
       }
 
       _currentRequest = _getRequest();
@@ -131,7 +127,7 @@ class PostManager {
       sendingStatus.attemptNumber = _currentRequest.attemptNumber;
       sendingStatus.totalAttemptNumber = _currentRequest.totalAttemptNumber;
 
-      Timer.run(() => packageSendingAttempt(sendingStatus));
+      Timer.run(() => global.packageProcessor.packageSendingAttempt(sendingStatus));
     }
 
     if (!req.isAnswer()) {

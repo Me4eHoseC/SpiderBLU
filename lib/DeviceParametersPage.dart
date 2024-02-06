@@ -11,7 +11,6 @@ import 'package:projects/core/NetDevice.dart';
 
 import 'AllEnum.dart';
 import 'NetNetworkPackages.dart';
-import 'PageWithMap.dart';
 import 'RoutesManager.dart';
 import 'core/CPD.dart';
 import 'core/CSD.dart';
@@ -39,7 +38,7 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
   }
 
   void stdConnected(int stdId) {
-    Timer(Duration(seconds: 4), () {
+    Timer(const Duration(seconds: 4), () {
       if ((global.listMapMarkers.isEmpty || global.flagCheckSPPU == false) && global.pageWithMap.coord() != null) {
         global.pageWithMap.createFirstSTDAutomatically(
             int.parse(global.STDNum), global.pageWithMap.coord()!.latitude, global.pageWithMap.coord()!.longitude);
@@ -62,7 +61,6 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
       tits.add(tid);
       global.stdHopsCheckRequests.add(tid);
 
-      print('std init');
     });
 
     // TODO PollMan.startPollRoutines();
@@ -196,7 +194,6 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
 
     if (nd == null) return;
 
-    print('dataReceived');
     global.pageWithMap.activateMapMarker(sender);
 
     if (basePackage is VersionPackage) {
@@ -227,7 +224,6 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
 
         if (global.stdHopsCheckRequests.contains(tid)) {
           global.stdHopsCheckRequests.remove(tid);
-          global.allowedHopsCame = false;
 
           if (rtMode == RtMode.NoOne) {
             var hp = HopsPackage();
@@ -242,7 +238,6 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
           }
         } else if (global.retransmissionRequests.contains(tid)) {
           global.retransmissionRequests.remove(tid);
-          global.allowedHopsCame = false;
 
           array.add('dataReceived: ${nd.allowedHops}');
 
@@ -371,7 +366,6 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
   @override
   bool get wantKeepAlive => true;
   ScrollController _scrollController = ScrollController();
-  List<DropdownMenuItem<String>> dropdownItems = [];
   String? bufferDeviceType;
 
   @override

@@ -1,8 +1,11 @@
 library projects.globals;
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:projects/BluetoothPage.dart';
 import 'package:projects/PackagesParser.dart';
 import 'package:projects/PostManager.dart';
@@ -33,7 +36,7 @@ abstract class TIDManagement {
 }
 
 String deviceName = 'HC-05-DMRS1', STDNum = '195';
-String selectedPage = '', statusBarString = '', selectedDevice = '', deleteStr = '';
+String statusBarString = '';
 
 Text mainBottomSelectedDev = Text('');
 Timer? timer;
@@ -72,14 +75,8 @@ class Pair<T1, T2> {
   Pair(this.first, this.second);
 }
 
-//List<String> globalDevicesListFromMap = [];
-
 bool flagConnect = false, dataComeFlag = false, flagMapPage = true,
-    flagCheckSPPU = false, allowedHopsCame = false, unallowedHopsCame = false,
-    flagMoveMarker = false, transLang = false;
-
-List<int> globalActiveDevices = List<int>.empty(growable: true),
-    globalAlarmDevices = List<int>.empty(growable: true);
+    flagCheckSPPU = false, flagMoveMarker = false, transLang = false;
 
 Map<int, MapMarker> listMapMarkers = {};
 
@@ -100,4 +97,13 @@ const int baseFrequency = 432999960;         // Hz
 const int channelFrequencyStep = 1999946;    // Hz
 const int reserveFrequencyOffset = 2999980;  // Hz
 
-int testCounter = 0;
+Directory pathToProject = Directory('/storage/emulated/0/Android/data/com.example.projects/files');
+
+void getPermission() async {
+  var status1 = await Permission.storage.status;
+  var status2 = await Permission.manageExternalStorage.status;
+  if (!status1.isGranted || !status2.isGranted) {
+    await Permission.storage.request();
+    await Permission.manageExternalStorage.request();
+  }
+}

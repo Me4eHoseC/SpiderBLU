@@ -156,12 +156,13 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
   }
 
   void save() async {
-    Directory? root = await getDownloadsDirectory();
-    String directoryPath = root!.path + '/photoTests';
+    Directory? root = global.pathToProject;
+    String directoryPath = '${root.path}/photoTests';
     await Directory(directoryPath).create(recursive: true);
     String filePath = '$directoryPath/${_dateLastPhoto!.toLocal().toString().substring(0, 19)}.jpeg';
     File(filePath).writeAsBytes(bufSecondImage!.bytes);
-    GallerySaver.saveImage(filePath, albumName: 'photoTest');
+    print(filePath);
+    //GallerySaver.saveImage(filePath, albumName: 'photoTest');
   }
 
   void endDownload() {

@@ -1,12 +1,9 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter_gif/flutter_gif.dart';
 import 'package:projects/core/NetDevice.dart';
 import 'package:provider/provider.dart';
 
-import 'core/CPD.dart';
-import 'core/CSD.dart';
 import 'core/RT.dart';
 import 'global.dart' as global;
 
@@ -72,6 +69,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   @override
   void initState() {
+    global.getPermission();
     controller = FlutterGifController(vsync: this);
     repeatAnim();
     super.initState();
@@ -157,7 +155,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     ),
                     global.std != null && global.itemsMan.get<STD>(int.parse(global.STDNum)) != null
                         ? Text('${STD().typeName()} #${global.STDNum} - ${global.itemsMan.get<STD>(int.parse(global.STDNum))?.channel}'
-                        '${global.itemsMan.get<STD>(int.parse(global.STDNum))!.isMain ? '' :'r'}')
+                            '${global.itemsMan.get<STD>(int.parse(global.STDNum))!.isMain ? '' : 'r'}')
                         : Text('${STD().typeName()} #${global.STDNum}'),
                   ],
                 ),

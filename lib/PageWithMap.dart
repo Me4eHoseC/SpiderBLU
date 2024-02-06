@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:projects/BasePackage.dart';
 import 'package:projects/NetPackagesDataTypes.dart';
 import 'package:projects/RoutesManager.dart';
@@ -198,7 +197,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
   List<String> array = [];
 
   late _PageWithMap _page;
-  int indexMapMarker = 0;
   String? bufferDeviceType;
 
   String setImagePackage(String type) {
@@ -222,17 +220,9 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
   }
 
   void saveMapMarkersInFile() async {
-    var status1 = await Permission.storage.status;
-    var status2 = await Permission.manageExternalStorage.status;
-    if (!status1.isGranted || !status2.isGranted) {
-      await Permission.storage.request();
-      await Permission.manageExternalStorage.request();
-    }
-    var dir = Directory('/storage/emulated/0/SpiderNet');
-    if (!await dir.exists()){
-      await dir.create();
-    }
-    File file = File('/storage/emulated/0/SpiderNet/file.json');
+    global.getPermission();
+    var dir = global.pathToProject;
+    File file = File('${dir.path}/first.json');
     if (!await file.exists()) {
       await file.create();
     }
@@ -249,27 +239,16 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
   }
 
   void loadMapMarkersFromFile() async {
-    var status1 = await Permission.storage.status;
-    var status2 = await Permission.manageExternalStorage.status;
-    if (!status1.isGranted || !status2.isGranted) {
-      await Permission.storage.request();
-      await Permission.manageExternalStorage.request();
-    }
-    var dir = Directory('/storage/emulated/0/SpiderNet');
-    if (!await dir.exists()){
-      await dir.create();
-    }
-
-    File file = File('/storage/emulated/0/SpiderNet/file.json');
-
+    global.getPermission();
+    var dir = global.pathToProject;
+    File file = File('${dir.path}/first.json');
     if (!await file.exists()) {
-      await file.create(recursive: true);
-    } else {
-      final data = await File('/storage/emulated/0/SpiderNet/file.json').readAsString();
-      final decoded = json.decode(data);
-      for (final item in decoded) {
-        createMapMarker(MarkerData.fromJson(item).id!, MarkerData.fromJson(item).type!, MarkerData.fromJson(item));
-      }
+      await file.create();
+    }
+    final data = await file.readAsString();
+    final decoded = json.decode(data);
+    for (final item in decoded) {
+      createMapMarker(MarkerData.fromJson(item).id!, MarkerData.fromJson(item).type!, MarkerData.fromJson(item));
     }
   }
 
@@ -292,7 +271,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     global.itemsMan.addItem(pin);
     global.itemsMan.itemAdded = addItem;
     global.itemsMan.selectionChanged = selectedItem;
-    indexMapMarker++;
 
     global.deviceParametersPage.addDeviceInDropdown(id, data.type!);
     selectMapMarker(id);
@@ -315,7 +293,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     } else if (type == STD.Name()) {
       pin = STD();
       global.flagCheckSPPU = true;
-      //_page.startDiscovery();
     } else if (type == CPD.Name()) {
       pin = CPD();
     } else if (type == CSD.Name()) {
@@ -333,7 +310,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     global.itemsMan.itemAdded = addItem;
     global.itemsMan.selectionChanged = selectedItem;
     global.itemsMan.itemRemoved = itemRemoved;
-    indexMapMarker++;
 
     global.deviceParametersPage.addDeviceInDropdown(id, type);
     selectMapMarker(id);
@@ -343,15 +319,9 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
   void selectedItem() {
     if (global.itemsMan.getSelected<NetDevice>() == null) return;
     _page.changeBottomBarWidget(1, global.itemsMan.getSelected<NetDevice>()!.id, null);
-    /*print(global.itemsMan.getAllIds());
-    print(global.itemsMan.get<STD>(195)?.typeName);
-    print(global.itemsMan.getSelectedItem()?.id);*/
   }
 
   void addItem(int id) {
-    /*print(global.itemsMan.get(195)?.id);
-    print('$id ${global.itemsMan.get<NetDevice>(id)?.typeName(global.transLang)}');
-    print(global.itemsMan.getSelectedItem()?.id);*/
   }
 
   void itemRemoved(int id) {
@@ -421,7 +391,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
 
   void deleteMapMarker(int id) {
     if (global.itemsMan.get<STD>(id) != null) {
-      print('blya');
       global.flagCheckSPPU = false;
       //_page.disconnect();
     }
@@ -439,8 +408,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     if (!global.itemsMan.isSelected(id)) {
       unselectMapMarker();
     }
-
-    print('true');
 
     global.itemsMan.setSelected(id);
     global.deviceParametersPage.selectDeviceInDropdown(id);
@@ -990,6 +957,8 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
     if (global.flagMoveMarker) {
       global.listMapMarkers[global.itemsMan.getSelected<mark.Marker>()!.id]!.point.latitude = pos.center!.latitude;
       global.listMapMarkers[global.itemsMan.getSelected<mark.Marker>()!.id]!.point.longitude = pos.center!.longitude;
+      global.listMapMarkers[global.itemsMan.getSelected<mark.Marker>()!.id]!.markerData.cord!.latitude = pos.center!.latitude;
+      global.listMapMarkers[global.itemsMan.getSelected<mark.Marker>()!.id]!.markerData.cord!.longitude = pos.center!.longitude;
       global.itemsMan.getSelected<mark.Marker>()!.setCoordinates(pos.center!.latitude, pos.center!.longitude);
       global.deviceParametersPage.updateDevice();
     }

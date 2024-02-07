@@ -1,4 +1,4 @@
-import '../NetPackagesDataTypes.dart';
+import '../radionet/NetPackagesDataTypes.dart';
 import 'Marker.dart';
 import 'RT.dart';
 

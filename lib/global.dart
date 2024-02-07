@@ -5,20 +5,25 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:projects/BluetoothPage.dart';
-import 'package:projects/PackagesParser.dart';
-import 'package:projects/PollManager.dart';
-import 'package:projects/PostManager.dart';
-import 'package:projects/SeismicPage.dart';
-import 'package:projects/DeviceParametersPage.dart';
-import 'package:projects/ISTD.dart';
-import 'package:projects/STDConnectionManager.dart';
-import 'BasePackage.dart';
-import 'PackageProcessor.dart';
-import 'core/ItemsManager.dart';
-import 'FileManager.dart';
-import 'ImagePage.dart';
-import 'PageWithMap.dart';
+
+import '../std/ISTD.dart';
+import '../std/STDConnectionManager.dart';
+
+import '../core/ItemsManager.dart';
+
+import '../radionet/FileManager.dart';
+import '../radionet/PackagesParser.dart';
+import '../radionet/PollManager.dart';
+import '../radionet/PostManager.dart';
+import '../radionet/BasePackage.dart';
+import '../radionet/PackageProcessor.dart';
+
+import '../pages/BluetoothPage.dart';
+import '../pages/SeismicPage.dart';
+import '../pages/DeviceParametersPage.dart';
+import '../pages/ImagePage.dart';
+import '../pages/PageWithMap.dart';
+
 import 'main.dart';
 
 abstract class TIDManagement {

@@ -1,7 +1,7 @@
 import 'package:projects/core/NetDevice.dart';
 import 'package:projects/core/Marker.dart';
 
-import '../NetPackagesDataTypes.dart';
+import '../radionet/NetPackagesDataTypes.dart';
 
 class RT extends NetDevice {
   int _rssi = 0;

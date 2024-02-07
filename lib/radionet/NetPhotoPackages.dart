@@ -4,7 +4,7 @@ import 'BasePackage.dart';
 import 'NetCommonFunctions.dart';
 import 'NetPackagesDataTypes.dart';
 
-import '../utils/AllEnum.dart';
+import 'PackageTypes.dart';
 
 /// Can be used as camera parameters package or as new photo request package
 class PhotoParametersPackage extends BasePackage {

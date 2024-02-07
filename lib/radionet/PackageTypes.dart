@@ -1,19 +1,3 @@
-enum eError {
-  ERROR_DELIVERY,
-  ERROR_TIMEOUT,
-  ERROR_CONNECTION,
-  ERROR_UNKNOWN;
-}
-
-enum ePacketStates {
-  PACKET_READY_TO_SEND,
-  PACKET_WAIT_ACK,
-  PACKET_WAIT_RESPONSE,
-  PACKET_WAIT_MEDIA,
-  PACKET_ON_PROCESS,
-  PACKET_TIMEOUT;
-}
-
 enum PackageType {
   INFORMATION, //00
   GET_INFORMATION,
@@ -333,10 +317,4 @@ enum PackageType {
 
   const PackageType();
   //final num value;
-}
-
-enum ReceiverStateEnum {
-  markerWaitingState,
-  headerWaitingState,
-  dataWaitingState,
 }

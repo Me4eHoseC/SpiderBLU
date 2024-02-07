@@ -13,7 +13,7 @@ import '../radionet/RoutesManager.dart';
 
 import '../utils/adpcmProcessor.dart';
 import '../utils/seismogramFunctions.dart';
-import '../utils/AllEnum.dart';
+import '../radionet/PackageTypes.dart';
 
 import '../core/CSD.dart';
 

@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'BasePackage.dart';
 import 'NetCommonFunctions.dart';
 
-import '../utils/AllEnum.dart';
+import 'PackageTypes.dart';
 
 class HopsPackage extends BasePackage{
   List<int> _hops = [];

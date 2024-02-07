@@ -10,7 +10,7 @@ import '../std/STDConnectionManager.dart';
 import '../core/NetDevice.dart';
 import '../core/MCD.dart';
 
-import '../utils/AllEnum.dart';
+import 'PackageTypes.dart';
 import "../global.dart" as global;
 
 class PollManager {

@@ -4,7 +4,7 @@ import 'BasePackage.dart';
 import 'NetCommonFunctions.dart';
 import 'NetPackagesDataTypes.dart';
 
-import '../utils/AllEnum.dart';
+import 'PackageTypes.dart';
 
 class SeismicRequestPackage extends BasePackage{
   bool _isZipped = false;

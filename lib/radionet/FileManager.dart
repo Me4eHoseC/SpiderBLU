@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import '../global.dart' as global;
-import '../utils/AllEnum.dart';
+import 'PackageTypes.dart';
 
 import 'NetCommonPackages.dart';
 import 'NetPackagesDataTypes.dart';

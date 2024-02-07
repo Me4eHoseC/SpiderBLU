@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 
 import '../radionet/RoutesManager.dart';
 
-import '../utils/AllEnum.dart';
+import 'PackageTypes.dart';
 
 import 'NetCommonFunctions.dart';
 

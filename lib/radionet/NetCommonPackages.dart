@@ -5,7 +5,7 @@ import 'NetPackagesDataTypes.dart';
 import 'BasePackage.dart';
 
 import '../core/NetDevice.dart';
-import '../utils/AllEnum.dart';
+import 'PackageTypes.dart';
 
 class InformationPackage extends BasePackage {
   int _battery = 0, _rssi = 0;

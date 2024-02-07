@@ -11,7 +11,7 @@ import 'PostManager.dart';
 import 'RoutesManager.dart';
 
 import 'FileManager.dart';
-import '../utils/AllEnum.dart';
+import 'PackageTypes.dart';
 
 import '../global.dart' as global;
 

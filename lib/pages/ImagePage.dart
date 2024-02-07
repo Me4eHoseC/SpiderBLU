@@ -6,7 +6,7 @@ import 'dart:io';
 
 import '../core/CPD.dart';
 
-import '../utils/AllEnum.dart';
+import '../radionet/PackageTypes.dart';
 import '../utils/Uint8Vector.dart';
 
 import '../radionet/BasePackage.dart';

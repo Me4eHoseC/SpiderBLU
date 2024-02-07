@@ -16,7 +16,7 @@ import '../core/MCD.dart';
 import '../core/NetDevice.dart';
 import '../core/RT.dart';
 import '../global.dart' as global;
-import '../utils/AllEnum.dart';
+import 'PackageTypes.dart';
 
 
 class PackageProcessor {

@@ -9,7 +9,7 @@ import '../radionet/NetPackagesDataTypes.dart';
 import '../core/NetDevice.dart';
 import '../radionet/NetPhotoPackages.dart';
 import '../radionet/NetSeismicPackage.dart';
-import '../utils/AllEnum.dart';
+import '../radionet/PackageTypes.dart';
 import '../radionet/NetNetworkPackages.dart';
 import '../radionet/RoutesManager.dart';
 import '../core/CPD.dart';

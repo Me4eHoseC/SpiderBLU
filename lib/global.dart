@@ -4,10 +4,10 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:projects/BluetoothPage.dart';
 import 'package:projects/PackagesParser.dart';
+import 'package:projects/PollManager.dart';
 import 'package:projects/PostManager.dart';
 import 'package:projects/SeismicPage.dart';
 import 'package:projects/DeviceParametersPage.dart';
@@ -66,6 +66,8 @@ FileManager fileManager = FileManager();
 PostManager postManager = PostManager();
 STDConnectionManager stdConnectionManager = STDConnectionManager();
 
+PollManager pollManager = PollManager();
+
 ISTD? std;
 
 class Pair<T1, T2> {
@@ -75,7 +77,7 @@ class Pair<T1, T2> {
   Pair(this.first, this.second);
 }
 
-bool flagConnect = false, dataComeFlag = false, flagMapPage = true,
+bool flagConnect = false, flagMapPage = true,
     flagCheckSPPU = false, flagMoveMarker = false, transLang = false;
 
 Map<int, MapMarker> listMapMarkers = {};
@@ -97,7 +99,7 @@ const int baseFrequency = 432999960;         // Hz
 const int channelFrequencyStep = 1999946;    // Hz
 const int reserveFrequencyOffset = 2999980;  // Hz
 
-Directory pathToProject = Directory('/storage/emulated/0/Android/data/com.example.projects/files');
+Directory pathToProject = Directory('/storage/emulated/0/SpiderNet/com.example.projects/files');
 
 void getPermission() async {
   var status1 = await Permission.storage.status;

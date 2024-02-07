@@ -18,13 +18,14 @@ class STDConnectionManager {
 
   void searchAndConnect() {
     isDiscovering = true;
-    print (FlutterBluetoothSerial.instance.isDiscovering);
+    print(FlutterBluetoothSerial.instance.isDiscovering);
 
     FlutterBluetoothSerial.instance.startDiscovery().listen((r) {
       if (r.device.name == _stdName && global.std == null) {
         _stdAddress = r.device.address.toString();
 
         var std = BluSTD(_stdId, (Uint8List? data) {
+          if (global.std != null) global.std!.lastActiveTime = DateTime.now();
           global.packagesParser.addData(data!);
         });
 
@@ -46,7 +47,7 @@ class STDConnectionManager {
     });
   }
 
-  void disconnect(){
+  void disconnect() {
     global.std!.disconnect();
   }
 

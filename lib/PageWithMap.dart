@@ -151,10 +151,9 @@ class MapMarker extends Marker {
   MarkerData markerData;
   String id;
   String type;
-  Timer? timer;
   String imageTypePackage;
 
-  MapMarker(this.parent, this.markerData, LatLng cord, this.id, this.type, this.timer, this.imageTypePackage)
+  MapMarker(this.parent, this.markerData, LatLng cord, this.id, this.type, this.imageTypePackage)
       : super(
           rotate: true,
           height: 75,
@@ -224,7 +223,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     var dir = global.pathToProject;
     File file = File('${dir.path}/first.json');
     if (!await file.exists()) {
-      await file.create();
+      await file.create(recursive: true);
     }
     var bufJson = '[';
     for (int i in global.listMapMarkers.keys) {
@@ -243,7 +242,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     var dir = global.pathToProject;
     File file = File('${dir.path}/first.json');
     if (!await file.exists()) {
-      await file.create();
+      await file.create(recursive: true);
     }
     final data = await file.readAsString();
     final decoded = json.decode(data);
@@ -258,7 +257,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     data.id = id;
     data.cord = LatLng(latitude, longitude);
     data.type = STD().typeName();
-    var localMarker = MapMarker(_page, data, data.cord!, data.id.toString(), data.type!, null, bufferDeviceType!);
+    var localMarker = MapMarker(_page, data, data.cord!, data.id.toString(), data.type!, bufferDeviceType!);
     global.listMapMarkers[id] = localMarker;
     global.flagCheckSPPU = true;
 
@@ -284,7 +283,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
       unselectMapMarker();
     }
 
-    var localMarker = MapMarker(_page, data, data.cord!, data.id.toString(), data.type!, null, bufferDeviceType!);
+    var localMarker = MapMarker(_page, data, data.cord!, data.id.toString(), data.type!, bufferDeviceType!);
     global.listMapMarkers[id] = localMarker;
 
     mark.Marker pin;
@@ -336,7 +335,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
       buf!.markerData.id = newId;
 
       var localMarker =
-          MapMarker(_page, buf.markerData, buf.markerData.cord!, newId.toString(), buf.markerData.type!, null, buf.imageTypePackage);
+          MapMarker(_page, buf.markerData, buf.markerData.cord!, newId.toString(), buf.markerData.type!, buf.imageTypePackage);
 
       global.listMapMarkers[newId] = localMarker;
       selectMapMarker(newId);
@@ -374,7 +373,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
       buf!.markerData.type = newType;
       global.listMapMarkers.remove(id);
 
-      var localMarker = MapMarker(_page, buf.markerData, buf.markerData.cord!, id.toString(), newType, null, setImagePackage(newType));
+      var localMarker = MapMarker(_page, buf.markerData, buf.markerData.cord!, id.toString(), newType, setImagePackage(newType));
       global.listMapMarkers[id] = localMarker;
 
       global.itemsMan.blockSignals = true;
@@ -452,13 +451,9 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
   }
 
   void activateMapMarker(int id) {
-    if (global.listMapMarkers[id]!.timer != null) {
-      global.listMapMarkers[id]!.timer!.cancel();
-    }
     if (!global.listMapMarkers[id]!.markerData.notifier.active && !global.listMapMarkers[id]!.markerData.notifier.alarm) {
       global.listMapMarkers[id]!.markerData.notifier.changeActive();
     }
-    global.listMapMarkers[id]!.timer = Timer(const Duration(minutes: 1), () => deactivateMapMarker(id));
   }
 
   void deactivateMapMarker(int id) {
@@ -481,7 +476,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
   void acknowledgeReceived(int tid, BasePackage basePackage) {
     tits.remove(tid);
     array.add('acknowledgeReceived');
-    global.dataComeFlag = true;
   }
 
   @override
@@ -504,7 +498,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     if (global.itemsMan.getAllIds().contains(pb!.getReceiver()) && global.listMapMarkers[pb.getReceiver()]!.markerData.notifier.active) {
       deactivateMapMarker(global.listMapMarkers[pb.getReceiver()]!.markerData.id!);
       array.add('RanOutOfSendAttempts');
-      global.dataComeFlag = true;
     }
   }
 }

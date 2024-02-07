@@ -63,7 +63,7 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
 
     });
 
-    // TODO PollMan.startPollRoutines();
+    global.pollManager.startPollRoutines();
   }
 
   void changeDeviceInDropdown(int newId, String newType, String oldId) {
@@ -180,8 +180,7 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
 
     setRequests.remove(tid);
     global.pageWithMap.activateMapMarker(sender);
-    array.add('acknowledgeReceived');
-    global.dataComeFlag = true;
+    addProtocolLine('acknowledgeReceived');
 
     _page.setAllNums();
   }
@@ -324,7 +323,6 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
 
     }
 
-    global.dataComeFlag = true;
     _page.setAllNums();
     _page.checkNewIdDevice();
   }
@@ -338,7 +336,6 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
 
         array.add('dataReceived: ${package.getAlarmType()}');
         array.add('dataReceived: ${package.getAlarmReason()}');
-        global.dataComeFlag = true;
         _page.checkNewIdDevice();
       }
     }
@@ -349,10 +346,13 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
     tits.remove(tid);
     if (global.itemsMan.getAllIds().contains(pb!.getReceiver()) && global.listMapMarkers[pb.getReceiver()]!.markerData.notifier.active) {
       global.pageWithMap.deactivateMapMarker(global.listMapMarkers[pb.getReceiver()]!.markerData.id!);
-      array.add('RanOutOfSendAttempts');
-      global.dataComeFlag = true;
-      _page.checkNewIdDevice();
+      addProtocolLine('RanOutOfSendAttempts');
     }
+  }
+
+  void addProtocolLine(String line){
+    array.add(line);
+    _page.checkNewIdDevice();
   }
 
   @override
@@ -378,7 +378,6 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
 
   void checkNewIdDevice() {
     setState(() {
-      if (global.dataComeFlag) {
         global.list = ListView.builder(
             reverse: true,
             controller: _scrollController,
@@ -393,8 +392,6 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         if (widget.array.length > 3) {
           _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
         }
-        global.dataComeFlag = false;
-      }
     });
   }
 

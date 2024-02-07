@@ -28,23 +28,28 @@ class PackageProcessor {
     // async file part received
     if (FileManager.isFileType(type)) {
       Timer.run(() => global.fileManager.addFilePart(package as FilePartPackage));
+      global.pollManager.packageReceived(package);
       return;
     }
 
     // alarm received
     if (type == PackageType.ALARM) {
       global.deviceParametersPage.alarmReceived(package);
+      global.pollManager.packageReceived(package);
       return;
     }
 
     // request received
     if (size == BasePackage.minExpectedSize && !package.isAnswer()) {
       _requestReceived(package);
+      global.pollManager.packageReceived(package);
       return;
     }
 
     var tid = global.postManager.getRequestTransactionId(package.getInvId());
     global.postManager.responseReceived(package);
+
+    global.pollManager.packageReceived(package, tid);
 
     var subscriber = _getSubscriber(tid);
     subscriber?.tits.remove(tid); // TODO: may be remove and implement in subscriber?
@@ -296,28 +301,25 @@ class PackageProcessor {
 
   void ranOutOfSendAttempts(BasePackage? pb, int transactionId) {
     //global.globalMapMarker[id].markerData.deviceAvailable = false;
-    print('RanOutOfSendAttempts');
+    if (pb == null) return;
+    global.pollManager.packageNotSent(pb, transactionId);
     global.deviceParametersPage.ranOutOfSendAttempts(transactionId, pb);
   }
 
   void packageSendingAttempt(PackageSendingStatus sendingStatus) {
-    print("#${sendingStatus.transactionId}: ${sendingStatus.attemptNumber}/"
-        "${sendingStatus.totalAttemptNumber} -> #${sendingStatus.receiver}");
-    global.statusBarString =
-    ("#${sendingStatus.transactionId}: ${sendingStatus.attemptNumber}/"
+    global.statusBarString = ("#${sendingStatus.transactionId}: ${sendingStatus.attemptNumber}/"
         "${sendingStatus.totalAttemptNumber} -> #${sendingStatus.receiver}");
     timerClearStatusBar();
   }
 
-  void timerClearStatusBar(){
-    if (global.timer != null){
+  void timerClearStatusBar() {
+    if (global.timer != null) {
       print(global.timer);
       global.timer!.cancel();
       global.timer = Timer(const Duration(seconds: 5), () {
         global.statusBarString = " ";
       });
-    }
-    else{
+    } else {
       global.timer = Timer(const Duration(seconds: 5), () {
         global.statusBarString = " ";
       });

@@ -179,7 +179,6 @@ class SeismicPage extends StatefulWidget with global.TIDManagement {
   void acknowledgeReceived(int tid, BasePackage basePackage) {
     tits.remove(tid);
     array.add('acknowledgeReceived');
-    global.dataComeFlag = true;
   }
 
   @override
@@ -196,7 +195,6 @@ class SeismicPage extends StatefulWidget with global.TIDManagement {
     if (global.itemsMan.getAllIds().contains(pb!.getReceiver()) && global.listMapMarkers[pb.getReceiver()]!.markerData.notifier.active) {
       global.pageWithMap.deactivateMapMarker(global.listMapMarkers[pb.getReceiver()]!.markerData.id!);
       array.add('RanOutOfSendAttempts');
-      global.dataComeFlag = true;
     }
   }
 

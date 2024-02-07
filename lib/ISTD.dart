@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 abstract class ISTD {
   int stdId = -1;
+  DateTime lastActiveTime = DateTime.now();
 
   int getStdId() {
     return stdId;

@@ -180,7 +180,7 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
 
     setRequests.remove(tid);
     global.pageWithMap.activateMapMarker(sender);
-    addProtocolLine('acknowledgeReceived');
+    _page.checkNewIdDevice();
 
     _page.setAllNums();
   }
@@ -195,27 +195,9 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
 
     global.pageWithMap.activateMapMarker(sender);
 
-    if (basePackage is VersionPackage) {
-      array.add('dataReceived: ${nd.firmwareVersion}');
-    } else if (basePackage is TimePackage) {
-
-      array.add('dataReceived: ${nd.time}');
-    } else if (basePackage is AllInformationPackage && nd is RT) {
-
-      array.add('dataReceived: ${nd.storedLongitude}');
-      array.add('dataReceived: ${nd.storedLatitude}');
-      array.add('dataReceived: ${nd.time}');
-      array.add('dataReceived: ${nd.stateMask}');
-      array.add('dataReceived: ${nd.batMonVoltage}');
-    } else if (basePackage is CoordinatesPackage) {
+    if (basePackage is CoordinatesPackage) {
       global.listMapMarkers[sender]?.point.latitude = nd.latitude;
       global.listMapMarkers[sender]?.point.longitude = nd.longitude;
-
-      array.add('dataReceived: ${nd.latitude}');
-      array.add('dataReceived: ${nd.longitude}');
-
-    } else if (basePackage is InformationPackage && nd is RT) {
-      array.add('dataReceived: ${nd.RSSI}');
 
     } else if (basePackage is HopsPackage && type == PackageType.ALLOWED_HOPS) {
       if (nd is RT) {
@@ -238,89 +220,12 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
         } else if (global.retransmissionRequests.contains(tid)) {
           global.retransmissionRequests.remove(tid);
 
-          array.add('dataReceived: ${nd.allowedHops}');
-
         } else {
           _page.dialogAllowedHopsBuilder();
         }
       }
     } else if (basePackage is HopsPackage && type == PackageType.UNALLOWED_HOPS && nd is RT) {
-      array.add('dataReceived: ${nd.unallowedHops}');
-
       _page.dialogUnallowedHopsBuilder();
-    } else if (basePackage is ModemFrequencyPackage) {
-      array.add('dataReceived: ${nd.modemFrequency}');
-    } else if (basePackage is StatePackage && nd is RT) {
-      array.add('dataReceived: ${nd.stateMask}');
-
-    } else if (basePackage is PeripheryMaskPackage && nd is RT) {
-      array.add('dataReceived: ${nd.peripheryMask}');
-
-    } else if (basePackage is ExternalPowerPackage) {
-      array.add('dataReceived: ${basePackage.getExternalPowerState()}');
-
-    } else if (basePackage is BatteryMonitorPackage) {
-      array.add('dataReceived: ${basePackage.getTemperature()}');
-      array.add('dataReceived: ${basePackage.getVoltage()}');
-      array.add('dataReceived: ${basePackage.getCurrent()}');
-      array.add('dataReceived: ${basePackage.getElapsedTime()}');
-      array.add('dataReceived: ${basePackage.getUsedCapacity()}');
-      array.add('dataReceived: ${basePackage.getResidue()}');
-
-    }
-
-    // TODO: add Battery state
-    else if (basePackage is BatteryStatePackage && nd is RT) {
-      array.add('dataReceived: ${basePackage.getBatteryState()}');
-
-    } else if (basePackage is AlarmReasonMaskPackage && nd is CSD) {
-      array.add('dataReceived: ${nd.alarmReasonMask}');
-
-    } else if (basePackage is SeismicSignalSwingPackage && nd is CSD) {
-      array.add('dataReceived: ${nd.signalSwing}');
-
-    } else if (basePackage is HumanSensitivityPackage && nd is CSD) {
-      array.add('dataReceived: ${nd.humanSensitivity}');
-
-    } else if (basePackage is HumanFreqThresholdPackage && nd is CSD) {
-      array.add('dataReceived: ${nd.humanFreqThreshold}');
-
-    } else if (basePackage is TransportSensitivityPackage && nd is CSD) {
-      array.add('dataReceived: ${nd.transportSensitivity}');
-
-    } else if (basePackage is CriterionFilterPackage && nd is CSD) {
-      array.add('dataReceived: ${nd.criterionFilter}');
-
-    } else if (basePackage is SignalToNoiseRatioPackage && nd is CSD) {
-      array.add('dataReceived: ${nd.snr}');
-
-    } else if (basePackage is CriterionRecognitionPackage && nd is CSD) {
-      array.add('dataReceived: ${nd.recognitionParameters}');
-
-    } else if (basePackage is PhotoParametersPackage && nd is CPD) {
-      array.add('dataReceived: ${nd.cameraSensitivity}');
-      array.add('dataReceived: ${nd.cameraCompression}');
-
-    } else if (basePackage is PhototrapPackage && nd is CPD) {
-      array.add('dataReceived: ${nd.targetSensor}');
-
-    } else if (basePackage is EEPROMFactorsPackage && nd is RT) {
-      array.add('dataReceived: ${nd.humanSignalsTreshold}');
-      array.add('dataReceived: ${nd.humanIntervalsCount}');
-      array.add('dataReceived: ${nd.transportSignalsTreshold}');
-      array.add('dataReceived: ${nd.transportIntervalsCount}');
-
-    } else if (basePackage is PhototrapFilesPackage && nd is CPD) {
-      array.add('dataReceived: ${nd.phototrapFiles}');
-
-    } else if (basePackage is ExternalPowerSafetyCatchPackage && nd is RT) {
-      array.add('dataReceived: ${nd.extPowerSafetyCatchState}');
-
-    } else if (basePackage is AutoExternalPowerPackage && nd is RT) {
-      array.add('dataReceived: ${nd.autoExtPowerActivationDelaySec}');
-      array.add('dataReceived: ${nd.extPowerImpulseDurationSec}');
-      array.add('dataReceived: ${nd.autoExtPowerState}');
-
     }
 
     _page.setAllNums();
@@ -333,10 +238,7 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
       var bufDev = package.getSender();
       if (global.itemsMan.getAllIds().contains(bufDev)) {
         global.pageWithMap.alarmMapMarker(bufDev, package.getAlarmReason());
-
-        array.add('dataReceived: ${package.getAlarmType()}');
-        array.add('dataReceived: ${package.getAlarmReason()}');
-        _page.checkNewIdDevice();
+        addProtocolLine('Alarm: ${package.getAlarmType()} ${package.getAlarmReason()} (${package.getAlarmNumber()})');
       }
     }
   }
@@ -346,7 +248,7 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
     tits.remove(tid);
     if (global.itemsMan.getAllIds().contains(pb!.getReceiver()) && global.listMapMarkers[pb.getReceiver()]!.markerData.notifier.active) {
       global.pageWithMap.deactivateMapMarker(global.listMapMarkers[pb.getReceiver()]!.markerData.id!);
-      addProtocolLine('RanOutOfSendAttempts');
+      _page.checkNewIdDevice();
     }
   }
 

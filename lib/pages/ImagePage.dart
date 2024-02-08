@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:gallery_saver/gallery_saver.dart';
 import 'dart:io';
 
 import '../core/CPD.dart';
@@ -87,33 +88,15 @@ class ImagePage extends StatefulWidget with global.TIDManagement {
   }
 
   @override
-  void acknowledgeReceived(int tid, BasePackage basePackage) {
-    tits.remove(tid);
-    array.add('acknowledgeReceived');
-  }
-
-  @override
   void dataReceived(int tid, BasePackage basePackage) {
-    tits.remove(tid);
     if (basePackage.getType() == PackageType.TRAP_PHOTO_LIST) {
       var package = basePackage as PhototrapFilesPackage;
-      var bufDev = package.getSender();
-      if (global.itemsMan.getAllIds().contains(bufDev)) {
-        global.itemsMan.get<CPD>(bufDev)?.phototrapFiles = package.getPhototrapFiles();
-        print(package.getPhototrapFiles());
-        _page.setPhotoList(global.itemsMan.get<CPD>(bufDev)!.id);
-        array.add('dataReceived: ${package.getPhototrapFiles()}');
-        global.pageWithMap.activateMapMarker(bufDev);
+      var sender = package.getSender();
+      var cpd = global.itemsMan.get<CPD>(sender);
+      if (cpd != null) {
+        cpd.phototrapFiles = package.getPhototrapFiles();
+        _page.setPhotoList(cpd.id);
       }
-    }
-  }
-
-  @override
-  void ranOutOfSendAttempts(int tid, BasePackage? pb) {
-    tits.remove(tid);
-    if (global.itemsMan.getAllIds().contains(pb!.getReceiver()) && global.listMapMarkers[pb.getReceiver()]!.markerData.notifier.active) {
-      global.pageWithMap.deactivateMapMarker(global.listMapMarkers[pb.getReceiver()]!.markerData.id!);
-      array.add('RanOutOfSendAttempts');
     }
   }
 }
@@ -155,10 +138,12 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
 
   void save() async {
     Directory? root = global.pathToProject;
-    String directoryPath = '${root.path}/photoTests';
+    String directoryPath = '${root.path}/photoTest';
     await Directory(directoryPath).create(recursive: true);
-    String filePath = '$directoryPath/${_dateLastPhoto!.toLocal().toString().substring(0, 19)}.jpeg';
-    File(filePath).writeAsBytes(bufSecondImage!.bytes);
+    String filePath = '$directoryPath/${_dateLastPhoto!.toLocal().toString().substring(0, 13)}-'
+        '${_dateLastPhoto!.toLocal().toString().substring(14, 16)}-${_dateLastPhoto!.toLocal().toString().substring(17, 19)}.jpeg';
+    await File(filePath).create().then((file) => file.writeAsBytes(bufSecondImage!.bytes));
+    //File(filePath).writeAsBytes(bufSecondImage!.bytes);
     print(filePath);
     //GallerySaver.saveImage(filePath, albumName: 'photoTest');
   }

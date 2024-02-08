@@ -102,86 +102,7 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
 
   @override
   void acknowledgeReceived(int tid, BasePackage basePackage) {
-    tits.remove(tid);
-
-    var sender = basePackage.getSender();
-    var nd = global.itemsMan.get<NetDevice>(sender);
-
-    if (nd == null) return;
-    if (!global.listMapMarkers.containsKey(sender)) return;
-
-    var pk = setRequests[tid];
-    if (pk == null) return;
-
-    if (pk is TimePackage) {
-      nd.time = pk.getTime();
-    } else if (pk is CoordinatesPackage) {
-      nd.setStoredCoordinates(pk.getLatitude(), pk.getLongitude());
-      nd.setCoordinates(pk.getLatitude(), pk.getLongitude());
-    } else if (pk is StatePackage && nd is RT) {
-      nd.stateMask = pk.getStateMask();
-    } else if (pk is ExternalPowerSafetyCatchPackage && nd is RT) {
-      nd.extPowerSafetyCatchState = pk.getSafetyCatchState();
-    } else if (pk is AutoExternalPowerPackage && nd is RT) {
-      nd.autoExtPowerActivationDelaySec = pk.getActivationDelay();
-      nd.extPowerImpulseDurationSec = pk.getImpulseDuration();
-      nd.autoExtPowerState = pk.getAutoExternalPowerModeState();
-    } else if (pk is ExternalPowerPackage) {
-      if (nd is RT) {
-        nd.extPower = pk.getExternalPowerState();
-      } else if (nd is MCD) {
-        nd.GPSState = pk.getExternalPowerState() == ExternalPower.ON;
-      }
-    } else if (pk is AlarmReasonMaskPackage && nd is CSD) {
-      nd.alarmReasonMask = pk.getAlarmReasonMask();
-    } else if (pk is HumanSensitivityPackage && nd is CSD) {
-      nd.humanSensitivity = pk.getHumanSensitivity();
-    } else if (pk is TransportSensitivityPackage && nd is CSD) {
-      nd.transportSensitivity = pk.getTransportSensitivity();
-    } else if (pk is CriterionFilterPackage && nd is CSD) {
-      nd.criterionFilter = pk.getCriterionFilter();
-    } else if (pk is SignalToNoiseRatioPackage && nd is CSD) {
-      nd.snr = pk.getSignalToNoiseRatio();
-    } else if (pk is CriterionRecognitionPackage && nd is CSD) {
-      nd.recognitionParameters = pk.getCriteria();
-    } else if (pk is EEPROMFactorsPackage && nd is RT) {
-      nd.wakeNetworkResendTimeMs = pk.getWakeNetworkResendTimeMs();
-      nd.alarmResendTimeMs = pk.getAlarmResendTimeMs();
-      nd.seismicResendTimeMs = pk.getSeismicResendTimeMs();
-      nd.photoResendTimeMs = pk.getPhotoResendTimeMs();
-      nd.alarmTriesResend = pk.getAlarmTriesResend();
-      nd.seismicTriesResend = pk.getSeismicTriesResend();
-      nd.photoTriesResend = pk.getPhotoTriesResend();
-      nd.periodicSendTelemetryTime10s = pk.getPeriodicSendTelemetryTime10S();
-      nd.afterSeismicAlarmPauseS = pk.getAfterSeismicAlarmPauseS();
-      nd.afterLineAlarmPauseS = pk.getAfterLineAlarmPauseS();
-      nd.batteryPeriodicUpdate10min = pk.getBatteryPeriodicUpdate10Min();
-      nd.batteryVoltageThresholdAlarm100mV = pk.getBatteryVoltageThresholdAlarm100mV();
-      nd.batteryResidueThresholdAlarmPC = pk.getBatteryResidueThresholdAlarmPC();
-      nd.batteryPeriodicAlarmH = pk.getBatteryPeriodicAlarmH();
-      nd.deviceType = pk.getDeviceType();
-
-      nd.humanSignalsTreshold = pk.getHumanSignalsTreshold();
-      nd.humanIntervalsCount = pk.getHumanIntervalsCount();
-      nd.transportSignalsTreshold = pk.getTransportSignalsTreshold();
-      nd.transportIntervalsCount = pk.getTransportIntervalsCount();
-    } else if (pk is PhotoParametersPackage && nd is CPD) {
-      nd.setCameraParameters(pk.getInvLightSensitivity(), pk.getCompressRatio());
-    } else if (pk is HopsPackage) {
-      if (pk.getType() == PackageType.SET_ALLOWED_HOPS) {
-        if (nd is RT) {
-          nd.allowedHops = pk.getHops();
-        } else if (nd is MCD) {
-          var rtMode = RoutesManager.getRtMode(pk.getHops());
-          nd.priority = rtMode == RtMode.ToAll;
-        }
-      }
-    }
-
-    setRequests.remove(tid);
-    global.pageWithMap.activateMapMarker(sender);
     _page.checkNewIdDevice();
-
     _page.setAllNums();
   }
 
@@ -192,8 +113,6 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
     var nd = global.itemsMan.get<NetDevice>(sender);
 
     if (nd == null) return;
-
-    global.pageWithMap.activateMapMarker(sender);
 
     if (basePackage is CoordinatesPackage) {
       global.listMapMarkers[sender]?.point.latitude = nd.latitude;

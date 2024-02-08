@@ -179,29 +179,6 @@ class SeismicPage extends StatefulWidget with global.TIDManagement {
   }
 
   @override
-  void acknowledgeReceived(int tid, BasePackage basePackage) {
-    tits.remove(tid);
-    array.add('acknowledgeReceived');
-  }
-
-  @override
-  void dataReceived(int tid, BasePackage basePackage) {
-    tits.remove(tid);
-    if (basePackage.getType() == PackageType.SEISMIC_WAVE) {
-      var package = basePackage as FilePartPackage;
-    }
-  }
-
-  @override
-  void ranOutOfSendAttempts(int tid, BasePackage? pb) {
-    tits.remove(tid);
-    if (global.itemsMan.getAllIds().contains(pb!.getReceiver()) && global.listMapMarkers[pb.getReceiver()]!.markerData.notifier.active) {
-      global.pageWithMap.deactivateMapMarker(global.listMapMarkers[pb.getReceiver()]!.markerData.id!);
-      array.add('RanOutOfSendAttempts');
-    }
-  }
-
-  @override
   State createState() {
     _page = _SeismicPage();
     return _page;

@@ -473,35 +473,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     _page = _PageWithMap();
     return _page;
   }
-
-  @override
-  void acknowledgeReceived(int tid, BasePackage basePackage) {
-    tits.remove(tid);
-    array.add('acknowledgeReceived');
-  }
-
-  @override
-  void dataReceived(int tid, BasePackage basePackage) {
-    tits.remove(tid);
-    if (basePackage.getType() == PackageType.TRAP_PHOTO_LIST) {
-      var package = basePackage as PhototrapFilesPackage;
-      var bufDev = package.getSender();
-      if (global.itemsMan.getAllIds().contains(bufDev)) {
-        global.itemsMan.get<CPD>(bufDev)?.phototrapFiles = package.getPhototrapFiles();
-        array.add('dataReceived: ${package.getPhototrapFiles()}');
-        global.pageWithMap.activateMapMarker(bufDev);
-      }
-    }
-  }
-
-  @override
-  void ranOutOfSendAttempts(int tid, BasePackage? pb) {
-    tits.remove(tid);
-    if (global.itemsMan.getAllIds().contains(pb!.getReceiver()) && global.listMapMarkers[pb.getReceiver()]!.markerData.notifier.active) {
-      deactivateMapMarker(global.listMapMarkers[pb.getReceiver()]!.markerData.id!);
-      array.add('RanOutOfSendAttempts');
-    }
-  }
 }
 
 class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin<PageWithMap> {

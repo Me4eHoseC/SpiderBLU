@@ -312,13 +312,13 @@ class CriterionRecognitionPackage extends BasePackage{
     success &= super.unpackHeader(unpackMan);
 
     int bodySize = getSize() - BasePackage.minExpectedSize;
-    int count = 0;
-    if (_criteria.isEmpty){
+    int count = bodySize;
+    /*if (_criteria.isEmpty){
       count = 0;
     } else {
       count =
           bodySize ~/ _criteria.length;
-    }
+    }*/
 
     if (count < 0) count = 0;
 

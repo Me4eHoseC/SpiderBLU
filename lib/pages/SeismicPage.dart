@@ -93,6 +93,7 @@ class SeismicPage extends StatefulWidget with global.TIDManagement {
   }
 
   void lastPartCome() {
+    downloadingCsdId = -1;
     //global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]?.markerData.downloadPhoto = false;
   }
 
@@ -104,7 +105,6 @@ class SeismicPage extends StatefulWidget with global.TIDManagement {
     _isADPCM = false;
     header = SeismicHeader();
     adpcmProcessor.clear();
-
 
     rawValues.clear();
     seismicValues.clear();
@@ -129,10 +129,12 @@ class SeismicPage extends StatefulWidget with global.TIDManagement {
   }
 
   bool getLastSeismic() {
-    if (downloadingCsdId != -1) return false;
+    if (global.seismicPage.downloadingCsdId != -1) return false;
 
     var csd = global.itemsMan.getSelected<CSD>();
     if (csd == null) return false;
+
+    global.seismicPage.downloadingCsdId = csd.id;
 
     var cc = SeismicRequestPackage();
     cc.setType(PackageType.GET_LAST_SEISMIC_WAVE);
@@ -146,10 +148,12 @@ class SeismicPage extends StatefulWidget with global.TIDManagement {
   }
 
   bool getSeismic() {
-    if (downloadingCsdId != -1) return false;
+    if (global.seismicPage.downloadingCsdId != -1) return false;
 
     var csd = global.itemsMan.getSelected<CSD>();
     if (csd == null) return false;
+
+    global.seismicPage.downloadingCsdId = csd.id;
 
     var cc = SeismicRequestPackage();
     cc.setReceiver(csd.id);
@@ -224,6 +228,12 @@ class _SeismicPage extends State<SeismicPage> with TickerProviderStateMixin {
     });
   }
 
+  void cancelSeismicDownload() {
+    print('11111111111111111111111111');
+    widget.downloadingCsdId = -1;
+    global.stopMedia();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -247,21 +257,19 @@ class _SeismicPage extends State<SeismicPage> with TickerProviderStateMixin {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            onPressed: () {
-              widget.getLastSeismic();
-              drawChart();
-            },
+            onPressed: widget.downloadingCsdId != -1 ? null : ()=> widget.getSeismic(),
+            icon: const Icon(Icons.show_chart),
+          ),
+          IconButton(
+            onPressed: widget.downloadingCsdId != -1 ? null : ()=> widget.getLastSeismic(),
             icon: const Icon(
               Icons.show_chart,
               color: Colors.red,
             ),
           ),
           IconButton(
-            onPressed: () {
-              widget.getSeismic();
-              drawChart();
-            },
-            icon: const Icon(Icons.show_chart),
+            onPressed: widget.downloadingCsdId == -1 ? null : cancelSeismicDownload,
+            icon: const Icon(Icons.cancel_outlined),
           ),
         ],
       ),

@@ -41,6 +41,8 @@ class Marker {
 
   double get latitude => _latitude;
   double get longitude => _longitude;
+  set latitude(double latitude) => _latitude = latitude;
+  set longitude(double longitude) => _longitude = longitude;
 
   void setCoordinates(double latitude, longitude){
     _latitude = latitude;

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gallery_saver/gallery_saver.dart';
+import 'package:projects/core/NetDevice.dart';
 import 'dart:io';
 
 import '../core/CPD.dart';
@@ -29,7 +30,7 @@ class ImagePage extends StatefulWidget with global.TIDManagement {
   bool get isImageEmpty => photoTest.isEmpty;
 
   bool getPhoto(PhotoImageSize size) {
-    if (downloadingCpdId != -1) return false;
+    if (global.imagePage.downloadingCpdId != -1) return false;
 
     var cpd = global.itemsMan.getSelected<CPD>();
     if (cpd == null) return false;
@@ -143,13 +144,12 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
     String filePath = '$directoryPath/${_dateLastPhoto!.toLocal().toString().substring(0, 13)}-'
         '${_dateLastPhoto!.toLocal().toString().substring(14, 16)}-${_dateLastPhoto!.toLocal().toString().substring(17, 19)}.jpeg';
     await File(filePath).create().then((file) => file.writeAsBytes(bufSecondImage!.bytes));
-    //File(filePath).writeAsBytes(bufSecondImage!.bytes);
     print(filePath);
-    //GallerySaver.saveImage(filePath, albumName: 'photoTest');
   }
 
-  void endDownload() {
+  void cancelPhotoDownload() {
     widget.downloadingCpdId = -1;
+    global.stopMedia();
     save();
   }
 
@@ -202,7 +202,7 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
       appBar: AppBar(
         title: _dateLastPhoto != null
             ? Text('# ${global.itemsMan.getSelected<CPD>()!.id} - ${_dateLastPhoto!.toLocal().toString().substring(0, 19)}')
-            : const Text('null'),
+            : const Text(''),
       ),
       endDrawer: Drawer(
         width: 250,
@@ -250,15 +250,15 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            onPressed: () => widget.getPhoto(PhotoImageSize.IMAGE_160X120),
+            onPressed: widget.downloadingCpdId != -1 ? null : ()=> widget.getPhoto(PhotoImageSize.IMAGE_160X120),
             icon: const Icon(Icons.photo_size_select_small),
           ),
           IconButton(
-            onPressed: () => widget.getPhoto(PhotoImageSize.IMAGE_320X240),
+            onPressed: widget.downloadingCpdId != -1 ? null : ()=> widget.getPhoto(PhotoImageSize.IMAGE_320X240),
             icon: const Icon(Icons.photo_size_select_large),
           ),
           IconButton(
-            onPressed: () => widget.getPhoto(PhotoImageSize.IMAGE_640X480),
+            onPressed: widget.downloadingCpdId != -1 ? null : ()=> widget.getPhoto(PhotoImageSize.IMAGE_640X480),
             icon: const Icon(Icons.photo_size_select_actual),
           ),
           IconButton(
@@ -266,7 +266,7 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
             icon: const Icon(Icons.photo_album_outlined),
           ),
           IconButton(
-            onPressed: endDownload,
+            onPressed: widget.downloadingCpdId == -1 ? null : cancelPhotoDownload,
             icon: const Icon(Icons.cancel_outlined),
           ),
         ],

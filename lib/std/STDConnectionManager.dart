@@ -7,6 +7,13 @@ import '../global.dart' as global;
 
 import 'BluSTD.dart';
 
+enum StdConnectionType {
+  TCPSTD,
+  SERIALSTD,
+  BTSTD,
+  UNDEFINED;
+}
+
 class STDConnectionManager {
   int _stdId = 195;
   final String _stdName = global.deviceName;
@@ -19,7 +26,7 @@ class STDConnectionManager {
   Timer? timer;
 
   void searchAndConnect() {
-    isDiscovering = true;
+    global.stdConnectionManager.isDiscovering = true;
     print(FlutterBluetoothSerial.instance.isDiscovering);
 
     FlutterBluetoothSerial.instance.startDiscovery().listen((r) {

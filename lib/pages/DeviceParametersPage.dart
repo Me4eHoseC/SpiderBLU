@@ -60,7 +60,6 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
       tid = global.postManager.sendPackage(req);
       tits.add(tid);
       global.stdHopsCheckRequests.add(tid);
-
     });
 
     global.pollManager.startPollRoutines();
@@ -96,7 +95,7 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
     }
   }
 
-  void updateDevice(){
+  void updateDevice() {
     _page.setAllNums();
   }
 
@@ -117,7 +116,6 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
     if (basePackage is CoordinatesPackage) {
       global.listMapMarkers[sender]?.point.latitude = nd.latitude;
       global.listMapMarkers[sender]?.point.longitude = nd.longitude;
-
     } else if (basePackage is HopsPackage && type == PackageType.ALLOWED_HOPS) {
       if (nd is RT) {
         var rtMode = RoutesManager.getRtMode(nd.allowedHops);
@@ -138,7 +136,6 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
           }
         } else if (global.retransmissionRequests.contains(tid)) {
           global.retransmissionRequests.remove(tid);
-
         } else {
           _page.dialogAllowedHopsBuilder();
         }
@@ -171,7 +168,7 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
     }
   }
 
-  void addProtocolLine(String line){
+  void addProtocolLine(String line) {
     array.add(line);
     _page.checkNewIdDevice();
   }
@@ -188,6 +185,17 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
   bool get wantKeepAlive => true;
   ScrollController _scrollController = ScrollController();
   String? bufferDeviceType;
+  TextEditingController _controllerId = TextEditingController();
+  TextEditingController _controllerLongitude = TextEditingController();
+  TextEditingController _controllerLatitude = TextEditingController();
+  TextEditingController _controllerCameraSensitivity = TextEditingController();
+  TextEditingController _controllerTransportSensitivity = TextEditingController();
+  TextEditingController _controllerHumanSensitivity = TextEditingController();
+  TextEditingController _controllerRatioTrToNoise = TextEditingController();
+  TextEditingController _controllerRatioIntToPerson = TextEditingController();
+  TextEditingController _controllerRatioPersonToTransport = TextEditingController();
+  TextEditingController _controllerSingleTransport = TextEditingController();
+  TextEditingController _controllerSinglePerson = TextEditingController();
 
   @override
   void initState() {
@@ -199,26 +207,27 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
 
   void checkNewIdDevice() {
     setState(() {
-        global.list = ListView.builder(
-            reverse: true,
-            controller: _scrollController,
-            shrinkWrap: true,
-            itemCount: widget.array.length,
-            itemBuilder: (context, i) {
-              return Text(
-                widget.array[i],
-                textScaleFactor: 0.85,
-              );
-            });
-        if (widget.array.length > 3) {
-          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-        }
+      global.list = ListView.builder(
+          reverse: true,
+          controller: _scrollController,
+          shrinkWrap: true,
+          itemCount: widget.array.length,
+          itemBuilder: (context, i) {
+            return Text(
+              widget.array[i],
+              textScaleFactor: 0.85,
+            );
+          });
+      if (widget.array.length > 3) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
     });
   }
 
   //Main settings
 
   void checkDevID(int newId, int oldId) {
+    print ('$newId  $oldId');
     setState(() {
       var listIdsBuf = global.itemsMan.getAllIds();
       if (oldId == newId) return;
@@ -227,7 +236,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         widget._cloneItem.id = oldId;
         return;
       }
-      if (newId > 0 && newId < 256) {
+      if (newId < 0 && newId > 256) {
         showError("Invalid ID \n ID can be from 1 to 255");
         widget._cloneItem.id = oldId;
         return;
@@ -296,6 +305,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
 
   void setCordClick(int devId, double latitude, double longitude) {
     setState(() {
+      if (global.itemsMan.get<MCD>(devId) != null) return;
       CoordinatesPackage coordinatesPackage = CoordinatesPackage();
       coordinatesPackage.setReceiver(devId);
       coordinatesPackage.setSender(RoutesManager.getLaptopAddress());
@@ -429,7 +439,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
   // Save/Reset settings
   //TODO Защита от дурня строка 7к в mainwindow.cpp
 
-  void restartDevice(int devId) {
+  void rebootDevice(int devId) {
     setState(() {
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.REBOOT_SYSTEM);
       var tid = global.postManager.sendPackage(getInfo);
@@ -785,10 +795,59 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
 
   void setMyCordsForDevice() {
     setState(() {
-      widget._cloneItem.setCoordinates(global.pageWithMap.coord()!.latitude, global.pageWithMap.coord()!.longitude);
+      widget._cloneItem.latitude = global.pageWithMap.coord()!.latitude;
+      widget._cloneItem.longitude = global.pageWithMap.coord()!.longitude;
       global.listMapMarkers[widget._cloneItem.id]!.point.latitude = widget._cloneItem.latitude;
       global.listMapMarkers[widget._cloneItem.id]!.point.longitude = widget._cloneItem.longitude;
+      _controllerLatitude.text = widget._cloneItem.latitude.toStringAsFixed(6);
+      _controllerLongitude.text = widget._cloneItem.longitude.toStringAsFixed(6);
     });
+  }
+
+  _changeId(){
+    setState(() => widget._cloneItem.id = int.parse(_controllerId.text));
+  }
+  _changeLongitude(){
+    setState(() => widget._cloneItem.longitude = double.parse(_controllerLongitude.text));
+  }
+  _changeLatitude(){
+    setState(() => widget._cloneItem.latitude = double.parse(_controllerLatitude.text));
+  }
+
+  _changeHumanSensitivity(){
+    var csd = widget._cloneItem as CSD;
+    setState(() => csd.humanSensitivity = int.parse(_controllerHumanSensitivity.text));
+  }
+  _changeTransportSensitivity(){
+    var csd = widget._cloneItem as CSD;
+    setState(() => csd.transportSensitivity = int.parse(_controllerTransportSensitivity.text));
+  }
+  _changeRatioSNR(){
+    var csd = widget._cloneItem as CSD;
+    setState(() => csd.snr = int.parse(_controllerRatioTrToNoise.text));
+  }
+
+  _changeInterferencePerson(){
+    var csd = widget._cloneItem as CSD;
+    setState(() => csd.recognitionParameters[0] = int.parse(_controllerRatioIntToPerson.text));
+  }
+  _changePersonTransport(){
+    var csd = widget._cloneItem as CSD;
+    setState(() => csd.recognitionParameters[1] = int.parse(_controllerRatioPersonToTransport.text));
+  }
+
+  _changeSingleHuman(){
+    var csd = widget._cloneItem as CSD;
+    setState(() => csd.humanSignalsTreshold = int.parse(_controllerSinglePerson.text));
+  }
+  _changeSingleTransport(){
+    var csd = widget._cloneItem as CSD;
+    setState(() => csd.transportSignalsTreshold = int.parse(_controllerSingleTransport.text));
+  }
+
+  _changeCameraSensitivity(){
+    var cpd = widget._cloneItem as CPD;
+    setState(() => cpd.cameraSensitivity = int.parse(_controllerCameraSensitivity.text));
   }
 
   void setAllNums() {
@@ -797,6 +856,38 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       if (item == null) return;
       widget._cloneItem = item.clone();
       bufferDeviceType = widget._cloneItem.typeName();
+      _controllerId.text = widget._cloneItem.id.toString();
+      _controllerId.addListener(_changeId);
+
+      _controllerLongitude.text = widget._cloneItem.longitude.toStringAsFixed(6);
+      _controllerLongitude.addListener(_changeLongitude);
+      _controllerLatitude.text = widget._cloneItem.latitude.toStringAsFixed(6);
+      _controllerLatitude.addListener(_changeLatitude);
+
+      if (widget._cloneItem is CSD){
+        var csd = widget._cloneItem as CSD;
+        _controllerHumanSensitivity.text = csd.humanSensitivity.toString();
+        _controllerHumanSensitivity.addListener(_changeHumanSensitivity);
+        _controllerTransportSensitivity.text = csd.transportSensitivity.toString();
+        _controllerTransportSensitivity.addListener(_changeTransportSensitivity);
+        _controllerRatioTrToNoise.text = csd.snr.toString();
+        _controllerRatioTrToNoise.addListener(_changeRatioSNR);
+        _controllerRatioIntToPerson.text = csd.recognitionParameters[0].toString();
+        _controllerRatioIntToPerson.addListener(_changeInterferencePerson);
+        _controllerRatioPersonToTransport.text = csd.recognitionParameters[1].toString();
+        _controllerRatioPersonToTransport.addListener(_changePersonTransport);
+        _controllerSinglePerson.text = csd.humanSignalsTreshold.toString();
+        _controllerSinglePerson.addListener(_changeSingleHuman);
+        _controllerSingleTransport.text = csd.transportSignalsTreshold.toString();
+        _controllerSingleTransport.addListener(_changeSingleTransport);
+      }
+
+      if (widget._cloneItem is CPD){
+        var cpd = widget._cloneItem as CPD;
+        _controllerCameraSensitivity.text = cpd.cameraSensitivity.toString();
+        _controllerCameraSensitivity.addListener(_changeCameraSensitivity);
+      }
+
     });
   }
 
@@ -824,14 +915,12 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               child: SizedBox(
                 width: 200,
                 child: TextField(
-                  controller: TextEditingController(text: nd.id.toString()),
+                  controller: _controllerId,
                   keyboardType: TextInputType.number,
                   maxLength: 3,
                   inputFormatters: <TextInputFormatter>[
                     FilteringTextInputFormatter.digitsOnly,
                   ],
-                  onChanged: (string) => nd.id = int.parse(string),
-                  onSubmitted: (string) => nd.id = int.parse(string),
                 ),
               ),
             ),
@@ -993,20 +1082,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               child: SizedBox(
                 width: 200,
                 child: TextField(
-                  controller: TextEditingController(text: nd.latitude.toStringAsFixed(6)),
+                  controller: _controllerLatitude,
                   keyboardType: TextInputType.number,
                   maxLength: 9,
-                  inputFormatters: <TextInputFormatter>[
-                    FilteringTextInputFormatter.digitsOnly,
-                  ],
-                  onChanged: (string) {
-                    nd.setCoordinates(double.parse(string), nd.longitude);
-                    global.listMapMarkers[nd.id]!.point.latitude = double.parse(string);
-                  },
-                  onSubmitted: (string) {
-                    nd.setCoordinates(double.parse(string), nd.longitude);
-                    global.listMapMarkers[nd.id]!.point.latitude = double.parse(string);
-                  },
                 ),
               ),
             ),
@@ -1037,20 +1115,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               child: SizedBox(
                 width: 200,
                 child: TextField(
-                  controller: TextEditingController(text: nd.longitude.toStringAsFixed(6)),
+                  controller: _controllerLongitude,
                   keyboardType: TextInputType.number,
                   maxLength: 9,
-                  inputFormatters: <TextInputFormatter>[
-                    FilteringTextInputFormatter.digitsOnly,
-                  ],
-                  onChanged: (string) {
-                    nd.setCoordinates(nd.latitude, double.parse(string));
-                    global.listMapMarkers[nd.id]!.point.longitude = double.parse(string);
-                  },
-                  onSubmitted: (string) {
-                    nd.setCoordinates(nd.latitude, double.parse(string));
-                    global.listMapMarkers[nd.id]!.point.longitude = double.parse(string);
-                  },
                 ),
               ),
             ),
@@ -1276,6 +1343,82 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     );
   }
 
+  void checkSaveSettingsButton(int devId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Do you really want to save all settings on selected device?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                saveDeviceParam(devId);
+                Navigator.pop(context);
+              },
+              child: const Text('Accept'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  void checkResetSettingsButton(int devId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Do you really want to reboot selected device?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                rebootDevice(devId);
+                Navigator.pop(context);
+              },
+              child: const Text('Accept'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  void checkFactoryResetSettingsButton(int devId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Do you really want to reset selected device to factory settings?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                returnDeviceToDefaultParam(devId);
+                Navigator.pop(context);
+              },
+              child: const Text('Accept'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget buildDeviceSettings(BuildContext context) {
     if (widget._cloneItem is! NetDevice) {
       return Container();
@@ -1287,16 +1430,16 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         OutlinedButton(
-          onPressed: () => restartDevice(nd.id),
+          onPressed: () => checkResetSettingsButton(nd.id),
           child: const Row(
             children: [
               Icon(Icons.restart_alt),
-              Text('Reset device'),
+              Text('Reboot device'),
             ],
           ),
         ),
         OutlinedButton(
-          onPressed: () => saveDeviceParam(nd.id),
+          onPressed: () => checkSaveSettingsButton(nd.id),
           child: const Row(
             children: [
               Icon(Icons.save),
@@ -1305,7 +1448,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           ),
         ),
         OutlinedButton(
-          onPressed: () => restartDevice(nd.id),
+          onPressed: () => checkFactoryResetSettingsButton(nd.id),
           child: const Row(
             children: [
               Icon(Icons.restore),
@@ -1343,7 +1486,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             flex: 2,
             child: SizedBox(
               width: 100,
-              child: Text("In. Dev. 1:"),
+              child: Text("In. dev. 1:"),
             ),
           ),
           Flexible(
@@ -1862,16 +2005,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               width: 200,
               child: Checkbox(
                 value: rt.autoExtPowerState,
-                onChanged:
-    global.itemsMan.getSelected<RT>() != null
-                ? global.itemsMan.getSelected<RT>()!.extPowerSafetyCatchState
-                    ? (bool? value) {
-                        setState(() {
-                          rt.autoExtPowerState = value!;
-                        });
-                      }
-                    : null
-        : null,
+                onChanged: global.itemsMan.getSelected<RT>() != null
+                    ? global.itemsMan.getSelected<RT>()!.extPowerSafetyCatchState
+                        ? (bool? value) {
+                            setState(() {
+                              rt.autoExtPowerState = value!;
+                            });
+                          }
+                        : null
+                    : null,
               ),
             ),
           ),
@@ -2173,38 +2315,13 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             flex: 2,
             child: SizedBox(
               width: 100,
-              child: /*TextFormField(
-                  key: Key(bufHumanSens.toString()),
-                  textAlign: TextAlign.center,
-                  initialValue: bufHumanSens.toString(),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: <TextInputFormatter>[
-                    FilteringTextInputFormatter.digitsOnly,
-                    TextInputFormatter.withFunction((oldValue, newValue) {
-                      String value = newValue.text;
-                      bufHumanSens = int.parse(value);
-                      if (value.length > 3) {
-                        return TextEditingValue(
-                          text: oldValue.text,
-                          selection: TextSelection.collapsed(offset: oldValue.selection.end),
-                        );
-                      }
-                      return TextEditingValue(
-                        text: bufHumanSens.toString(),
-                        selection: TextSelection.collapsed(offset: bufHumanSens.toString().length),
-                      );
-                    }),
-                  ],
-                ),*/
-                  TextField(
-                controller: TextEditingController(text: csd.humanSensitivity.toString()),
+              child: TextField(
+                controller: _controllerHumanSensitivity,
                 keyboardType: TextInputType.number,
                 maxLength: 3,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly,
                 ],
-                onChanged: (string) => csd.humanSensitivity = int.parse(string),
-                onSubmitted: (string) => csd.humanSensitivity = int.parse(string),
               ),
             ),
           ),
@@ -2253,38 +2370,14 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             flex: 2,
             child: SizedBox(
               width: 100,
-              child: /*TextFormField(
-                  textAlign: TextAlign.center,
-                  key: Key(bufAutoSens.toString()),
-                  initialValue: bufAutoSens.toString(),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: <TextInputFormatter>[
-                    FilteringTextInputFormatter.digitsOnly,
-                    TextInputFormatter.withFunction((oldValue, newValue) {
-                      String value = newValue.text;
-                      bufAutoSens = int.parse(value);
-                      if (value.length > 3) {
-                        return TextEditingValue(
-                          text: oldValue.text,
-                          selection: TextSelection.collapsed(offset: oldValue.selection.end),
-                        );
-                      }
-                      return TextEditingValue(
-                        text: bufAutoSens.toString(),
-                        selection: TextSelection.collapsed(offset: bufAutoSens.toString().length),
-                      );
-                    }),
-                  ],
-                ),*/
+              child:
                   TextField(
-                controller: TextEditingController(text: csd.transportSensitivity.toString()),
+                controller: _controllerTransportSensitivity,
                 keyboardType: TextInputType.number,
                 maxLength: 3,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly,
                 ],
-                onChanged: (string) => csd.transportSensitivity = int.parse(string),
-                onSubmitted: (string) => csd.transportSensitivity = int.parse(string),
               ),
             ),
           ),
@@ -2387,38 +2480,14 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             flex: 2,
             child: SizedBox(
               width: 100,
-              child: /*TextFormField(
-                textAlign: TextAlign.center,
-                key: Key(bufSnr.toString()),
-                initialValue: bufSnr.toString(),
-                keyboardType: TextInputType.number,
-                inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter.digitsOnly,
-                  TextInputFormatter.withFunction((oldValue, newValue) {
-                    String value = newValue.text;
-                    bufSnr = int.parse(value);
-                    if (value.length > 2) {
-                      return TextEditingValue(
-                        text: oldValue.text,
-                        selection: TextSelection.collapsed(offset: oldValue.selection.end),
-                      );
-                    }
-                    return TextEditingValue(
-                      text: bufSnr.toString(),
-                      selection: TextSelection.collapsed(offset: bufSnr.toString().length),
-                    );
-                  }),
-                ],
-              ),*/
+              child:
                   TextField(
-                controller: TextEditingController(text: csd.snr.toString()),
+                controller: _controllerRatioTrToNoise,
                 keyboardType: TextInputType.number,
                 maxLength: 3,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly,
                 ],
-                onChanged: (string) => csd.snr = int.parse(string),
-                onSubmitted: (string) => csd.snr = int.parse(string),
               ),
             ),
           ),
@@ -2467,38 +2536,14 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             flex: 2,
             child: SizedBox(
               width: 100,
-              child: /*TextFormField(
-                textAlign: TextAlign.center,
-                key: Key(bufRecogniZero.toString()),
-                initialValue: bufRecogniZero.toString(),
-                keyboardType: TextInputType.number,
-                inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter.digitsOnly,
-                  TextInputFormatter.withFunction((oldValue, newValue) {
-                    String value = newValue.text;
-                    bufRecogniZero = int.parse(value);
-                    if (value.length > 3) {
-                      return TextEditingValue(
-                        text: oldValue.text,
-                        selection: TextSelection.collapsed(offset: oldValue.selection.end),
-                      );
-                    }
-                    return TextEditingValue(
-                      text: bufRecogniZero.toString(),
-                      selection: TextSelection.collapsed(offset: bufRecogniZero.toString().length),
-                    );
-                  })
-                ],
-              ),*/
+              child:
                   TextField(
-                controller: TextEditingController(text: csd.recognitionParameters[0].toString()),
+                controller: _controllerRatioIntToPerson,
                 keyboardType: TextInputType.number,
                 maxLength: 3,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly,
                 ],
-                onChanged: (string) => csd.recognitionParameters[0] = int.parse(string),
-                onSubmitted: (string) => csd.recognitionParameters[0] = int.parse(string),
               ),
             ),
           ),
@@ -2517,45 +2562,21 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             flex: 2,
             child: SizedBox(
               width: 140,
-              child: Text('Human/Transport'),
+              child: Text('Person/Transport'),
             ),
           ),
           Flexible(
             flex: 2,
             child: SizedBox(
               width: 100,
-              child: /*TextFormField(
-                textAlign: TextAlign.center,
-                key: Key(bufRecogniFirst.toString()),
-                initialValue: bufRecogniFirst.toString(),
-                keyboardType: TextInputType.number,
-                inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter.digitsOnly,
-                  TextInputFormatter.withFunction((oldValue, newValue) {
-                    String value = newValue.text;
-                    bufRecogniFirst = int.parse(value);
-                    if (value.length > 3) {
-                      return TextEditingValue(
-                        text: oldValue.text,
-                        selection: TextSelection.collapsed(offset: oldValue.selection.end),
-                      );
-                    }
-                    return TextEditingValue(
-                      text: bufRecogniFirst.toString(),
-                      selection: TextSelection.collapsed(offset: bufRecogniFirst.toString().length),
-                    );
-                  }),
-                ],
-              ),*/
+              child:
                   TextField(
-                controller: TextEditingController(text: csd.recognitionParameters[1].toString()),
+                controller: _controllerRatioPersonToTransport,
                 keyboardType: TextInputType.number,
                 maxLength: 3,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly,
                 ],
-                onChanged: (string) => csd.recognitionParameters[1] = int.parse(string),
-                onSubmitted: (string) => csd.recognitionParameters[1] = int.parse(string),
               ),
             ),
           ),
@@ -2607,39 +2628,13 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             flex: 2,
             child: SizedBox(
               width: 100,
-              child: /*TextFormField(
-                textAlign: TextAlign.center,
-                key: Key(global.itemsMan.getSelected<CSD>()!.humanSignalsTreshold.toString()),
-                initialValue: global.itemsMan.getSelected<CSD>()!.humanSignalsTreshold.toString(),
-                keyboardType: TextInputType.number,
-                inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter.digitsOnly,
-                  TextInputFormatter.withFunction((oldValue, newValue) {
-                    String value = newValue.text;
-                    global.itemsMan.getSelected<CSD>()!.humanSignalsTreshold = int.parse(value);
-                    if (value.length > 3) {
-                      return TextEditingValue(
-                        text: oldValue.text,
-                        selection: TextSelection.collapsed(offset: oldValue.selection.end),
-                      );
-                    }
-                    return TextEditingValue(
-                      text: global.itemsMan.getSelected<CSD>()!.humanSignalsTreshold.toString(),
-                      selection:
-                          TextSelection.collapsed(offset: global.itemsMan.getSelected<CSD>()!.humanSignalsTreshold.toString().length),
-                    );
-                  })
-                ],
-              ),*/
-                  TextField(
-                controller: TextEditingController(text: csd.humanSignalsTreshold.toString()),
+              child: TextField(
+                controller: _controllerSinglePerson,
                 keyboardType: TextInputType.number,
                 maxLength: 3,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly,
                 ],
-                onChanged: (string) => csd.humanSignalsTreshold = int.parse(string),
-                onSubmitted: (string) => csd.humanSignalsTreshold = int.parse(string),
               ),
             ),
           ),
@@ -2714,39 +2709,13 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             flex: 2,
             child: SizedBox(
               width: 100,
-              child: /*TextFormField(
-                textAlign: TextAlign.center,
-                key: Key(global.itemsMan.getSelected<CSD>()!.transportSignalsTreshold.toString()),
-                initialValue: global.itemsMan.getSelected<CSD>()!.transportSignalsTreshold.toString(),
-                keyboardType: TextInputType.number,
-                inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter.digitsOnly,
-                  TextInputFormatter.withFunction((oldValue, newValue) {
-                    String value = newValue.text;
-                    global.itemsMan.getSelected<CSD>()!.transportSignalsTreshold = int.parse(value);
-                    if (value.length > 3) {
-                      return TextEditingValue(
-                        text: oldValue.text,
-                        selection: TextSelection.collapsed(offset: oldValue.selection.end),
-                      );
-                    }
-                    return TextEditingValue(
-                      text: global.itemsMan.getSelected<CSD>()!.transportSignalsTreshold.toString(),
-                      selection:
-                          TextSelection.collapsed(offset: global.itemsMan.getSelected<CSD>()!.transportSignalsTreshold.toString().length),
-                    );
-                  })
-                ],
-              ),*/
-                  TextField(
-                controller: TextEditingController(text: csd.transportSignalsTreshold.toString()),
+              child: TextField(
+                controller: _controllerSingleTransport,
                 keyboardType: TextInputType.number,
                 maxLength: 3,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly,
                 ],
-                onChanged: (string) => csd.transportSignalsTreshold = int.parse(string),
-                onSubmitted: (string) => csd.transportSignalsTreshold = int.parse(string),
               ),
             ),
           ),
@@ -2861,39 +2830,13 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               flex: 3,
               child: SizedBox(
                 width: 200,
-                child: /* TextFormField(
-                    textAlign: TextAlign.center,
-                    initialValue:
-                        global.itemsMan.getSelected() != null ? global.itemsMan.getSelected<CPD>()!.cameraSensitivity.toString() : 'null',
-                    keyboardType: TextInputType.number,
-                    inputFormatters: <TextInputFormatter>[
-                      FilteringTextInputFormatter.digitsOnly,
-                      TextInputFormatter.withFunction((oldValue, newValue) {
-                        String value = newValue.text;
-                        global.itemsMan.getSelected<CPD>()!.cameraSensitivity = int.parse(value);
-                        if (value.length > 3) {
-                          return TextEditingValue(
-                            text: oldValue.text,
-                            selection: TextSelection.collapsed(offset: oldValue.selection.end),
-                          );
-                        }
-                        return TextEditingValue(
-                          text: global.itemsMan.getSelected<CPD>()!.cameraSensitivity.toString(),
-                          selection:
-                              TextSelection.collapsed(offset: global.itemsMan.getSelected<CPD>()!.cameraSensitivity.toString().length),
-                        );
-                      }),
-                    ],
-                  ),*/
-                    TextField(
-                  controller: TextEditingController(text: cpd.cameraSensitivity.toString()),
+                child: TextField(
+                  controller: _controllerCameraSensitivity,
                   keyboardType: TextInputType.number,
                   maxLength: 3,
                   inputFormatters: <TextInputFormatter>[
                     FilteringTextInputFormatter.digitsOnly,
                   ],
-                  onChanged: (string) => cpd.cameraSensitivity = int.parse(string),
-                  onSubmitted: (string) => cpd.cameraSensitivity = int.parse(string),
                 ),
               ),
             ),

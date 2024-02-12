@@ -126,6 +126,7 @@ class PackageProcessor {
     if (nd.typeName() == CPD.Name()) {
       global.imagePage.lastPartCome();
     } else if (nd.typeName() == CSD.Name()) {
+      global.seismicPage.lastPartCome();
       print('Seismic downloaded');
     }
   }
@@ -263,6 +264,7 @@ class PackageProcessor {
       nd.snr = package.getSignalToNoiseRatio();
     } else if (package is CriterionRecognitionPackage && nd is CSD) {
       nd.recognitionParameters = package.getCriteria();
+      print(nd.recognitionParameters.length);
     } else if (package is PhotoParametersPackage && nd is CPD) {
       nd.setCameraParameters(package.getInvLightSensitivity(), package.getCompressRatio());
     } else if (package is PhototrapPackage && nd is CPD) {

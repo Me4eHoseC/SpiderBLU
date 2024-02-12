@@ -6,8 +6,6 @@ import 'NetCommonPackages.dart';
 import 'NetNetworkPackages.dart';
 import 'NetPhotoPackages.dart';
 import 'NetSeismicPackage.dart';
-import 'PackageProcessor.dart';
-import 'PostManager.dart';
 import 'RoutesManager.dart';
 
 import 'FileManager.dart';

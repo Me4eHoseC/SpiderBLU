@@ -4,10 +4,12 @@ import 'package:flutter_gif/flutter_gif.dart';
 import 'package:projects/core/NetDevice.dart';
 import 'package:provider/provider.dart';
 
+import 'core/CPD.dart';
+import 'core/CSD.dart';
 import 'core/RT.dart';
 import 'global.dart' as global;
 
-void main() {
+void main(){
   Provider.debugCheckInvalidValueType = null;
   runApp(const MyApp());
 }
@@ -180,6 +182,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   ),
                   ListTile(
                     title: const Text('Device parameters'),
+                    enabled: global.itemsMan.getSelected<NetDevice>() != null,
                     onTap: () {
                       global.flagMapPage = false;
                       changePage(2);
@@ -188,6 +191,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   ),
                   ListTile(
                     title: const Text('Photo'),
+                    enabled: global.itemsMan.getSelected<CPD>() != null,
                     onTap: () {
                       global.flagMapPage = false;
                       changePage(3);
@@ -196,6 +200,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   ),
                   ListTile(
                     title: const Text('Seismic'),
+                    enabled: global.itemsMan.getSelected<CSD>() != null,
                     onTap: () {
                       global.flagMapPage = false;
                       changePage(4);

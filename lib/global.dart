@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:projects/radionet/PackageTypes.dart';
 
 import '../std/ISTD.dart';
 import '../std/STDConnectionManager.dart';
@@ -24,6 +25,8 @@ import '../pages/DeviceParametersPage.dart';
 import '../pages/ImagePage.dart';
 import '../pages/PageWithMap.dart';
 
+import 'core/CPD.dart';
+import 'core/NetDevice.dart';
 import 'main.dart';
 
 abstract class TIDManagement {
@@ -113,4 +116,16 @@ void getPermission() async {
     await Permission.storage.request();
     await Permission.manageExternalStorage.request();
   }
+}
+
+void stopMedia(){
+  print ('CANCEL DOWNLOAD');
+  var selected = itemsMan.getSelected<NetDevice>();
+  if (selected == null) return;
+  var type = PackageType.STOP_SEISMIC_WAVE;
+  if (selected is CPD){
+    type = PackageType.STOP_PHOTO;
+  }
+  var tid = postManager.sendPackage(BasePackage.makeBaseRequest(selected.id, type));
+  if (tid == -1) return;
 }

@@ -322,8 +322,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     _page.changeBottomBarWidget(1, global.itemsMan.getSelected<NetDevice>()!.id, null);
   }
 
-  void addItem(int id) {
-  }
+  void addItem(int id) {}
 
   void itemRemoved(int id) {
     print('delete device $id');
@@ -771,50 +770,84 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
       }
       if (counter == 1) {
         var bufMark = global.listMapMarkers[id!];
-        //global.testPage.selectDeviceInDropdown(int.parse(id!));
-        //widget.selectMapMarker(id);
+        if (bufMark == null) return;
         global.mainBottomSelectedDev = Text(
-          '${bufMark?.type} #$id',
+          '${bufMark.type} #$id',
           textScaleFactor: 1.4,
         );
-        if (bufMark?.markerData.type == STD.Name()) {
+        if (bufMark.markerData.type == STD.Name()) {
           bottomBarWidget = SizedBox(
             height: 70,
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(global.listMapMarkers[id]!.markerData.type!),
                 IconButton(
-                    onPressed: () {
-                      changeBottomBarWidget(-1, null, null);
-                      if (global.listMapMarkers[id]!.markerData.notifier.alarm) {
-                        global.listMapMarkers[id]!.markerData.notifier.changeAlarm();
-                      }
-                    },
-                    icon: const Icon(Icons.power_settings_new))
+                  onPressed: !global.listMapMarkers[id]!.markerData.notifier.alarm
+                      ? null
+                      : () {
+                          global.listMapMarkers[id]!.markerData.notifier.changeAlarm();
+                          changeBottomBarWidget(-1, null, null);
+                        },
+                  icon: !global.listMapMarkers[id]!.markerData.notifier.alarm
+                      ? const Icon(Icons.warning_rounded)
+                      : const Icon(
+                          Icons.warning_rounded,
+                          color: Color.fromARGB(220, 211, 44, 44),
+                        ),
+                ),
               ],
             ),
           );
         }
-        if (bufMark?.markerData.type == RT.Name()) {
+        if (bufMark.markerData.type == RT.Name()) {
           bottomBarWidget = SizedBox(
             height: 70,
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(global.itemsMan.getSelected<RT>()!.firmwareVersion.toString()),
-                Text(bufMark!.markerData.id.toString()),
                 IconButton(
-                    onPressed: () {
-                      changeBottomBarWidget(-1, null, null);
-                      if (bufMark.markerData.notifier.alarm) {
-                        bufMark.markerData.notifier.changeAlarm();
-                      }
-                    },
-                    icon: const Icon(Icons.power_settings_new))
+                  onPressed: !global.listMapMarkers[id]!.markerData.notifier.alarm
+                      ? null
+                      : () {
+                          global.listMapMarkers[id]!.markerData.notifier.changeAlarm();
+                          changeBottomBarWidget(-1, null, null);
+                        },
+                  icon: !global.listMapMarkers[id]!.markerData.notifier.alarm
+                      ? const Icon(Icons.warning_rounded)
+                      : const Icon(
+                          Icons.warning_rounded,
+                          color: Color.fromARGB(220, 211, 44, 44),
+                        ),
+                ),
               ],
             ),
           );
         }
-        if (bufMark?.markerData.type == CSD.Name()) {
+        if (bufMark.markerData.type == MCD.Name()) {
+          bottomBarWidget = SizedBox(
+            height: 70,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  onPressed: !global.listMapMarkers[id]!.markerData.notifier.alarm
+                      ? null
+                      : () {
+                          global.listMapMarkers[id]!.markerData.notifier.changeAlarm();
+                          changeBottomBarWidget(-1, null, null);
+                        },
+                  icon: !global.listMapMarkers[id]!.markerData.notifier.alarm
+                      ? const Icon(Icons.warning_rounded)
+                      : const Icon(
+                          Icons.warning_rounded,
+                          color: Color.fromARGB(220, 211, 44, 44),
+                        ),
+                ),
+              ],
+            ),
+          );
+        }
+        if (bufMark.markerData.type == CSD.Name()) {
           bottomBarWidget = SizedBox(
             height: 70,
             child: Row(
@@ -835,27 +868,28 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                   },
                   icon: const Icon(
                     Icons.show_chart,
-                    color: Colors.red,
+                    color: Color.fromARGB(220, 211, 44, 44),
                   ),
                 ),
                 IconButton(
-                  onPressed: () => global.globalKey.currentState?.changePage(4),
-                  icon: const Icon(Icons.file_download),
-                ),
-                IconButton(
-                  onPressed: () {
-                    changeBottomBarWidget(-1, null, null);
-                    if (bufMark!.markerData.notifier.alarm) {
-                      bufMark.markerData.notifier.changeAlarm();
-                    }
-                  },
-                  icon: const Icon(Icons.power_settings_new),
+                  onPressed: !global.listMapMarkers[id]!.markerData.notifier.alarm
+                      ? null
+                      : () {
+                          global.listMapMarkers[id]!.markerData.notifier.changeAlarm();
+                          changeBottomBarWidget(-1, null, null);
+                        },
+                  icon: !global.listMapMarkers[id]!.markerData.notifier.alarm
+                      ? const Icon(Icons.warning_rounded)
+                      : const Icon(
+                          Icons.warning_rounded,
+                          color: Color.fromARGB(220, 211, 44, 44),
+                        ),
                 ),
               ],
             ),
           );
         }
-        if (bufMark?.markerData.type == CPD.Name()) {
+        if (bufMark.markerData.type == CPD.Name()) {
           bottomBarWidget = SizedBox(
             height: 70,
             child: Row(
@@ -891,14 +925,18 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                   icon: const Icon(Icons.photo_album_outlined),
                 ),
                 IconButton(
-                  onPressed: () {
-                    global.flagMoveMarker = true;
-                    changeBottomBarWidget(-1, null, null);
-                    if (bufMark!.markerData.notifier.alarm) {
-                      bufMark.markerData.notifier.changeAlarm();
-                    }
-                  },
-                  icon: const Icon(Icons.power_settings_new),
+                  onPressed: !global.listMapMarkers[id]!.markerData.notifier.alarm
+                      ? null
+                      : () {
+                          global.listMapMarkers[id]!.markerData.notifier.changeAlarm();
+                          changeBottomBarWidget(-1, null, null);
+                        },
+                  icon: !global.listMapMarkers[id]!.markerData.notifier.alarm
+                      ? const Icon(Icons.warning_rounded)
+                      : const Icon(
+                          Icons.warning_rounded,
+                          color: Color.fromARGB(220, 211, 44, 44),
+                        ),
                 ),
               ],
             ),
@@ -919,7 +957,18 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
 
   void changeLocationMarkerOnMap(LatLng point) {}
 
+  void saveTile(String name) async{
+      Directory? root = global.pathToProject;
+      String directoryPath = '${root.path}/mapTiles';
+      await Directory(directoryPath).create(recursive: true);
+      String filePath = '$directoryPath/$name';
+      //await File(filePath).create().then((file) => file.writeAsBytes());
+      print(filePath);
+
+  }
+
   void chan(MapPosition pos, bool flag) {
+
     if (global.flagMoveMarker) {
       global.listMapMarkers[global.itemsMan.getSelected<mark.Marker>()!.id]!.point.latitude = pos.center!.latitude;
       global.listMapMarkers[global.itemsMan.getSelected<mark.Marker>()!.id]!.point.longitude = pos.center!.longitude;
@@ -943,6 +992,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
           maxZoom: 18.0,
           minZoom: 1.0,
           onPositionChanged: chan,
+          keepAlive: true,
           onLongPress: global.flagMoveMarker
               ? (tapPosition, point) {
                   changeLocationMarkerOnMap(point);
@@ -956,9 +1006,13 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
         ),
         mapController: mapController,
         layers: [
-          TileLayerOptions(urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", subdomains: ['a', 'b', 'c']),
-          MarkerLayerOptions(markers: global.listMapMarkers.values.toList()),
+          TileLayerOptions(
+              urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+              subdomains: ['a', 'b', 'c'],
+            userAgentPackageName: 'com.example.app',
+            ),
           MarkerLayerOptions(markers: [myLocalPosition!]),
+          MarkerLayerOptions(markers: global.listMapMarkers.values.toList()),
         ],
       ),
       floatingActionButton: Builder(builder: (context) {
@@ -970,12 +1024,13 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
             SizedBox(
               height: 60,
               child: Opacity(
-                opacity: 0.8,
+                opacity: 1,
                 child: IconButton(
                   onPressed: findMarkerPosition,
                   icon: const Icon(
                     Icons.crop_free,
-                    color: Colors.red,
+                    color: Color.fromARGB(250, 61, 174, 233),
+                    shadows: [Shadow(color: Colors.black, blurRadius: 1), ],
                   ),
                 ),
               ),
@@ -983,12 +1038,13 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
             SizedBox(
               height: 60,
               child: Opacity(
-                opacity: 0.8,
+                opacity: 1,
                 child: IconButton(
                   onPressed: changeMapRotation,
                   icon: const Icon(
                     Icons.arrow_upward,
-                    color: Colors.red,
+                    color: Color.fromARGB(250, 61, 174, 233),
+                    shadows: [Shadow(color: Colors.black, blurRadius: 1), ],
                   ),
                 ),
               ),
@@ -996,12 +1052,13 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
             SizedBox(
               height: 60,
               child: Opacity(
-                opacity: 0.8,
+                opacity: 1,
                 child: IconButton(
                   onPressed: findMyPosition,
                   icon: const Icon(
                     Icons.location_searching,
-                    color: Colors.red,
+                    color: Color.fromARGB(250, 61, 174, 233),
+                    shadows: [Shadow(color: Colors.black, blurRadius: 1), ],
                   ),
                 ),
               ),
@@ -1009,21 +1066,23 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
             SizedBox(
               height: 60,
               child: Opacity(
-                opacity: 0.8,
+                opacity: 1,
                 child: global.itemsMan.getSelected<mark.Marker>() != null
                     ? global.flagMoveMarker
                         ? IconButton(
                             onPressed: changeMoveFlag,
                             icon: const Icon(
                               Icons.pin_drop,
-                              color: Colors.amber,
+                              color: Colors.white,
+                              shadows: [Shadow(color: Colors.black, blurRadius: 1), ],
                             ),
                           )
                         : IconButton(
                             onPressed: changeMoveFlag,
                             icon: const Icon(
                               Icons.pin_drop,
-                              color: Colors.red,
+                              color: Color.fromARGB(250, 61, 174, 233),
+                              shadows: [Shadow(color: Colors.black, blurRadius: 1), ],
                             ),
                           )
                     : null,

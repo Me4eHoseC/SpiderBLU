@@ -69,6 +69,7 @@ class _BluetoothPage extends State<BluetoothPage> with TickerProviderStateMixin 
       (value) {
         if (value == null) {
           print('dialog closed with on barrier dismissal or android back button');
+
           global.stdConnectionManager.searchAndConnect();
         }
       },
@@ -86,6 +87,7 @@ class _BluetoothPage extends State<BluetoothPage> with TickerProviderStateMixin 
   }
 
   void repeatDiscovery() {
+    global.stdConnectionManager.isDiscovering = true;
     alert();
   }
 

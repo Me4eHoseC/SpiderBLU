@@ -18,7 +18,6 @@ import '../core/RT.dart';
 import '../global.dart' as global;
 import 'PackageTypes.dart';
 
-
 class PackageProcessor {
   List<global.TIDManagement> subscribers = [];
 
@@ -166,8 +165,10 @@ class PackageProcessor {
 
     if (package is VersionPackage) {
       nd.firmwareVersion = package.getVersion();
+      global.sendingState[partner]![global.ParametersGroup.firmwareVersion] = global.SendingState.defaultState;
     } else if (package is TimePackage) {
       nd.time = package.getTime();
+      global.sendingState[partner]![global.ParametersGroup.dateTime] = global.SendingState.defaultState;
     } else if (package is AllInformationPackage && nd is RT) {
       nd.setStoredCoordinates(package.getLatitude(), package.getLongitude());
       nd.setCoordinates(nd.storedLatitude, nd.storedLongitude);
@@ -206,35 +207,48 @@ class PackageProcessor {
     } else if (package is CoordinatesPackage) {
       nd.setStoredCoordinates(package.getLatitude(), package.getLongitude());
       nd.setCoordinates(nd.storedLatitude, nd.storedLongitude);
+      global.sendingState[partner]![global.ParametersGroup.coordinates] = global.SendingState.defaultState;
     } else if (package is InformationPackage && nd is RT) {
       nd.RSSI = package.getRssi();
+      global.sendingState[partner]![global.ParametersGroup.signalStrength] = global.SendingState.defaultState;
     } else if (package is HopsPackage && (type == PackageType.ALLOWED_HOPS || type == PackageType.SET_ALLOWED_HOPS)) {
       if (nd is RT) {
         nd.allowedHops = package.getHops();
+        global.sendingState[partner]![global.ParametersGroup.allowedHops] = global.SendingState.defaultState;
+        global.sendingState[partner]![global.ParametersGroup.rebroadcastToEveryone] = global.SendingState.defaultState;
       } else if (nd is MCD) {
         var rtMode = RoutesManager.getRtMode(package.getHops());
         nd.priority = rtMode == RtMode.ToAll;
+        global.sendingState[partner]![global.ParametersGroup.priority] = global.SendingState.defaultState;
       }
     } else if (package is HopsPackage && (type == PackageType.UNALLOWED_HOPS || type == PackageType.SET_UNALLOWED_HOPS) && nd is RT) {
       nd.unallowedHops = package.getHops();
+      global.sendingState[partner]![global.ParametersGroup.unallowedHops] = global.SendingState.defaultState;
     } else if (package is ModemFrequencyPackage) {
       nd.modemFrequency = package.getModemFrequency();
+      global.sendingState[partner]![global.ParametersGroup.signalStrength] = global.SendingState.defaultState;
     } else if (package is StatePackage && nd is RT) {
       nd.stateMask = package.getStateMask();
+      global.sendingState[partner]![global.ParametersGroup.onOffInDev] = global.SendingState.defaultState;
     } else if (package is PeripheryMaskPackage && nd is RT) {
       nd.peripheryMask = package.getPeripheryMask();
+      global.sendingState[partner]![global.ParametersGroup.deviceStatus] = global.SendingState.defaultState;
     } else if (package is ExternalPowerPackage) {
       if (nd is RT) {
         nd.extPower = package.getExternalPowerState();
+        global.sendingState[partner]![global.ParametersGroup.switchingBreak] = global.SendingState.defaultState;
       } else if (nd is MCD) {
         nd.GPSState = package.getExternalPowerState() == ExternalPower.ON;
+        global.sendingState[partner]![global.ParametersGroup.gps] = global.SendingState.defaultState;
       }
     } else if (package is BatteryMonitorPackage) {
       if (nd is RT) {
         nd.setBatMonParameters(package.getResidue(), package.getUsedCapacity(), package.getVoltage(), package.getCurrent(),
             package.getTemperature(), package.getElapsedTime());
+        global.sendingState[partner]![global.ParametersGroup.powerSupply] = global.SendingState.defaultState;
       } else if (nd is MCD) {
         nd.setBatMonParameters(package.getVoltage(), package.getTemperature());
+        global.sendingState[partner]![global.ParametersGroup.powerSupply] = global.SendingState.defaultState;
       }
     }
     // TODO: add Battery state
@@ -250,23 +264,30 @@ class PackageProcessor {
       //deviceBatteryStateChanged(rt.id(), isWeakBattery);
     } else if (package is AlarmReasonMaskPackage && nd is CSD) {
       nd.alarmReasonMask = package.getAlarmReasonMask();
+      global.sendingState[partner]![global.ParametersGroup.humanTransport] = global.SendingState.defaultState;
     } else if (package is SeismicSignalSwingPackage && nd is CSD) {
       nd.signalSwing = package.getSignalSwing();
+      global.sendingState[partner]![global.ParametersGroup.ratioSign] = global.SendingState.defaultState;
     } else if (package is HumanSensitivityPackage && nd is CSD) {
       nd.humanSensitivity = package.getHumanSensitivity();
+      global.sendingState[partner]![global.ParametersGroup.humSens] = global.SendingState.defaultState;
     } else if (package is HumanFreqThresholdPackage && nd is CSD) {
       nd.humanFreqThreshold = package.getHumanFreqThresholdPackage();
     } else if (package is TransportSensitivityPackage && nd is CSD) {
       nd.transportSensitivity = package.getTransportSensitivity();
+      global.sendingState[partner]![global.ParametersGroup.autoSens] = global.SendingState.defaultState;
     } else if (package is CriterionFilterPackage && nd is CSD) {
       nd.criterionFilter = package.getCriterionFilter();
+      global.sendingState[partner]![global.ParametersGroup.critFilter] = global.SendingState.defaultState;
     } else if (package is SignalToNoiseRatioPackage && nd is CSD) {
       nd.snr = package.getSignalToNoiseRatio();
+      global.sendingState[partner]![global.ParametersGroup.snr] = global.SendingState.defaultState;
     } else if (package is CriterionRecognitionPackage && nd is CSD) {
       nd.recognitionParameters = package.getCriteria();
-      print(nd.recognitionParameters.length);
+      global.sendingState[partner]![global.ParametersGroup.recogParam] = global.SendingState.defaultState;
     } else if (package is PhotoParametersPackage && nd is CPD) {
-      nd.setCameraParameters(package.getInvLightSensitivity(), package.getCompressRatio());
+      nd.setCameraParameters(package.getInvLightSensitivity(), package.getCompress());
+      global.sendingState[partner]![global.ParametersGroup.cameraSettings] = global.SendingState.defaultState;
     } else if (package is PhototrapPackage && nd is CPD) {
       nd.targetSensor = package.getCrossDevicesList().first;
     } else if (package is EEPROMFactorsPackage && nd is RT) {
@@ -291,20 +312,88 @@ class PackageProcessor {
       nd.humanIntervalsCount = package.getHumanIntervalsCount();
       nd.transportSignalsTreshold = package.getTransportSignalsTreshold();
       nd.transportIntervalsCount = package.getTransportIntervalsCount();
+      global.sendingState[partner]![global.ParametersGroup.alarmFilter] = global.SendingState.defaultState;
     } else if (package is PhototrapFilesPackage && nd is CPD) {
       nd.phototrapFiles = package.getPhototrapFiles();
     } else if (package is ExternalPowerSafetyCatchPackage && nd is RT) {
       nd.extPowerSafetyCatchState = package.getSafetyCatchState();
+      global.sendingState[partner]![global.ParametersGroup.safetyCatch] = global.SendingState.defaultState;
     } else if (package is AutoExternalPowerPackage && nd is RT) {
       nd.autoExtPowerActivationDelaySec = package.getActivationDelay();
       nd.extPowerImpulseDurationSec = package.getImpulseDuration();
       nd.autoExtPowerState = package.getAutoExternalPowerModeState();
+      global.sendingState[partner]![global.ParametersGroup.switchingBreak] = global.SendingState.defaultState;
     }
   }
 
   void ranOutOfSendAttempts(BasePackage? pb, int transactionId) {
     //global.globalMapMarker[id].markerData.deviceAvailable = false;
     if (pb == null) return;
+    var type = pb.getType();
+    var partner = pb.getPartner();
+
+    var nd = global.itemsMan.get<NetDevice>(partner);
+    if (nd == null) return;
+
+    if (pb is VersionPackage || type == PackageType.GET_VERSION) {
+      global.sendingState[partner]![global.ParametersGroup.firmwareVersion] = global.SendingState.notAnswerState;
+    } else if (pb is TimePackage || type == PackageType.GET_TIME) {
+      global.sendingState[partner]![global.ParametersGroup.dateTime] = global.SendingState.notAnswerState;
+    } else if (pb is CoordinatesPackage || type == PackageType.GET_COORDINATE) {
+      global.sendingState[partner]![global.ParametersGroup.coordinates] = global.SendingState.notAnswerState;
+    } else if (pb is InformationPackage && nd is RT || type == PackageType.GET_INFORMATION) {
+      global.sendingState[partner]![global.ParametersGroup.signalStrength] = global.SendingState.notAnswerState;
+    } else if (pb is HopsPackage &&
+        (type == PackageType.ALLOWED_HOPS || type == PackageType.SET_ALLOWED_HOPS || type == PackageType.GET_ALLOWED_HOPS)) {
+      if (nd is RT) {
+        global.sendingState[partner]![global.ParametersGroup.allowedHops] = global.SendingState.notAnswerState;
+      } else if (nd is MCD) {
+        global.sendingState[partner]![global.ParametersGroup.priority] = global.SendingState.notAnswerState;
+      }
+    } else if (pb is HopsPackage && (type == PackageType.UNALLOWED_HOPS || type == PackageType.SET_UNALLOWED_HOPS) && nd is RT) {
+      global.sendingState[partner]![global.ParametersGroup.unallowedHops] = global.SendingState.notAnswerState;
+    } else if (pb is ModemFrequencyPackage || type == PackageType.GET_MODEM_FREQUENCY) {
+      global.sendingState[partner]![global.ParametersGroup.signalStrength] = global.SendingState.notAnswerState;
+    } else if (pb is StatePackage && nd is RT || type == PackageType.GET_STATE) {
+      global.sendingState[partner]![global.ParametersGroup.onOffInDev] = global.SendingState.notAnswerState;
+    } else if (pb is PeripheryMaskPackage && nd is RT || type == PackageType.GET_PERIPHERY) {
+      global.sendingState[partner]![global.ParametersGroup.deviceStatus] = global.SendingState.notAnswerState;
+    } else if (pb is ExternalPowerPackage || type == PackageType.GET_EXTERNAL_POWER) {
+      if (nd is RT) {
+        global.sendingState[partner]![global.ParametersGroup.switchingBreak] = global.SendingState.notAnswerState;
+      } else if (nd is MCD) {
+        global.sendingState[partner]![global.ParametersGroup.gps] = global.SendingState.notAnswerState;
+      }
+    } else if (pb is BatteryMonitorPackage|| type == PackageType.GET_BATTERY_MONITOR) {
+      global.sendingState[partner]![global.ParametersGroup.powerSupply] = global.SendingState.notAnswerState;
+    }
+    // TODO: add Battery state
+    else if (pb is AlarmReasonMaskPackage && nd is CSD || type == PackageType.GET_ALARM_REASON_MASK) {
+      global.sendingState[partner]![global.ParametersGroup.humanTransport] = global.SendingState.notAnswerState;
+    } else if (pb is SeismicSignalSwingPackage && nd is CSD || type == PackageType.GET_SIGNAL_SWING) {
+      global.sendingState[partner]![global.ParametersGroup.ratioSign] = global.SendingState.notAnswerState;
+    } else if (pb is HumanSensitivityPackage && nd is CSD || type == PackageType.GET_HUMAN_SENSITIVITY) {
+      global.sendingState[partner]![global.ParametersGroup.humSens] = global.SendingState.notAnswerState;
+    } else if (pb is TransportSensitivityPackage && nd is CSD || type == PackageType.GET_TRANSPORT_SENSITIVITY) {
+      global.sendingState[partner]![global.ParametersGroup.autoSens] = global.SendingState.notAnswerState;
+    } else if (pb is CriterionFilterPackage && nd is CSD || type == PackageType.GET_CRITERION_FILTER) {
+      global.sendingState[partner]![global.ParametersGroup.critFilter] = global.SendingState.notAnswerState;
+    } else if (pb is SignalToNoiseRatioPackage && nd is CSD || type == PackageType.GET_SIGNAL_TO_NOISE_RATIO) {
+      global.sendingState[partner]![global.ParametersGroup.snr] = global.SendingState.notAnswerState;
+    } else if (pb is CriterionRecognitionPackage && nd is CSD || type == PackageType.GET_CRITERION_RECOGNITION) {
+      global.sendingState[partner]![global.ParametersGroup.recogParam] = global.SendingState.notAnswerState;
+    } else if (pb is PhotoParametersPackage && nd is CPD || type == PackageType.GET_PHOTO_PARAMETERS) {
+      global.sendingState[partner]![global.ParametersGroup.cameraSettings] = global.SendingState.notAnswerState;
+    } else if (pb is EEPROMFactorsPackage && nd is RT || type == PackageType.GET_EEPROM_FACTORS) {
+      global.sendingState[partner]![global.ParametersGroup.alarmFilter] = global.SendingState.notAnswerState;
+    } else if (pb is ExternalPowerSafetyCatchPackage && nd is RT || type == PackageType.GET_SAFETY_CATCH) {
+      global.sendingState[partner]![global.ParametersGroup.safetyCatch] = global.SendingState.notAnswerState;
+    } else if (pb is AutoExternalPowerPackage && nd is RT || type == PackageType.GET_AUTO_EXT_POWER) {
+      global.sendingState[partner]![global.ParametersGroup.switchingBreak] = global.SendingState.notAnswerState;
+    }
+    else if (pb is ExternalPowerPackage && nd is RT || type == PackageType.GET_EXTERNAL_POWER) {
+      global.sendingState[partner]![global.ParametersGroup.power] = global.SendingState.notAnswerState;
+    }
     global.pollManager.packageNotSent(pb, transactionId);
     global.deviceParametersPage.ranOutOfSendAttempts(transactionId, pb);
   }

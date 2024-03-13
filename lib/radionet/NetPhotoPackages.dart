@@ -37,6 +37,10 @@ class PhotoParametersPackage extends BasePackage {
     return PhotoImageCompression.values[_compressRatio];
   }
 
+  PhotoImageCompression getCompress() {
+    return castToCompression(_compressRatio);
+  }
+
   PhotoImageSize getImageSize() {
     return PhotoImageSize.values[_imageSize];
   }

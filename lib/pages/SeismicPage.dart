@@ -198,6 +198,7 @@ class _SeismicPage extends State<SeismicPage> with TickerProviderStateMixin {
   void drawChart() {
     setState(() {
       firstSeismic = SfCartesianChart(
+        borderWidth: 6,
         enableAxisAnimation: false,
         zoomPanBehavior: ZoomPanBehavior(
             enablePinching: true,
@@ -207,14 +208,15 @@ class _SeismicPage extends State<SeismicPage> with TickerProviderStateMixin {
             selectionRectBorderWidth: 2,
             selectionRectColor: Colors.grey,
             enablePanning: true,
-            zoomMode: ZoomMode.x,
-            maximumZoomLevel: 0.5),
+            zoomMode: ZoomMode.xy,
+            maximumZoomLevel: 0.1),
         margin: EdgeInsets.zero,
         primaryXAxis: NumericAxis(
           edgeLabelPlacement: EdgeLabelPlacement.shift,
           anchorRangeToVisiblePoints: false,
           maximumLabels: 5,
           minimum: 0,
+
         ),
         series: <LineSeries<Point, double>>[
           LineSeries<Point, double>(
@@ -241,27 +243,19 @@ class _SeismicPage extends State<SeismicPage> with TickerProviderStateMixin {
       appBar: AppBar(
         title: const Text('Seismic'),
       ),
-      body: InteractiveViewer(
-        boundaryMargin: const EdgeInsets.all(20.0),
-        trackpadScrollCausesScale: true,
-        maxScale: 5,
-        child: Center(
-          child: SizedBox(
-            height: 250,
-            width: 350,
-            child: firstSeismic,
-          ),
-        ),
+      body: Center(
+        child: firstSeismic,
       ),
       bottomNavigationBar: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           IconButton(
-            onPressed: widget.downloadingCsdId != -1 ? null : ()=> widget.getSeismic(),
+            onPressed: widget.downloadingCsdId != -1 ? null : () => widget.getSeismic(),
             icon: const Icon(Icons.show_chart),
           ),
           IconButton(
-            onPressed: widget.downloadingCsdId != -1 ? null : ()=> widget.getLastSeismic(),
+            onPressed: widget.downloadingCsdId != -1 ? null : () => widget.getLastSeismic(),
             icon: const Icon(
               Icons.show_chart,
               color: Colors.red,

@@ -181,11 +181,19 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     },
                   ),
                   ListTile(
+                    title: const Text('Devices Table'),
+                    onTap: () {
+                      global.flagMapPage = true;
+                      changePage(2);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
                     title: const Text('Device parameters'),
                     enabled: global.itemsMan.getSelected<NetDevice>() != null,
                     onTap: () {
                       global.flagMapPage = false;
-                      changePage(2);
+                      changePage(3);
                       Navigator.pop(context);
                     },
                   ),
@@ -194,7 +202,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     enabled: global.itemsMan.getSelected<CPD>() != null,
                     onTap: () {
                       global.flagMapPage = false;
-                      changePage(3);
+                      changePage(4);
                       Navigator.pop(context);
                     },
                   ),
@@ -203,7 +211,15 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     enabled: global.itemsMan.getSelected<CSD>() != null,
                     onTap: () {
                       global.flagMapPage = false;
-                      changePage(4);
+                      changePage(5);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('Scan'),
+                    onTap: () {
+                      global.flagMapPage = false;
+                      changePage(6);
                       Navigator.pop(context);
                     },
                   ),
@@ -239,7 +255,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                             if (global.itemsMan.getSelected<NetDevice>() == null) {
                               return;
                             }
-                            changePage(2);
+                            changePage(3);
                             global.flagMapPage = false;
                           },
                           child: const Icon(

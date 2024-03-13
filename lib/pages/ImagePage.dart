@@ -247,7 +247,8 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
         ),
       ),
       bottomNavigationBar: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           IconButton(
             onPressed: widget.downloadingCpdId != -1 ? null : ()=> widget.getPhoto(PhotoImageSize.IMAGE_160X120),

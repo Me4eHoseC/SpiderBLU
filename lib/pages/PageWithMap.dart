@@ -281,6 +281,8 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
   void createMapMarker(int id, String type, MarkerData data) {
     bufferDeviceType = setImagePackage(type);
 
+    global.initSendingState(id);
+
     if (global.itemsMan.getSelected<mark.Marker>() != null) {
       unselectMapMarker();
     }
@@ -311,7 +313,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     global.itemsMan.itemAdded = addItem;
     global.itemsMan.selectionChanged = selectedItem;
     global.itemsMan.itemRemoved = itemRemoved;
-
     global.deviceParametersPage.addDeviceInDropdown(id, type);
     selectMapMarker(id);
     saveMapMarkersInFile();
@@ -322,7 +323,9 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     _page.changeBottomBarWidget(1, global.itemsMan.getSelected<NetDevice>()!.id, null);
   }
 
-  void addItem(int id) {}
+  void addItem(int id) {
+    global.devicesTablePage.addDevice(id);
+  }
 
   void itemRemoved(int id) {
     print('delete device $id');
@@ -339,10 +342,10 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
           MapMarker(_page, buf.markerData, buf.markerData.cord!, newId.toString(), buf.markerData.type!, buf.imageTypePackage);
 
       global.listMapMarkers[newId] = localMarker;
+      global.deviceParametersPage.changeDeviceInDropdown(newId, buf.markerData.type!, oldId.toString());
       selectMapMarker(newId);
       global.listMapMarkers.remove(oldId);
 
-      global.deviceParametersPage.changeDeviceInDropdown(newId, buf.markerData.type!, oldId.toString());
       saveMapMarkersInFile();
     }
   }
@@ -402,6 +405,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     global.listMapMarkers.remove(id);
     global.deviceParametersPage.deleteDeviceInDropdown(id);
     saveMapMarkersInFile();
+    global.devicesTablePage.ref();
   }
 
   void selectMapMarker(int id) {
@@ -420,6 +424,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
       '${global.listMapMarkers[id]?.markerData.type} #$id',
       textScaleFactor: 1.4,
     );
+    global.devicesTablePage.ref();
   }
 
   void unselectMapMarker() {
@@ -435,6 +440,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
       '',
       textScaleFactor: 1.4,
     );
+    global.devicesTablePage.ref();
   }
 
   void alarmMapMarker(int id, AlarmReason reason) {

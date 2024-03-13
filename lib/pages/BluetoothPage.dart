@@ -100,44 +100,34 @@ class _BluetoothPage extends State<BluetoothPage> with TickerProviderStateMixin 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          toolbarHeight: 80,
-          title: global.flagConnect ? Text(global.deviceName) : const Text('None device'),
-          actions: <Widget>[
-            global.flagConnect
-                ? IconButton(
-                    onPressed: disconnect,
-                    icon: const Icon(Icons.cancel),
-                  )
-                : (global.stdConnectionManager.isDiscovering
-                    ? FittedBox(
-                        child: Container(
-                          margin: const EdgeInsets.all(16.0),
-                          child: const CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
-                          ),
+      appBar: AppBar(
+        toolbarHeight: 80,
+        title: global.flagConnect ? Text(global.deviceName) : const Text('None device'),
+        actions: <Widget>[
+          global.flagConnect
+              ? IconButton(
+                  onPressed: disconnect,
+                  icon: const Icon(Icons.cancel),
+                )
+              : (global.stdConnectionManager.isDiscovering
+                  ? FittedBox(
+                      child: Container(
+                        margin: const EdgeInsets.all(16.0),
+                        child: const CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
                         ),
-                      )
-                    : IconButton(
-                        onPressed: repeatDiscovery,
-                        icon: const Icon(Icons.replay),
-                      )),
-          ],
-        ),
-        body: Visibility(
-            visible: global.std != null,
-            child: const Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [],
-              ),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [],
-              ),
-              SizedBox(width: 200, height: 500),
-            ])));
+                      ),
+                    )
+                  : IconButton(
+                      onPressed: repeatDiscovery,
+                      icon: const Icon(Icons.replay),
+                    )),
+        ],
+      ),
+      body: const Align(
+        alignment: Alignment.bottomCenter,
+          child:Text('SpiderNet v0.0.1 (BETA)'),
+      ),
+    );
   }
 }

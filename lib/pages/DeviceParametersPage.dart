@@ -196,6 +196,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
   TextEditingController _controllerRatioPersonToTransport = TextEditingController();
   TextEditingController _controllerSingleTransport = TextEditingController();
   TextEditingController _controllerSinglePerson = TextEditingController();
+  Color notSend = Colors.orange;
+  Color defaultColor = Colors.white;
+  Color trySend = Colors.yellow;
 
   @override
   void initState() {
@@ -227,7 +230,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
   //Main settings
 
   void checkDevID(int newId, int oldId) {
-    print ('$newId  $oldId');
+    print('$newId  $oldId');
     setState(() {
       var listIdsBuf = global.itemsMan.getAllIds();
       if (oldId == newId) return;
@@ -270,6 +273,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_TIME);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.dateTime] = global.SendingState.sendingState;
     });
   }
 
@@ -282,6 +286,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
 
       widget.setRequests[tid] = timePackage;
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.dateTime] = global.SendingState.sendingState;
     });
   }
 
@@ -290,6 +295,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_VERSION);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.firmwareVersion] = global.SendingState.sendingState;
     });
   }
 
@@ -300,6 +306,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_COORDINATE);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.coordinates] = global.SendingState.sendingState;
     });
   }
 
@@ -315,6 +322,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
 
       widget.setRequests[tid] = coordinatesPackage;
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.coordinates] = global.SendingState.sendingState;
     });
   }
 
@@ -325,6 +333,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_INFORMATION);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.signalStrength] = global.SendingState.sendingState;
     });
   }
 
@@ -333,6 +342,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_ALLOWED_HOPS);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.allowedHops] = global.SendingState.sendingState;
     });
   }
 
@@ -361,6 +371,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_UNALLOWED_HOPS);
         var tid = global.postManager.sendPackage(getInfo);
         widget.tits.add(tid);
+        global.sendingState[devId]![global.ParametersGroup.unallowedHops] = global.SendingState.sendingState;
       },
     );
   }
@@ -390,6 +401,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
       global.retransmissionRequests.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.rebroadcastToEveryone] = global.SendingState.sendingState;
     });
   }
 
@@ -404,10 +416,11 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       widget.setRequests[tid] = hopsPackage;
       widget.tits.add(tid);
       global.retransmissionRequests.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.rebroadcastToEveryone] = global.SendingState.sendingState;
     });
   }
 
-  void takePriorityClick(int devId) {
+/*  void takePriorityClick(int devId) {
     setState(() {
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_ALLOWED_HOPS);
       var tid = global.postManager.sendPackage(getInfo);
@@ -426,7 +439,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       widget.setRequests[tid] = hopsPackage;
       widget.tits.add(tid);
     });
-  }
+  }*/
 
   void buttonResetRetransmissionClick(int devId) {
     setState(() {
@@ -470,6 +483,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_STATE);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.onOffInDev] = global.SendingState.sendingState;
     });
   }
 
@@ -482,6 +496,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       var tid = global.postManager.sendPackage(statePackage);
       widget.setRequests[tid] = statePackage;
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.onOffInDev] = global.SendingState.sendingState;
     });
   }
 
@@ -490,6 +505,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_PERIPHERY);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.deviceStatus] = global.SendingState.sendingState;
     });
   }
 
@@ -500,6 +516,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_SAFETY_CATCH);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.safetyCatch] = global.SendingState.sendingState;
     });
   }
 
@@ -512,6 +529,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       var tid = global.postManager.sendPackage(externalPowerSafetyCatchPackage);
       widget.setRequests[tid] = externalPowerSafetyCatchPackage;
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.safetyCatch] = global.SendingState.sendingState;
     });
   }
 
@@ -520,6 +538,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_AUTO_EXT_POWER);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.switchingBreak] = global.SendingState.sendingState;
     });
   }
 
@@ -534,6 +553,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       var tid = global.postManager.sendPackage(autoExternalPowerPackage);
       widget.setRequests[tid] = autoExternalPowerPackage;
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.switchingBreak] = global.SendingState.sendingState;
     });
   }
 
@@ -542,6 +562,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_EXTERNAL_POWER);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.power] = global.SendingState.sendingState;
     });
   }
 
@@ -554,6 +575,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       var tid = global.postManager.sendPackage(externalPowerPackage);
       widget.setRequests[tid] = externalPowerPackage;
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.power] = global.SendingState.sendingState;
     });
   }
 
@@ -564,6 +586,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_BATTERY_MONITOR);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.powerSupply] = global.SendingState.sendingState;
     });
   }
 
@@ -574,6 +597,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_ALARM_REASON_MASK);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.humanTransport] = global.SendingState.sendingState;
     });
   }
 
@@ -587,6 +611,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       widget.setRequests[tid] = alarmReasonMaskPackage;
 
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.humanTransport] = global.SendingState.sendingState;
     });
   }
 
@@ -595,6 +620,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_SIGNAL_SWING);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.ratioSign] = global.SendingState.sendingState;
     });
   }
 
@@ -603,6 +629,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_HUMAN_SENSITIVITY);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.humSens] = global.SendingState.sendingState;
     });
   }
 
@@ -614,8 +641,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       humanSensitivityPackage.setHumanSensitivity(sensitivity);
       var tid = global.postManager.sendPackage(humanSensitivityPackage);
       widget.setRequests[tid] = humanSensitivityPackage;
-
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.humSens] = global.SendingState.sendingState;
     });
   }
 
@@ -624,6 +651,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_TRANSPORT_SENSITIVITY);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.autoSens] = global.SendingState.sendingState;
     });
   }
 
@@ -636,6 +664,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       var tid = global.postManager.sendPackage(transportSensitivityPackage);
       widget.setRequests[tid] = transportSensitivityPackage;
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.autoSens] = global.SendingState.sendingState;
     });
   }
 
@@ -644,6 +673,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_CRITERION_FILTER);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.critFilter] = global.SendingState.sendingState;
     });
   }
 
@@ -656,6 +686,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       var tid = global.postManager.sendPackage(criterionFilterPackage);
       widget.setRequests[tid] = criterionFilterPackage;
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.critFilter] = global.SendingState.sendingState;
     });
   }
 
@@ -664,6 +695,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_SIGNAL_TO_NOISE_RATIO);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.snr] = global.SendingState.sendingState;
     });
   }
 
@@ -676,6 +708,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       var tid = global.postManager.sendPackage(signalToNoiseRatioPackage);
       widget.setRequests[tid] = signalToNoiseRatioPackage;
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.snr] = global.SendingState.sendingState;
     });
   }
 
@@ -684,6 +717,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_CRITERION_RECOGNITION);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.recogParam] = global.SendingState.sendingState;
     });
   }
 
@@ -698,6 +732,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       var tid = global.postManager.sendPackage(criterionRecognitionPackage);
       widget.setRequests[tid] = criterionRecognitionPackage;
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.recogParam] = global.SendingState.sendingState;
     });
   }
 
@@ -706,6 +741,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_EEPROM_FACTORS);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.alarmFilter] = global.SendingState.sendingState;
     });
   }
 
@@ -742,6 +778,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       var tid = global.postManager.sendPackage(pfp);
       widget.setRequests[tid] = pfp;
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.alarmFilter] = global.SendingState.sendingState;
     });
   }
 
@@ -752,6 +789,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_PHOTO_PARAMETERS);
       var tid = global.postManager.sendPackage(getInfo);
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.cameraSettings] = global.SendingState.sendingState;
     });
   }
 
@@ -764,6 +802,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       var tid = global.postManager.sendPackage(photoParametersPackage);
       widget.setRequests[tid] = photoParametersPackage;
       widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.cameraSettings] = global.SendingState.sendingState;
     });
   }
 
@@ -804,48 +843,56 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     });
   }
 
-  _changeId(){
-    setState(() => widget._cloneItem.id = int.parse(_controllerId.text));
+  _changeId() {
+    setState(() {widget._cloneItem.id = int.parse(_controllerId.text);
+    global.initSendingState(widget._cloneItem.id);
+    });
   }
-  _changeLongitude(){
+
+  _changeLongitude() {
     setState(() => widget._cloneItem.longitude = double.parse(_controllerLongitude.text));
   }
-  _changeLatitude(){
+
+  _changeLatitude() {
     setState(() => widget._cloneItem.latitude = double.parse(_controllerLatitude.text));
   }
 
-  _changeHumanSensitivity(){
+  _changeHumanSensitivity() {
     var csd = widget._cloneItem as CSD;
     setState(() => csd.humanSensitivity = int.parse(_controllerHumanSensitivity.text));
   }
-  _changeTransportSensitivity(){
+
+  _changeTransportSensitivity() {
     var csd = widget._cloneItem as CSD;
     setState(() => csd.transportSensitivity = int.parse(_controllerTransportSensitivity.text));
   }
-  _changeRatioSNR(){
+
+  _changeRatioSNR() {
     var csd = widget._cloneItem as CSD;
     setState(() => csd.snr = int.parse(_controllerRatioTrToNoise.text));
   }
 
-  _changeInterferencePerson(){
+  _changeInterferencePerson() {
     var csd = widget._cloneItem as CSD;
     setState(() => csd.recognitionParameters[0] = int.parse(_controllerRatioIntToPerson.text));
   }
-  _changePersonTransport(){
+
+  _changePersonTransport() {
     var csd = widget._cloneItem as CSD;
     setState(() => csd.recognitionParameters[1] = int.parse(_controllerRatioPersonToTransport.text));
   }
 
-  _changeSingleHuman(){
+  _changeSingleHuman() {
     var csd = widget._cloneItem as CSD;
     setState(() => csd.humanSignalsTreshold = int.parse(_controllerSinglePerson.text));
   }
-  _changeSingleTransport(){
+
+  _changeSingleTransport() {
     var csd = widget._cloneItem as CSD;
     setState(() => csd.transportSignalsTreshold = int.parse(_controllerSingleTransport.text));
   }
 
-  _changeCameraSensitivity(){
+  _changeCameraSensitivity() {
     var cpd = widget._cloneItem as CPD;
     setState(() => cpd.cameraSensitivity = int.parse(_controllerCameraSensitivity.text));
   }
@@ -864,7 +911,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       _controllerLatitude.text = widget._cloneItem.latitude.toStringAsFixed(6);
       _controllerLatitude.addListener(_changeLatitude);
 
-      if (widget._cloneItem is CSD){
+      if (widget._cloneItem is CSD) {
         var csd = widget._cloneItem as CSD;
         _controllerHumanSensitivity.text = csd.humanSensitivity.toString();
         _controllerHumanSensitivity.addListener(_changeHumanSensitivity);
@@ -882,12 +929,11 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         _controllerSingleTransport.addListener(_changeSingleTransport);
       }
 
-      if (widget._cloneItem is CPD){
+      if (widget._cloneItem is CPD) {
         var cpd = widget._cloneItem as CPD;
         _controllerCameraSensitivity.text = cpd.cameraSensitivity.toString();
         _controllerCameraSensitivity.addListener(_changeCameraSensitivity);
       }
-
     });
   }
 
@@ -901,154 +947,146 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     return Column(
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
                 child: Text('ID:'),
               ),
             ),
-            Flexible(
-              flex: 3,
-              child: SizedBox(
-                width: 200,
-                child: TextField(
-                  controller: _controllerId,
-                  keyboardType: TextInputType.number,
-                  maxLength: 3,
-                  inputFormatters: <TextInputFormatter>[
-                    FilteringTextInputFormatter.digitsOnly,
-                  ],
-                ),
+            Expanded(
+              flex: 1,
+              child: TextField(
+                controller: _controllerId,
+                keyboardType: TextInputType.number,
+                maxLength: 3,
+                inputFormatters: <TextInputFormatter>[
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
               ),
             ),
-            Flexible(
+            Expanded(
               flex: 1,
-              child: SizedBox(
-                width: 100,
-                child: IconButton(
-                  onPressed: () => checkDevID(nd.id, global.itemsMan.getSelected<NetDevice>()!.id),
-                  icon: const Icon(Icons.check),
-                  color: Colors.green,
-                ),
+              child: IconButton(
+                onPressed: () => checkDevID(nd.id, global.itemsMan.getSelected<NetDevice>()!.id),
+                icon: const Icon(Icons.check),
+                color: Colors.green,
               ),
             ),
           ],
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
                 child: Text('Type:'),
               ),
             ),
-            Flexible(
-              flex: 3,
-              child: SizedBox(
-                width: 200,
-                child: DropdownButton<String>(
-                  alignment: AlignmentDirectional.topCenter,
-                  onChanged: (String? value) {
-                    bufferDeviceType = value!;
-                  },
-                  value: bufferDeviceType,
-                  icon: const Icon(Icons.keyboard_double_arrow_down),
-                  items: global.deviceTypeList.map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                ),
+            Expanded(
+              flex: 1,
+              child: DropdownButton<String>(
+                alignment: AlignmentDirectional.topCenter,
+                onChanged: (String? value) {
+                  bufferDeviceType = value!;
+                },
+                value: bufferDeviceType,
+                isExpanded: true,
+                icon: const Icon(Icons.keyboard_double_arrow_down),
+                items: global.deviceTypeList.map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
               ),
             ),
-            Flexible(
+            Expanded(
               flex: 1,
-              child: SizedBox(
-                width: 100,
-                child: IconButton(
-                  onPressed: () => checkDevType(nd.id, nd.typeName(), bufferDeviceType!),
-                  icon: const Icon(Icons.check),
-                  color: Colors.green,
-                ),
+              child: IconButton(
+                onPressed: () => checkDevType(nd.id, nd.typeName(), bufferDeviceType!),
+                icon: const Icon(Icons.check),
+                color: Colors.green,
               ),
             ),
           ],
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
                 child: Text('Date/time:'),
               ),
             ),
-            Flexible(
-              flex: 3,
-              child: SizedBox(width: 200, child: Text(nd.time.toString().substring(0, 19), textAlign: TextAlign.center)),
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[nd.id]![global.ParametersGroup.dateTime] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[nd.id]![global.ParametersGroup.dateTime] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
+                child: Text(nd.time.toString().substring(0, 19), textAlign: TextAlign.center),
+              ),
             ),
-            Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => takeTimeClick(nd.id),
-                      icon: const Icon(
-                        Icons.refresh,
-                        color: Colors.blue,
-                      ),
+            Expanded(
+              flex: 1,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: () => takeTimeClick(nd.id),
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.blue,
                     ),
-                    IconButton(
-                      onPressed: () => setTimeClick(nd.id),
-                      icon: const Icon(
-                        Icons.access_time,
-                        color: Colors.green,
-                      ),
+                  ),
+                  IconButton(
+                    onPressed: () => setTimeClick(nd.id),
+                    icon: const Icon(
+                      Icons.access_time,
+                      color: Colors.green,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Flexible(
-              flex: 2,
+            const Expanded(
+              flex: 1,
               child: SizedBox(
                 width: 100,
-                child: Text('Firmware version:'),
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text('Firmware version:'),
+                ),
               ),
             ),
-            Flexible(
-              flex: 3,
-              child: SizedBox(width: 200, child: Text(nd.firmwareVersion.toString(), textAlign: TextAlign.center)),
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[nd.id]![global.ParametersGroup.firmwareVersion] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[nd.id]![global.ParametersGroup.firmwareVersion] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
+                child: Text(nd.firmwareVersion.toString(), textAlign: TextAlign.center),
+              ),
             ),
-            Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(
-                      onPressed: () => takeVersionClick(nd.id),
-                      icon: const Icon(
-                        Icons.refresh,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ],
+            Expanded(
+              flex: 1,
+              child: IconButton(
+                onPressed: () => takeVersionClick(nd.id),
+                icon: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
               ),
             ),
@@ -1068,19 +1106,22 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     return Column(
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
                 child: Text('Latitude:'),
               ),
             ),
-            Flexible(
-              flex: 3,
-              child: SizedBox(
-                width: 200,
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[nd.id]![global.ParametersGroup.coordinates] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[nd.id]![global.ParametersGroup.coordinates] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
                 child: TextField(
                   controller: _controllerLatitude,
                   keyboardType: TextInputType.number,
@@ -1088,32 +1129,32 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 ),
               ),
             ),
-            Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
-                child: IconButton(
-                  onPressed: () => setMyCordsForDevice(),
-                  icon: const Icon(Icons.abc),
-                ),
+            Expanded(
+              flex: 1,
+              child: IconButton(
+                onPressed: () => setMyCordsForDevice(),
+                icon: const Icon(Icons.navigation),
               ),
             ),
           ],
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
                 child: Text('Longitude:'),
               ),
             ),
-            Flexible(
-              flex: 3,
-              child: SizedBox(
-                width: 200,
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[nd.id]![global.ParametersGroup.coordinates] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[nd.id]![global.ParametersGroup.coordinates] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
                 child: TextField(
                   controller: _controllerLongitude,
                   keyboardType: TextInputType.number,
@@ -1121,29 +1162,26 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 ),
               ),
             ),
-            Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      onPressed: () => takeCordClick(nd.id),
-                      icon: const Icon(
-                        Icons.refresh,
-                        color: Colors.blue,
-                      ),
+            Expanded(
+              flex: 1,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: () => takeCordClick(nd.id),
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.blue,
                     ),
-                    IconButton(
-                      onPressed: () => setCordClick(nd.id, nd.latitude, nd.longitude),
-                      icon: const Icon(
-                        Icons.check,
-                        color: Colors.green,
-                      ),
+                  ),
+                  IconButton(
+                    onPressed: () => setCordClick(nd.id, nd.latitude, nd.longitude),
+                    icon: const Icon(
+                      Icons.check,
+                      color: Colors.green,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -1160,132 +1198,120 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     var rt = widget._cloneItem as RT;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 150,
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
                 child: Text('Signal strength:'),
               ),
             ),
-            Flexible(
-              flex: 3,
-              child: SizedBox(
-                width: 200,
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[rt.id]![global.ParametersGroup.signalStrength] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[rt.id]![global.ParametersGroup.signalStrength] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
                 child: Text(rt.RSSI.toString(), textAlign: TextAlign.center),
               ),
             ),
-            Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    IconButton(
-                      onPressed: () => takeSignalStrengthClick(rt.id),
-                      icon: const Icon(
-                        Icons.refresh,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ],
+            Expanded(
+              flex: 1,
+              child: IconButton(
+                onPressed: () => takeSignalStrengthClick(rt.id),
+                icon: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
               ),
             ),
           ],
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 150,
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
                 child: Text('Allowed hops:'),
               ),
             ),
-            const Flexible(
-              flex: 3,
-              child: SizedBox(
-                width: 200,
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[rt.id]![global.ParametersGroup.allowedHops] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[rt.id]![global.ParametersGroup.allowedHops] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
+                child: Text(''),
               ),
             ),
-            Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    IconButton(
-                      onPressed: () => takeAllowedHopsClick(rt.id),
-                      icon: const Icon(
-                        Icons.refresh,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ],
+            Expanded(
+              flex: 1,
+              child: IconButton(
+                onPressed: () => takeAllowedHopsClick(rt.id),
+                icon: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
               ),
             ),
           ],
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 150,
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
                 child: Text('Unallowed hops:'),
               ),
             ),
-            const Flexible(
-              flex: 3,
-              child: SizedBox(
-                width: 200,
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[rt.id]![global.ParametersGroup.unallowedHops] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[rt.id]![global.ParametersGroup.unallowedHops] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
+                child: Text(''),
               ),
             ),
-            Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    IconButton(
-                      onPressed: () => takeUnallowedHopsClick(rt.id),
-                      icon: const Icon(
-                        Icons.refresh,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ],
+            Expanded(
+              flex: 1,
+              child: IconButton(
+                onPressed: () => takeUnallowedHopsClick(rt.id),
+                icon: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
               ),
             ),
           ],
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 150,
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
                 child: Text("Rebroadcast to everyone:"),
               ),
             ),
-            Flexible(
-              flex: 3,
-              child: SizedBox(
-                width: 200,
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[rt.id]![global.ParametersGroup.rebroadcastToEveryone] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[rt.id]![global.ParametersGroup.rebroadcastToEveryone] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
                 child: Checkbox(
                     value: rt.allowedHops[0] == 65535 ? true : false,
                     onChanged: (bool? value) {
@@ -1299,27 +1325,24 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                     }),
               ),
             ),
-            Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    IconButton(
-                      onPressed: () => takeRetransmissionAllClick(rt.id),
-                      icon: const Icon(
-                        Icons.refresh,
-                        color: Colors.blue,
-                      ),
+            Expanded(
+              flex: 1,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: () => takeRetransmissionAllClick(rt.id),
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.blue,
                     ),
-                    IconButton(
-                      onPressed: () => setRetransmissionAllClick(rt.id, rt.allowedHops[0] == 65535),
-                      icon: const Icon(Icons.check),
-                      color: Colors.green,
-                    ),
-                  ],
-                ),
+                  ),
+                  IconButton(
+                    onPressed: () => setRetransmissionAllClick(rt.id, rt.allowedHops[0] == 65535),
+                    icon: const Icon(Icons.check),
+                    color: Colors.green,
+                  ),
+                ],
               ),
             ),
           ],
@@ -1327,17 +1350,11 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            SizedBox(
-              height: 40,
-              child: OutlinedButton(
-                onPressed: () => buttonResetRetransmissionClick(rt.id),
-                child: const Text('Reset retransmission'),
-              ),
+            OutlinedButton(
+              onPressed: () => buttonResetRetransmissionClick(rt.id),
+              child: const Text('Reset retransmission'),
             ),
           ],
-        ),
-        const SizedBox(
-          height: 10,
         ),
       ],
     );
@@ -1368,6 +1385,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       },
     );
   }
+
   void checkResetSettingsButton(int devId) {
     showDialog(
       context: context,
@@ -1393,6 +1411,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       },
     );
   }
+
   void checkFactoryResetSettingsButton(int devId) {
     showDialog(
       context: context,
@@ -1427,11 +1446,12 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     var nd = widget._cloneItem as NetDevice;
 
     return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         OutlinedButton(
           onPressed: () => checkResetSettingsButton(nd.id),
           child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.restart_alt),
               Text('Reboot device'),
@@ -1441,6 +1461,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         OutlinedButton(
           onPressed: () => checkSaveSettingsButton(nd.id),
           child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.save),
               Text('Save settings'),
@@ -1450,6 +1471,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         OutlinedButton(
           onPressed: () => checkFactoryResetSettingsButton(nd.id),
           child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.restore),
               Text('Factory reset'),
@@ -1470,84 +1492,88 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     List<Widget> children = [];
 
     if (widget._cloneItem is RT) {
-      children.add(const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 300,
-            child: Text("On/Off in. dev.:"),
-          ),
-        ],
-      ));
-      children.add(Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Text("In. dev. 1:"),
+      children.add(
+        const Row(
+          children: [
+            Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text("On/Off in. dev.:"),
             ),
-          ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
-              child: Checkbox(
-                  value: rt.stateMask & DeviceState.MONITORING_LINE1 != 0,
-                  onChanged: (bool? value) {
-                    if (value!) {
-                      rt.stateMask |= DeviceState.MONITORING_LINE1;
-                    } else {
-                      rt.stateMask &= ~DeviceState.MONITORING_LINE1;
-                    }
-
-                    setState(() {});
-                  }),
+          ],
+        ),
+      );
+      children.add(
+        Row(
+          children: [
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Text("In. dev. 1:"),
+              ),
             ),
-          ),
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[rt.id]![global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[rt.id]![global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
+                child: Checkbox(
+                    value: rt.stateMask & DeviceState.MONITORING_LINE1 != 0,
+                    onChanged: (bool? value) {
+                      if (value!) {
+                        rt.stateMask |= DeviceState.MONITORING_LINE1;
+                      } else {
+                        rt.stateMask &= ~DeviceState.MONITORING_LINE1;
+                      }
+                      setState(() {});
+                    }),
+              ),
             ),
-          ),
-        ],
-      ));
-      children.add(Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Text("In. dev. 2:"),
+            const Expanded(
+              flex: 1,
+              child: SizedBox(),
             ),
-          ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
-              child: Checkbox(
-                  value: rt.stateMask & DeviceState.MONITORING_LINE2 != 0,
-                  onChanged: (bool? value) {
-                    if (value!) {
-                      rt.stateMask |= DeviceState.MONITORING_LINE2;
-                    } else {
-                      rt.stateMask &= ~DeviceState.MONITORING_LINE2;
-                    }
-
-                    setState(() {});
-                  }),
+          ],
+        ),
+      );
+      children.add(
+        Row(
+          children: [
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Text("In. dev. 2:"),
+              ),
             ),
-          ),
-          Flexible(
-            flex: 2,
-            child: (widget._cloneItem is! CSD && widget._cloneItem is! CPD)
-                ? SizedBox(
-                    width: 100,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[rt.id]![global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[rt.id]![global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
+                child: Checkbox(
+                    value: rt.stateMask & DeviceState.MONITORING_LINE2 != 0,
+                    onChanged: (bool? value) {
+                      if (value!) {
+                        rt.stateMask |= DeviceState.MONITORING_LINE2;
+                      } else {
+                        rt.stateMask &= ~DeviceState.MONITORING_LINE2;
+                      }
+                      setState(() {});
+                    }),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: (widget._cloneItem is! CSD && widget._cloneItem is! CPD)
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         IconButton(
                           onPressed: () => takeInternalDeviceParamClick(rt.id),
@@ -1562,50 +1588,51 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                           color: Colors.green,
                         ),
                       ],
+                    )
+                  : const SizedBox(
+                      width: 100,
                     ),
-                  )
-                : const SizedBox(
-                    width: 100,
-                  ),
-          ),
-        ],
-      ));
+            ),
+          ],
+        ),
+      );
     }
 
     if (widget._cloneItem is CSD) {
-      children.add(Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Text("Geophone:"),
+      children.add(
+        Row(
+          children: [
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Text("Geophone:"),
+              ),
             ),
-          ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
-              child: Checkbox(
-                  value: rt.stateMask & DeviceState.MONITOR_SEISMIC != 0,
-                  onChanged: (bool? value) {
-                    if (value!) {
-                      rt.stateMask |= DeviceState.MONITOR_SEISMIC;
-                    } else {
-                      rt.stateMask &= ~DeviceState.MONITOR_SEISMIC;
-                    }
-
-                    setState(() {});
-                  }),
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[rt.id]![global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[rt.id]![global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
+                child: Checkbox(
+                    value: rt.stateMask & DeviceState.MONITOR_SEISMIC != 0,
+                    onChanged: (bool? value) {
+                      if (value!) {
+                        rt.stateMask |= DeviceState.MONITOR_SEISMIC;
+                      } else {
+                        rt.stateMask &= ~DeviceState.MONITOR_SEISMIC;
+                      }
+                      setState(() {});
+                    }),
+              ),
             ),
-          ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
+            Expanded(
+              flex: 1,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
                     onPressed: () => takeInternalDeviceParamClick(rt.id),
@@ -1622,45 +1649,46 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 ],
               ),
             ),
-          ),
-        ],
-      ));
+          ],
+        ),
+      );
     }
 
     if (widget._cloneItem is CPD) {
-      children.add(Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Text("Camera trap:"),
+      children.add(
+        Row(
+          children: [
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Text("Camera trap:"),
+              ),
             ),
-          ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
-              child: Checkbox(
-                  value: rt.stateMask & DeviceState.LINES_CAMERA_TRAP != 0,
-                  onChanged: (bool? value) {
-                    if (value!) {
-                      rt.stateMask |= DeviceState.LINES_CAMERA_TRAP;
-                    } else {
-                      rt.stateMask &= ~DeviceState.LINES_CAMERA_TRAP;
-                    }
-
-                    setState(() {});
-                  }),
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[rt.id]![global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[rt.id]![global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
+                child: Checkbox(
+                    value: rt.stateMask & DeviceState.LINES_CAMERA_TRAP != 0,
+                    onChanged: (bool? value) {
+                      if (value!) {
+                        rt.stateMask |= DeviceState.LINES_CAMERA_TRAP;
+                      } else {
+                        rt.stateMask &= ~DeviceState.LINES_CAMERA_TRAP;
+                      }
+                      setState(() {});
+                    }),
+              ),
             ),
-          ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
+            Expanded(
+              flex: 1,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
                     onPressed: () => takeInternalDeviceParamClick(rt.id),
@@ -1677,156 +1705,155 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 ],
               ),
             ),
-          ),
-        ],
-      ));
+          ],
+        ),
+      );
     }
 
     if (widget._cloneItem is RT) {
-      children.add(const Row(
-        children: [
-          SizedBox(
-            width: 300,
-            child: Text("Device status:"),
-          ),
-        ],
-      ));
-      children.add(Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Text("In. dev. 1:"),
+      children.add(
+        const Row(
+          children: [
+            Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text("Device status:"),
             ),
-          ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
-              child: Checkbox(
-                  value: rt.peripheryMask & PeripheryMask.LINE1 != 0,
-                  onChanged: (bool? value) {
-                    if (value!) {
-                      rt.peripheryMask |= PeripheryMask.LINE1;
-                    } else {
-                      rt.peripheryMask &= ~PeripheryMask.LINE1;
-                    }
-
-                    setState(() {});
-                  }),
-            ),
-          ),
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-            ),
-          ),
-        ],
-      ));
-      children.add(Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Text("In. dev. 2:"),
-            ),
-          ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
-              child: Checkbox(
-                  value: rt.peripheryMask & PeripheryMask.LINE2 != 0,
-                  onChanged: (bool? value) {
-                    if (value!) {
-                      rt.peripheryMask |= PeripheryMask.LINE2;
-                    } else {
-                      rt.peripheryMask &= ~PeripheryMask.LINE2;
-                    }
-
-                    setState(() {});
-                  }),
-            ),
-          ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  IconButton(
-                    onPressed: () => takeInternalDeviceStateClick(rt.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
-                  ),
-                ],
+          ],
+        ),
+      );
+      children.add(
+        Row(
+          children: [
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Text("In. dev. 1:"),
               ),
             ),
-          ),
-        ],
-      ));
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[rt.id]![global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[rt.id]![global.ParametersGroup.deviceStatus] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
+                child: Checkbox(
+                    value: rt.peripheryMask & PeripheryMask.LINE1 != 0,
+                    onChanged: (bool? value) {
+                      if (value!) {
+                        rt.peripheryMask |= PeripheryMask.LINE1;
+                      } else {
+                        rt.peripheryMask &= ~PeripheryMask.LINE1;
+                      }
+                      setState(() {});
+                    }),
+              ),
+            ),
+            const Expanded(
+              flex: 1,
+              child: SizedBox(),
+            ),
+          ],
+        ),
+      );
+      children.add(
+        Row(
+          children: [
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Text("In. dev. 2:"),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[rt.id]![global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[rt.id]![global.ParametersGroup.deviceStatus] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
+                child: Checkbox(
+                    value: rt.peripheryMask & PeripheryMask.LINE2 != 0,
+                    onChanged: (bool? value) {
+                      if (value!) {
+                        rt.peripheryMask |= PeripheryMask.LINE2;
+                      } else {
+                        rt.peripheryMask &= ~PeripheryMask.LINE2;
+                      }
+
+                      setState(() {});
+                    }),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: widget._cloneItem is CPD
+                  ? SizedBox()
+                  : IconButton(
+                      onPressed: () => takeInternalDeviceStateClick(rt.id),
+                      icon: const Icon(
+                        Icons.refresh,
+                        color: Colors.blue,
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      );
     }
 
     if (widget._cloneItem is CPD) {
-      children.add(Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Text("Camera:"),
-            ),
-          ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
-              child: Checkbox(
-                  value: rt.peripheryMask & PeripheryMask.CAMERA != 0,
-                  onChanged: (bool? value) {
-                    if (value!) {
-                      rt.peripheryMask |= PeripheryMask.CAMERA;
-                    } else {
-                      rt.peripheryMask &= ~PeripheryMask.CAMERA;
-                    }
-
-                    setState(() {});
-                  }),
-            ),
-          ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  IconButton(
-                    onPressed: () => takeInternalDeviceStateClick(rt.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
-                  ),
-                ],
+      children.add(
+        Row(
+          children: [
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Text("Camera:"),
               ),
             ),
-          ),
-        ],
-      ));
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[rt.id]![global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[rt.id]![global.ParametersGroup.deviceStatus] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
+                child: Checkbox(
+                    value: rt.peripheryMask & PeripheryMask.CAMERA != 0,
+                    onChanged: (bool? value) {
+                      if (value!) {
+                        rt.peripheryMask |= PeripheryMask.CAMERA;
+                      } else {
+                        rt.peripheryMask &= ~PeripheryMask.CAMERA;
+                      }
+
+                      setState(() {});
+                    }),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: IconButton(
+                onPressed: () => takeInternalDeviceStateClick(rt.id),
+                icon: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: children,
     );
   }
@@ -1838,171 +1865,165 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
 
     var rt = widget._cloneItem as RT;
 
-    return Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+    return Column(children: [
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 150,
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
               child: Text("Safety catch:"),
             ),
           ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
-              child: Checkbox(
-                  value: rt.extPowerSafetyCatchState,
-                  onChanged: (bool? value) {
-                    setState(() {
-                      rt.extPowerSafetyCatchState = value!;
-                    });
-                  }),
+          Expanded(
+            flex: 1,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Container(
+                color: global.sendingState[rt.id]![global.ParametersGroup.safetyCatch] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[rt.id]![global.ParametersGroup.safetyCatch] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
+                child: Checkbox(
+                    value: rt.extPowerSafetyCatchState,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        rt.extPowerSafetyCatchState = value!;
+                      });
+                    }),
+              ),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  IconButton(
-                    onPressed: () => takeSafetyCatch(rt.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
+          Expanded(
+            flex: 1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: () => takeSafetyCatch(rt.id),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => setSafetyCatch(rt.id, rt.extPowerSafetyCatchState),
+                  icon: const Icon(Icons.check),
+                  color: Colors.green,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      Row(
+        children: [
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text('Activation delay:'),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: DropdownButton<int>(
+              selectedItemBuilder: (BuildContext context) {
+                return global.delayList.map((int value) {
+                  return Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      '$value sec',
+                      style: const TextStyle(color: Colors.black),
                     ),
-                  ),
-                  IconButton(
-                    onPressed: () => setSafetyCatch(rt.id, rt.extPowerSafetyCatchState),
-                    icon: const Icon(Icons.check),
-                    color: Colors.green,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Text('Activation \ndelay:'),
-            ),
-          ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
-              child: DropdownButton<int>(
-                selectedItemBuilder: (BuildContext context) {
-                  return global.delayList.map((int value) {
-                    return Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        '$value sec',
-                        style: const TextStyle(color: Colors.black),
-                      ),
-                    );
-                  }).toList();
-                },
-                isExpanded: true,
-                items: global.delayList.map<DropdownMenuItem<int>>((int value) {
-                  return DropdownMenuItem<int>(
-                    value: value,
-                    child: Text('$value sec'),
                   );
-                }).toList(),
-                onChanged: rt.extPowerSafetyCatchState
-                    ? (int? value) {
-                        rt.autoExtPowerActivationDelaySec = value!;
-                      }
-                    : null,
-                value: global.delayList.contains(rt.autoExtPowerActivationDelaySec) ? rt.autoExtPowerActivationDelaySec : null,
-                icon: const Icon(Icons.keyboard_double_arrow_down),
-              ),
+                }).toList();
+              },
+              isExpanded: true,
+              items: global.delayList.map<DropdownMenuItem<int>>((int value) {
+                return DropdownMenuItem<int>(
+                  value: value,
+                  child: Text('$value sec'),
+                );
+              }).toList(),
+              onChanged: rt.extPowerSafetyCatchState
+                  ? (int? value) {
+                      rt.autoExtPowerActivationDelaySec = value!;
+                    }
+                  : null,
+              value: global.delayList.contains(rt.autoExtPowerActivationDelaySec) ? rt.autoExtPowerActivationDelaySec : null,
+              icon: const Icon(Icons.keyboard_double_arrow_down),
             ),
           ),
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-            ),
+          const Expanded(
+            flex: 1,
+            child: SizedBox(),
           ),
         ],
       ),
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Text('Pulse \nduration:'),
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text('Pulse duration:'),
             ),
           ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
-              child: DropdownButton<int>(
-                selectedItemBuilder: (BuildContext context) {
-                  return global.impulseList.map((int value) {
-                    return Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        '$value sec',
-                        style: const TextStyle(color: Colors.black),
-                      ),
-                    );
-                  }).toList();
-                },
-                isExpanded: true,
-                items: global.impulseList.map<DropdownMenuItem<int>>((int value) {
-                  return DropdownMenuItem<int>(
-                    value: value,
-                    child: Text('$value sec'),
+          Expanded(
+            flex: 1,
+            child: DropdownButton<int>(
+              selectedItemBuilder: (BuildContext context) {
+                return global.impulseList.map((int value) {
+                  return Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      '$value sec',
+                      style: const TextStyle(color: Colors.black),
+                    ),
                   );
-                }).toList(),
-                onChanged: rt.extPowerSafetyCatchState
-                    ? (int? value) {
-                        rt.extPowerImpulseDurationSec = value!;
-                      }
-                    : null,
-                value: global.impulseList.contains(rt.extPowerImpulseDurationSec) ? rt.extPowerImpulseDurationSec : null,
-                icon: const Icon(Icons.keyboard_double_arrow_down),
-              ),
+                }).toList();
+              },
+              isExpanded: true,
+              items: global.impulseList.map<DropdownMenuItem<int>>((int value) {
+                return DropdownMenuItem<int>(
+                  value: value,
+                  child: Text('$value sec'),
+                );
+              }).toList(),
+              onChanged: rt.extPowerSafetyCatchState
+                  ? (int? value) {
+                      rt.extPowerImpulseDurationSec = value!;
+                    }
+                  : null,
+              value: global.impulseList.contains(rt.extPowerImpulseDurationSec) ? rt.extPowerImpulseDurationSec : null,
+              icon: const Icon(Icons.keyboard_double_arrow_down),
             ),
           ),
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-            ),
+          const Expanded(
+            flex: 1,
+            child: SizedBox(),
           ),
         ],
       ),
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 150,
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
               child: Text("Switching by break:"),
             ),
           ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[rt.id]![global.ParametersGroup.switchingBreak] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[rt.id]![global.ParametersGroup.switchingBreak] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
               child: Checkbox(
                 value: rt.autoExtPowerState,
                 onChanged: global.itemsMan.getSelected<RT>() != null
@@ -2017,46 +2038,46 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  IconButton(
-                    onPressed: () => takeAutoExtPower(rt.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+          Expanded(
+            flex: 1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: () => takeAutoExtPower(rt.id),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () =>
-                        setAutoExtPower(rt.id, rt.autoExtPowerState, rt.autoExtPowerActivationDelaySec, rt.extPowerImpulseDurationSec),
-                    icon: const Icon(Icons.check),
-                    color: Colors.green,
-                  ),
-                ],
-              ),
+                ),
+                IconButton(
+                  onPressed: () =>
+                      setAutoExtPower(rt.id, rt.autoExtPowerState, rt.autoExtPowerActivationDelaySec, rt.extPowerImpulseDurationSec),
+                  icon: const Icon(Icons.check),
+                  color: Colors.green,
+                ),
+              ],
             ),
           ),
         ],
       ),
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 150,
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
               child: Text("Power:"),
             ),
           ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[rt.id]![global.ParametersGroup.power] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[rt.id]![global.ParametersGroup.power] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
               child: Checkbox(
                   value: rt.extPower.index != 0,
                   onChanged: (bool? value) {
@@ -2066,27 +2087,24 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   }),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  IconButton(
-                    onPressed: () => takeExternalPowerClick(rt.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+          Expanded(
+            flex: 1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: () => takeExternalPowerClick(rt.id),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () => setExternalPowerClick(rt.id, rt.extPower),
-                    icon: const Icon(Icons.check),
-                    color: Colors.green,
-                  ),
-                ],
-              ),
+                ),
+                IconButton(
+                  onPressed: () => setExternalPowerClick(rt.id, rt.extPower),
+                  icon: const Icon(Icons.check),
+                  color: Colors.green,
+                ),
+              ],
             ),
           ),
         ],
@@ -2102,66 +2120,60 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     var rt = widget._cloneItem as RT;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 150,
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
                 child: Text('Voltage, V:'),
               ),
             ),
-            Flexible(
-              flex: 3,
-              child: SizedBox(
-                width: 200,
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[rt.id]![global.ParametersGroup.powerSupply] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[rt.id]![global.ParametersGroup.powerSupply] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
                 child: Text(rt.batMonVoltage.toStringAsFixed(2), textAlign: TextAlign.center),
               ),
             ),
-            const Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
-              ),
+            const Expanded(
+              flex: 1,
+              child: SizedBox(),
             ),
           ],
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 150,
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
                 child: Text('Temperature, °С:'),
               ),
             ),
-            Flexible(
-              flex: 3,
-              child: SizedBox(
-                width: 200,
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[rt.id]![global.ParametersGroup.powerSupply] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[rt.id]![global.ParametersGroup.powerSupply] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
                 child: Text(rt.batMonTemperature.toStringAsFixed(2), textAlign: TextAlign.center),
               ),
             ),
-            Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    IconButton(
-                      onPressed: () => takeBatteryMonitorClick(rt.id),
-                      icon: const Icon(
-                        Icons.refresh,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ],
+            Expanded(
+              flex: 1,
+              child: IconButton(
+                onPressed: () => takeBatteryMonitorClick(rt.id),
+                icon: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
               ),
             ),
@@ -2178,21 +2190,24 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
 
     var csd = widget._cloneItem as CSD;
 
-    return Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+    return Column(children: [
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
               child: Text("Human:"),
             ),
           ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[csd.id]![global.ParametersGroup.humanTransport] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[csd.id]![global.ParametersGroup.humanTransport] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
               child: Checkbox(
                   value: csd.alarmReasonMask & AlarmReasonMask.HUMAN != 0,
                   onChanged: (bool? value) {
@@ -2205,28 +2220,29 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   }),
             ),
           ),
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-            ),
+          const Expanded(
+            flex: 1,
+            child: SizedBox(),
           ),
         ],
       ),
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
               child: Text("Transport:"),
             ),
           ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[csd.id]![global.ParametersGroup.humanTransport] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[csd.id]![global.ParametersGroup.humanTransport] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
               child: Checkbox(
                   value: csd.alarmReasonMask & AlarmReasonMask.AUTO != 0,
                   onChanged: (bool? value) {
@@ -2239,82 +2255,77 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   }),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  IconButton(
-                    onPressed: () => takeStateHumanTransportSensitivityClick(csd.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+          Expanded(
+            flex: 1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: () => takeStateHumanTransportSensitivityClick(csd.id),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () => setStateHumanTransportSensitivityClick(csd.id, csd.alarmReasonMask),
-                    icon: const Icon(Icons.check),
-                    color: Colors.green,
-                  ),
-                ],
-              ),
+                ),
+                IconButton(
+                  onPressed: () => setStateHumanTransportSensitivityClick(csd.id, csd.alarmReasonMask),
+                  icon: const Icon(Icons.check),
+                  color: Colors.green,
+                ),
+              ],
             ),
           ),
         ],
       ),
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 150,
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
               child: Text('Signal swing:'),
             ),
           ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[csd.id]![global.ParametersGroup.ratioSign] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[csd.id]![global.ParametersGroup.ratioSign] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
               child: Text(csd.signalSwing.toString(), textAlign: TextAlign.center),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  IconButton(
-                    onPressed: () => takeSignalSwingClick(csd.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
-                  ),
-                ],
+          Expanded(
+            flex: 1,
+            child: IconButton(
+              onPressed: () => takeSignalSwingClick(csd.id),
+              icon: const Icon(
+                Icons.refresh,
+                color: Colors.blue,
               ),
             ),
           ),
         ],
       ),
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 140,
-              child: Text('Human \nsensitivity:\n(25-255)'),
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text('Human sensitivity: (25-255)'),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[csd.id]![global.ParametersGroup.humSens] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[csd.id]![global.ParametersGroup.humSens] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
               child: TextField(
                 controller: _controllerHumanSensitivity,
                 keyboardType: TextInputType.number,
@@ -2325,53 +2336,53 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => takeHumanSensitivityClick(csd.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+          Expanded(
+            flex: 1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: () => takeHumanSensitivityClick(csd.id),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () {
-                      csd.humanSensitivity > 24 && csd.humanSensitivity < 256
-                          ? setHumanSensitivityClick(global.itemsMan.getSelected<CSD>()!.id, csd.humanSensitivity)
-                          : {
-                              showError('Sensitivity from 25 to 255'),
-                              csd.humanSensitivity = global.itemsMan.getSelected<CSD>()!.humanSensitivity,
-                            };
-                    },
-                    icon: const Icon(Icons.check),
-                    color: Colors.green,
-                  ),
-                ],
-              ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    csd.humanSensitivity > 24 && csd.humanSensitivity < 256
+                        ? setHumanSensitivityClick(global.itemsMan.getSelected<CSD>()!.id, csd.humanSensitivity)
+                        : {
+                            showError('Sensitivity from 25 to 255'),
+                            csd.humanSensitivity = global.itemsMan.getSelected<CSD>()!.humanSensitivity,
+                          };
+                  },
+                  icon: const Icon(Icons.check),
+                  color: Colors.green,
+                ),
+              ],
             ),
           ),
         ],
       ),
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 140,
-              child: Text('Transport \nsensitivity:\n(25-255)'),
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text('Transport sensitivity: (25-255)'),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child:
-                  TextField(
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[csd.id]![global.ParametersGroup.autoSens] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[csd.id]![global.ParametersGroup.autoSens] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
+              child: TextField(
                 controller: _controllerTransportSensitivity,
                 keyboardType: TextInputType.number,
                 maxLength: 3,
@@ -2381,51 +2392,52 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => takeTransportSensitivityClick(csd.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+          Expanded(
+            flex: 1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: () => takeTransportSensitivityClick(csd.id),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () {
-                      csd.transportSensitivity > 24 && csd.transportSensitivity < 256
-                          ? setTransportSensitivityClick(csd.id, csd.transportSensitivity)
-                          : {
-                              showError('Sensitivity from 25 to 255'),
-                              csd.transportSensitivity = global.itemsMan.getSelected<CSD>()!.transportSensitivity
-                            };
-                    },
-                    icon: const Icon(Icons.check),
-                    color: Colors.green,
-                  ),
-                ],
-              ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    csd.transportSensitivity > 24 && csd.transportSensitivity < 256
+                        ? setTransportSensitivityClick(csd.id, csd.transportSensitivity)
+                        : {
+                            showError('Sensitivity from 25 to 255'),
+                            csd.transportSensitivity = global.itemsMan.getSelected<CSD>()!.transportSensitivity
+                          };
+                  },
+                  icon: const Icon(Icons.check),
+                  color: Colors.green,
+                ),
+              ],
             ),
           ),
         ],
       ),
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Text('Criterion \nfilter:'),
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text('Criterion filter:'),
             ),
           ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[csd.id]![global.ParametersGroup.critFilter] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[csd.id]![global.ParametersGroup.critFilter] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
               child: DropdownButton<CriterionFilter>(
                 isExpanded: true,
                 items: CriterionFilter.values.map<DropdownMenuItem<CriterionFilter>>((CriterionFilter value) {
@@ -2442,46 +2454,46 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => takeCriterionFilterClick(csd.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+          Expanded(
+            flex: 1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: () => takeCriterionFilterClick(csd.id),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () => setCriterionFilterClick(csd.id, csd.criterionFilter),
-                    icon: const Icon(Icons.check),
-                    color: Colors.green,
-                  ),
-                ],
-              ),
+                ),
+                IconButton(
+                  onPressed: () => setCriterionFilterClick(csd.id, csd.criterionFilter),
+                  icon: const Icon(Icons.check),
+                  color: Colors.green,
+                ),
+              ],
             ),
           ),
         ],
       ),
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 140,
-              child: Text('Ratio signal \ntransport/noise:\n(5-40)'),
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text('Ratio signal transport/noise: (5-40)'),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child:
-                  TextField(
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[csd.id]![global.ParametersGroup.snr] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[csd.id]![global.ParametersGroup.snr] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
+              child: TextField(
                 controller: _controllerRatioTrToNoise,
                 keyboardType: TextInputType.number,
                 maxLength: 3,
@@ -2491,53 +2503,56 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => takeSignalToNoiseClick(csd.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+          Expanded(
+            flex: 1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: () => takeSignalToNoiseClick(csd.id),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () {
-                      csd.snr > 4 && csd.snr < 41
-                          ? setSignalToNoiseClick(csd.id, csd.snr)
-                          : {showError('Ratio from 5 to 40'), csd.snr = global.itemsMan.getSelected<CSD>()!.snr};
-                    },
-                    icon: const Icon(Icons.check),
-                    color: Colors.green,
-                  ),
-                ],
-              ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    csd.snr > 4 && csd.snr < 41
+                        ? setSignalToNoiseClick(csd.id, csd.snr)
+                        : {showError('Ratio from 5 to 40'), csd.snr = global.itemsMan.getSelected<CSD>()!.snr};
+                  },
+                  icon: const Icon(Icons.check),
+                  color: Colors.green,
+                ),
+              ],
             ),
           ),
         ],
       ),
-      const Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-        Text('Recognition parameters:'),
+      const Row(children: [
+        Padding(
+          padding: EdgeInsets.only(left: 4),
+          child: Text('Recognition parameters:'),
+        ),
       ]),
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
               child: Text("Interference/Person"),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child:
-                  TextField(
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[csd.id]![global.ParametersGroup.recogParam] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[csd.id]![global.ParametersGroup.recogParam] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
+              child: TextField(
                 controller: _controllerRatioIntToPerson,
                 keyboardType: TextInputType.number,
                 maxLength: 3,
@@ -2547,30 +2562,30 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
             ),
           ),
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-            ),
+          const Expanded(
+            flex: 1,
+            child: SizedBox(),
           ),
         ],
       ),
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 140,
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
               child: Text('Person/Transport'),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child:
-                  TextField(
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[csd.id]![global.ParametersGroup.recogParam] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[csd.id]![global.ParametersGroup.recogParam] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
+              child: TextField(
                 controller: _controllerRatioPersonToTransport,
                 keyboardType: TextInputType.number,
                 maxLength: 3,
@@ -2580,54 +2595,58 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => takeCriterionRecognitionClick(csd.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+          Expanded(
+            flex: 1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: () => takeCriterionRecognitionClick(csd.id),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () {
-                      csd.recognitionParameters[0] > -1 &&
-                              csd.recognitionParameters[0] < 256 &&
-                              csd.recognitionParameters[1] > -1 &&
-                              csd.recognitionParameters[1] < 256
-                          ? setCriterionRecognitionClick(csd.id, csd.recognitionParameters.length, csd.recognitionParameters)
-                          : showError('Parameters from 0 to 255');
-                    },
-                    icon: const Icon(Icons.check),
-                    color: Colors.green,
-                  ),
-                ],
-              ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    csd.recognitionParameters[0] > -1 &&
+                            csd.recognitionParameters[0] < 256 &&
+                            csd.recognitionParameters[1] > -1 &&
+                            csd.recognitionParameters[1] < 256
+                        ? setCriterionRecognitionClick(csd.id, csd.recognitionParameters.length, csd.recognitionParameters)
+                        : showError('Parameters from 0 to 255');
+                  },
+                  icon: const Icon(Icons.check),
+                  color: Colors.green,
+                ),
+              ],
             ),
           ),
         ],
       ),
-      const Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-        Text('Alarm filtering:'),
+      const Row(children: [
+        Padding(
+          padding: EdgeInsets.only(left: 4),
+          child: Text('Alarm filtering:'),
+        ),
       ]),
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
               child: Text("Single(human):"),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[csd.id]![global.ParametersGroup.alarmFilter] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[csd.id]![global.ParametersGroup.alarmFilter] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
               child: TextField(
                 controller: _controllerSinglePerson,
                 keyboardType: TextInputType.number,
@@ -2638,35 +2657,36 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
             ),
           ),
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-            ),
+          const Expanded(
+            flex: 1,
+            child: SizedBox(),
           ),
         ],
       ),
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
               child: Text("Serial(person):"),
             ),
           ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[csd.id]![global.ParametersGroup.alarmFilter] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[csd.id]![global.ParametersGroup.alarmFilter] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
               child: DropdownButton<int>(
                 selectedItemBuilder: (BuildContext context) {
                   return global.serialHuman.map((int value) {
                     return Align(
-                      alignment: Alignment.center,
+                      alignment: Alignment.centerLeft,
                       child: Text(
-                        '$value in ' + value.toString() + '0 seconds ',
+                        '$value in ${value}0 sec',
                         style: const TextStyle(color: Colors.black),
                       ),
                     );
@@ -2676,7 +2696,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 items: global.serialHuman.map<DropdownMenuItem<int>>((int value) {
                   return DropdownMenuItem<int>(
                     value: value,
-                    child: Text('$value in ' + value.toString() + '0 seconds '),
+                    child: Text('$value in ${value}0 seconds'),
                   );
                 }).toList(),
                 onChanged: (int? value) {
@@ -2687,28 +2707,29 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
             ),
           ),
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-            ),
+          const Expanded(
+            flex: 1,
+            child: SizedBox(),
           ),
         ],
       ),
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
               child: Text("Single(transport):"),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[csd.id]![global.ParametersGroup.alarmFilter] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[csd.id]![global.ParametersGroup.alarmFilter] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
               child: TextField(
                 controller: _controllerSingleTransport,
                 keyboardType: TextInputType.number,
@@ -2719,35 +2740,36 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
             ),
           ),
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-            ),
+          const Expanded(
+            flex: 1,
+            child: SizedBox(),
           ),
         ],
       ),
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
               child: Text("Serial(transport):"),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[csd.id]![global.ParametersGroup.alarmFilter] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[csd.id]![global.ParametersGroup.alarmFilter] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
               child: DropdownButton<int>(
                 selectedItemBuilder: (BuildContext context) {
                   return global.serialTransport.map((int value) {
                     return Align(
-                      alignment: Alignment.center,
+                      alignment: Alignment.centerLeft,
                       child: Text(
-                        '$value in ' + value.toString() + '0 seconds ',
+                        '$value in ${value}0 sec',
                         style: const TextStyle(color: Colors.black),
                       ),
                     );
@@ -2757,7 +2779,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 items: global.serialTransport.map<DropdownMenuItem<int>>((int value) {
                   return DropdownMenuItem<int>(
                     value: value,
-                    child: Text('$value in ' + value.toString() + '0 seconds '),
+                    child: Text('$value in ${value}0 seconds'),
                   );
                 }).toList(),
                 onChanged: (int? value) {
@@ -2768,38 +2790,36 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => takeEEPROMClick(csd.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+          Expanded(
+            flex: 1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: () => takeEEPROMClick(csd.id),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () {
-                      csd.humanSignalsTreshold > -1 &&
-                              csd.humanSignalsTreshold < 256 &&
-                              csd.transportSignalsTreshold > -1 &&
-                              csd.transportSignalsTreshold < 256
-                          ? {
-                              csd.EEPROMInitialized
-                                  ? setEEPROMClick(csd.id, csd.humanSignalsTreshold, csd.transportSignalsTreshold,
-                                      csd.seriesHumanFilterTreshold, csd.seriesTransportFilterTreshold)
-                                  : showError('Request data first'),
-                            }
-                          : showError('Parameters from 0 to 255');
-                    },
-                    icon: const Icon(Icons.check),
-                    color: Colors.green,
-                  ),
-                ],
-              ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    csd.humanSignalsTreshold > -1 &&
+                            csd.humanSignalsTreshold < 256 &&
+                            csd.transportSignalsTreshold > -1 &&
+                            csd.transportSignalsTreshold < 256
+                        ? {
+                            csd.EEPROMInitialized
+                                ? setEEPROMClick(csd.id, csd.humanSignalsTreshold, csd.transportSignalsTreshold,
+                                    csd.seriesHumanFilterTreshold, csd.seriesTransportFilterTreshold)
+                                : showError('Request data first'),
+                          }
+                        : showError('Parameters from 0 to 255');
+                  },
+                  icon: const Icon(Icons.check),
+                  color: Colors.green,
+                ),
+              ],
             ),
           ),
         ],
@@ -2817,19 +2837,22 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     return Column(
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
                 child: Text('Sensitivity:'),
               ),
             ),
-            Flexible(
-              flex: 3,
-              child: SizedBox(
-                width: 200,
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[cpd.id]![global.ParametersGroup.cameraSettings] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[cpd.id]![global.ParametersGroup.cameraSettings] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
                 child: TextField(
                   controller: _controllerCameraSensitivity,
                   keyboardType: TextInputType.number,
@@ -2840,28 +2863,29 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 ),
               ),
             ),
-            const Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
-              ),
+            const Expanded(
+              flex: 1,
+              child: SizedBox(),
             ),
           ],
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
-                child: Text('Сжатие фотографий:'),
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Text('Photo compression:'),
               ),
             ),
-            Flexible(
-              flex: 3,
-              child: SizedBox(
-                width: 200,
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[cpd.id]![global.ParametersGroup.cameraSettings] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[cpd.id]![global.ParametersGroup.cameraSettings] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
                 child: DropdownButton<PhotoImageCompression>(
                   isExpanded: true,
                   items: PhotoImageCompression.values.map<DropdownMenuItem<PhotoImageCompression>>((PhotoImageCompression value) {
@@ -2876,33 +2900,31 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 ),
               ),
             ),
-            Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => takePhotoParametersClick(cpd.id),
-                      icon: const Icon(
-                        Icons.refresh,
-                        color: Colors.blue,
-                      ),
+            Expanded(
+              flex: 1,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: () => takePhotoParametersClick(cpd.id),
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.blue,
                     ),
-                    IconButton(
-                      onPressed: () {
-                        cpd.cameraSensitivity > -1 && cpd.cameraSensitivity < 256
-                            ? setPhotoParametersClick(cpd.id, cpd.cameraSensitivity, cpd.cameraCompression)
-                            : {
-                                showError('Sensitivity from 0 to 255'),
-                                cpd.cameraSensitivity = global.itemsMan.getSelected<CPD>()!.cameraSensitivity
-                              };
-                      },
-                      icon: const Icon(Icons.check),
-                      color: Colors.green,
-                    ),
-                  ],
-                ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      cpd.cameraSensitivity > -1 && cpd.cameraSensitivity < 256
+                          ? setPhotoParametersClick(cpd.id, cpd.cameraSensitivity, cpd.cameraCompression)
+                          : {
+                              showError('Sensitivity from 0 to 255'),
+                              cpd.cameraSensitivity = global.itemsMan.getSelected<CPD>()!.cameraSensitivity
+                            };
+                    },
+                    icon: const Icon(Icons.check),
+                    color: Colors.green,
+                  ),
+                ],
               ),
             ),
           ],
@@ -2918,21 +2940,24 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
 
     var mcd = widget._cloneItem as MCD;
 
-    return Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+    return Column(children: [
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 150,
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
               child: Text("Priority:"),
             ),
           ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[mcd.id]![global.ParametersGroup.priority] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[mcd.id]![global.ParametersGroup.priority] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
               child: Checkbox(
                   value: mcd.priority,
                   onChanged: (bool? value) {
@@ -2942,45 +2967,45 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   }),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  IconButton(
-                    onPressed: () => takeRetransmissionAllClick(mcd.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+          Expanded(
+            flex: 1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: () => takeRetransmissionAllClick(mcd.id),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () => setRetransmissionAllClick(mcd.id, mcd.priority),
-                    icon: const Icon(Icons.check),
-                    color: Colors.green,
-                  ),
-                ],
-              ),
+                ),
+                IconButton(
+                  onPressed: () => setRetransmissionAllClick(mcd.id, mcd.priority),
+                  icon: const Icon(Icons.check),
+                  color: Colors.green,
+                ),
+              ],
             ),
           ),
         ],
       ),
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 150,
+          const Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
               child: Text("GPS:"),
             ),
           ),
-          Flexible(
-            flex: 3,
-            child: SizedBox(
-              width: 200,
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: global.sendingState[mcd.id]![global.ParametersGroup.gps] == global.SendingState.notAnswerState
+                  ? notSend
+                  : global.sendingState[mcd.id]![global.ParametersGroup.gps] == global.SendingState.sendingState
+                      ? trySend
+                      : defaultColor,
               child: Checkbox(
                   value: mcd.GPSState,
                   onChanged: (bool? value) {
@@ -2990,27 +3015,24 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   }),
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: SizedBox(
-              width: 100,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  IconButton(
-                    onPressed: () => takeExternalPowerClick(mcd.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+          Expanded(
+            flex: 1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: () => takeExternalPowerClick(mcd.id),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () => setExternalPowerClick(mcd.id, mcd.GPSState ? ExternalPower.ON : ExternalPower.OFF),
-                    icon: const Icon(Icons.check),
-                    color: Colors.green,
-                  ),
-                ],
-              ),
+                ),
+                IconButton(
+                  onPressed: () => setExternalPowerClick(mcd.id, mcd.GPSState ? ExternalPower.ON : ExternalPower.OFF),
+                  icon: const Icon(Icons.check),
+                  color: Colors.green,
+                ),
+              ],
             ),
           ),
         ],
@@ -3028,34 +3050,32 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     return Column(
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
                 child: Text('Voltage, V:'),
               ),
             ),
-            Flexible(
-              flex: 3,
-              child: SizedBox(width: 200, child: Text(mcd.batMonVoltage.toStringAsFixed(2), textAlign: TextAlign.center)),
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[mcd.id]![global.ParametersGroup.powerSupply] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[mcd.id]![global.ParametersGroup.powerSupply] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
+                child: Text(mcd.batMonVoltage.toStringAsFixed(2), textAlign: TextAlign.center),
+              ),
             ),
-            Flexible(
-              flex: 2,
-              child: SizedBox(
-                width: 100,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(
-                      onPressed: () => takeBatteryMonitorClick(global.itemsMan.getSelected<NetDevice>()!.id),
-                      icon: const Icon(
-                        Icons.refresh,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ],
+            Expanded(
+              flex: 1,
+              child: IconButton(
+                onPressed: () => takeBatteryMonitorClick(global.itemsMan.getSelected<NetDevice>()!.id),
+                icon: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
               ),
             ),

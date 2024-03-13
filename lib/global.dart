@@ -1,10 +1,13 @@
 library projects.globals;
 import 'dart:async';
+import 'dart:core';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:projects/pages/DevicesTablePage.dart';
+import 'package:projects/pages/ScanPage.dart';
 import 'package:projects/radionet/PackageTypes.dart';
 
 import '../std/ISTD.dart';
@@ -24,6 +27,7 @@ import '../pages/SeismicPage.dart';
 import '../pages/DeviceParametersPage.dart';
 import '../pages/ImagePage.dart';
 import '../pages/PageWithMap.dart';
+import '../pages/ScanPage.dart';
 
 import 'core/CPD.dart';
 import 'core/NetDevice.dart';
@@ -56,14 +60,94 @@ final PageWithMap pageWithMap = PageWithMap();
 final DeviceParametersPage deviceParametersPage = DeviceParametersPage();
 final ImagePage imagePage = ImagePage();
 final SeismicPage seismicPage = SeismicPage();
+final ScanPage scanPage = ScanPage();
+final DevicesTablePage devicesTablePage = DevicesTablePage();
 
+enum SendingState {
+  defaultState,
+  sendingState,
+  notAnswerState,
+}
+
+enum ParametersGroup {
+  //main
+  dateTime,
+  firmwareVersion,
+  //coordinates
+  coordinates,
+  //radio
+  signalStrength,
+  allowedHops,
+  unallowedHops,
+  rebroadcastToEveryone,
+  //connected devices
+  onOffInDev,
+  deviceStatus,
+  //External power
+  safetyCatch,
+  switchingBreak,
+  power,
+  //power supply
+  powerSupply,
+  //camera
+  cameraSettings,
+  //seismic
+  humanTransport,
+  snr,
+  humSens,
+  autoSens,
+  critFilter,
+  ratioSign,
+  recogParam,
+  alarmFilter,
+  //MCD
+  priority,
+  gps,
+  //TODO: save/reset settings???
+
+}
+
+//List<String> ParametersGroup = ['dateTime', 'firmwareVersion'];
+
+Map<int, Map<ParametersGroup, SendingState>> sendingState = {};
+
+void initSendingState(int devId){
+  Map<ParametersGroup, SendingState> init = {
+    ParametersGroup.dateTime : SendingState.defaultState,
+    ParametersGroup.firmwareVersion : SendingState.defaultState,
+    ParametersGroup.coordinates : SendingState.defaultState,
+    ParametersGroup.signalStrength : SendingState.defaultState,
+    ParametersGroup.allowedHops : SendingState.defaultState,
+    ParametersGroup.unallowedHops : SendingState.defaultState,
+    ParametersGroup.rebroadcastToEveryone : SendingState.defaultState,
+    ParametersGroup.onOffInDev : SendingState.defaultState,
+    ParametersGroup.deviceStatus : SendingState.defaultState,
+    ParametersGroup.safetyCatch : SendingState.defaultState,
+    ParametersGroup.switchingBreak : SendingState.defaultState,
+    ParametersGroup.power : SendingState.defaultState,
+    ParametersGroup.powerSupply : SendingState.defaultState,
+    ParametersGroup.cameraSettings : SendingState.defaultState,
+    ParametersGroup.humanTransport : SendingState.defaultState,
+    ParametersGroup.snr : SendingState.defaultState,
+    ParametersGroup.humSens : SendingState.defaultState,
+    ParametersGroup.autoSens : SendingState.defaultState,
+    ParametersGroup.critFilter : SendingState.defaultState,
+    ParametersGroup.ratioSign : SendingState.defaultState,
+    ParametersGroup.recogParam : SendingState.defaultState,
+    ParametersGroup.alarmFilter : SendingState.defaultState,
+    ParametersGroup.priority : SendingState.defaultState,
+    ParametersGroup.gps : SendingState.defaultState,};
+  sendingState[devId] = init;
+}
 
 final List<StatefulWidget> pages = [
   bluetoothPage,
   pageWithMap,
+  devicesTablePage,
   deviceParametersPage,
   imagePage,
   seismicPage,
+  scanPage,
 ];
 
 PackageProcessor packageProcessor = PackageProcessor();
@@ -87,6 +171,7 @@ class Pair<T1, T2> {
 
 bool flagConnect = false, flagMapPage = true,
     flagCheckSPPU = false, flagMoveMarker = false, transLang = false;
+
 
 Map<int, MapMarker> listMapMarkers = {};
 

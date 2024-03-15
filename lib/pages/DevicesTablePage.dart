@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:projects/pages/PageWithMap.dart';
 
 import '../core/Marker.dart';
@@ -14,7 +15,7 @@ class DevicesTablePage extends StatefulWidget with global.TIDManagement {
   late _DevicesTablePage _page;
 
   void addDevice(int id) {
-   /* deviceTableList[id] = TextButton(
+    /* deviceTableList[id] = TextButton(
       onPressed: () => selectDevice(id),
       onLongPress: () => deleteDevice(id),
       child: ListenableBuilder(
@@ -73,6 +74,21 @@ class _DevicesTablePage extends State<DevicesTablePage> with TickerProviderState
   Column devTable = Column();
   List<Row> tableRow = [];
   List<TextButton> bufListButton = [];
+  LatLng cordLastDev = LatLng(0, 0);
+  double cordLat = 0, cordLon = 0;
+  int colDev = 1, rowDev = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    refresh();
+    if (global.pageWithMap.coord() != null) {
+      cordLastDev = global.pageWithMap.coord()!;
+    }
+    Timer.periodic(Duration.zero, (timer) {
+      setState(() {});
+    });
+  }
 
   void refresh() {
     devTable = Column();
@@ -80,7 +96,7 @@ class _DevicesTablePage extends State<DevicesTablePage> with TickerProviderState
     bufListButton = [];
     setState(() {});
     int z = 0;
-    for (int i = 0; i < 255; i++) {
+    for (int i = 0; i < 256; i++) {
       if (global.itemsMan.get<Marker>(i) != null) {
         z += 1;
         bufListButton.add(
@@ -90,8 +106,8 @@ class _DevicesTablePage extends State<DevicesTablePage> with TickerProviderState
             child: ListenableBuilder(
               listenable: global.listMapMarkers[i]!.markerData.notifier,
               builder: (context, child) => Ink.image(
-                width: 70,
-                height: 70,
+                width: 60,
+                height: 60,
                 image: Image.asset(
                   global.listMapMarkers[i]!.markerData.notifier.imageStatus +
                       global.listMapMarkers[i]!.markerData.notifier.imageSelected +
@@ -115,7 +131,7 @@ class _DevicesTablePage extends State<DevicesTablePage> with TickerProviderState
             ),
           ),
         );
-        if (z == 4) {
+        if (z == 5) {
           tableRow.add(Row(
             children: bufListButton,
           ));
@@ -123,12 +139,24 @@ class _DevicesTablePage extends State<DevicesTablePage> with TickerProviderState
           bufListButton = [];
         }
       }
-      if (i == 254 && z < 4 && z != 0) {
-        tableRow.add(Row(
-          children: bufListButton,
-        ));
-        z = 0;
-        bufListButton = [];
+      if (i == 255) {
+        bufListButton.add(
+          TextButton(
+            onPressed: () => {},
+            onLongPress: () => addNewDevice(),
+            child: const Icon(
+              Icons.add,
+              size: 60,
+            ),
+          ),
+        );
+        if (bufListButton != []) {
+          tableRow.add(Row(
+            children: bufListButton,
+          ));
+          z = 0;
+          bufListButton = [];
+        }
       }
       //bufListButton.add(widget.deviceTableList.values);
     }
@@ -137,12 +165,40 @@ class _DevicesTablePage extends State<DevicesTablePage> with TickerProviderState
     );
   }
 
+  void addNewDevice() {
+    setState(() {
+      var size = global.pageWithMap.takeMapBounds();
+      if (cordLon * 8 - 0.001 > size.northWest.longitude - size.southEast.longitude ||
+          cordLon * 8 + 0.001 < size.northWest.longitude - size.southEast.longitude ||
+          cordLat - 0.001 > size.northWest.latitude - size.southEast.latitude ||
+          cordLat + 0.001 < size.northWest.latitude - size.southEast.latitude) {
+        rowDev = 1;
+        colDev = 1;
+      }
+      cordLon = (size.northWest.longitude - size.southEast.longitude) / 8;
+      cordLat = size.northWest.latitude - size.southEast.latitude;
+      if (colDev == 6) {
+        rowDev++;
+        colDev = 1;
+      }
+      colDev++;
+      var coordinates = LatLng(size.northWest.latitude + cordLon * rowDev, size.northWest.longitude - cordLon * colDev);
+      global.pageWithMap.addNewDeviceOnMap(coordinates);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text(''),
-        ),
-        body: devTable);
+      appBar: AppBar(
+        title: const Text(''),
+      ),
+      body: SingleChildScrollView(
+        child: devTable,
+      ),
+      bottomNavigationBar: BottomAppBar(
+        child: global.pageWithMap.bottomBarWidget,
+      ),
+    );
   }
 }

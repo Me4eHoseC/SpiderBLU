@@ -200,6 +200,8 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
   late _PageWithMap _page;
   String? bufferDeviceType;
 
+  Widget bottomBarWidget = Container(height: 0);
+
   String setImagePackage(String type) {
     if (type == STD.Name(global.transLang)) {
       return 'assets/devices/std';
@@ -318,6 +320,14 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     saveMapMarkersInFile();
   }
 
+  void addNewDeviceOnMap(LatLng cord){
+    _page.addNewDeviceOnMap(cord);
+  }
+
+  LatLngBounds takeMapBounds(){
+    return _page.takeBounds();
+  }
+
   void selectedItem() {
     if (global.itemsMan.getSelected<NetDevice>() == null) return;
     _page.changeBottomBarWidget(1, global.itemsMan.getSelected<NetDevice>()!.id, null);
@@ -390,6 +400,10 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
       global.deviceParametersPage.changeDeviceInDropdown(id, newType, id.toString());
       saveMapMarkersInFile();
     }
+  }
+
+  void askDeleteMapMarker(int id){
+    _page.askDeleteMapMarker(id);
   }
 
   void deleteMapMarker(int id) {
@@ -487,7 +501,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
   Location location = Location();
   LatLng? myCords;
   MapController mapController = MapController();
-  Widget bottomBarWidget = Container(height: 0);
+
   int bufferId = 195;
   String bufferType = STD.Name();
 
@@ -721,7 +735,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
 
   void addNewDeviceOnMap(LatLng cord) {
     setState(() {
-      bottomBarWidget = SizedBox(
+      widget.bottomBarWidget = SizedBox(
         height: 100,
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
           SizedBox(
@@ -770,7 +784,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
         addNewDeviceOnMap(point!);
       }
       if (counter == -1) {
-        bottomBarWidget = Container(
+        widget.bottomBarWidget = Container(
           height: 0.0,
         );
       }
@@ -782,7 +796,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
           textScaleFactor: 1.4,
         );
         if (bufMark.markerData.type == STD.Name()) {
-          bottomBarWidget = SizedBox(
+          widget.bottomBarWidget = SizedBox(
             height: 70,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -806,7 +820,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
           );
         }
         if (bufMark.markerData.type == RT.Name()) {
-          bottomBarWidget = SizedBox(
+          widget.bottomBarWidget = SizedBox(
             height: 70,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -830,7 +844,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
           );
         }
         if (bufMark.markerData.type == MCD.Name()) {
-          bottomBarWidget = SizedBox(
+          widget.bottomBarWidget = SizedBox(
             height: 70,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -854,7 +868,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
           );
         }
         if (bufMark.markerData.type == CSD.Name()) {
-          bottomBarWidget = SizedBox(
+          widget.bottomBarWidget = SizedBox(
             height: 70,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -896,7 +910,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
           );
         }
         if (bufMark.markerData.type == CPD.Name()) {
-          bottomBarWidget = SizedBox(
+          widget.bottomBarWidget = SizedBox(
             height: 70,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -973,7 +987,15 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
 
   }
 
+  LatLngBounds takeBounds(){
+    var bounds =  mapController.bounds!;
+    print(mapController.bounds!.northWest);
+    return bounds;
+  }
+
   void chan(MapPosition pos, bool flag) {
+    //print(mapController.bounds!.northWest);
+   // print(mapController.bounds!.southEast);
 
     if (global.flagMoveMarker) {
       global.listMapMarkers[global.itemsMan.getSelected<mark.Marker>()!.id]!.point.latitude = pos.center!.latitude;
@@ -1098,7 +1120,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
         );
       }),
       bottomNavigationBar: BottomAppBar(
-        child: bottomBarWidget,
+        child: widget.bottomBarWidget,
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'core/CPD.dart';
 import 'core/CSD.dart';
+import 'core/MCD.dart';
 import 'core/RT.dart';
 import 'global.dart' as global;
 
@@ -75,6 +76,16 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     controller = FlutterGifController(vsync: this);
     repeatAnim();
     super.initState();
+    global.stdConnectionManager.stdConnected = global.deviceParametersPage.stdConnected;
+    global.packageProcessor.subscribers.addAll([global.deviceParametersPage, global.imagePage, global.seismicPage, global.pageWithMap]);
+
+    global.deviceTypeList = [];
+    global.deviceTypeList.add(STD.Name());
+    global.deviceTypeList.add(RT.Name());
+    global.deviceTypeList.add(CSD.Name());
+    global.deviceTypeList.add(CPD.Name());
+    global.deviceTypeList.add(MCD.Name());
+
     Timer.periodic(Duration.zero, (_) {
       setState(() {
         list = global.list;

@@ -5,8 +5,6 @@ import 'BasePackage.dart';
 import 'NetCommonPackages.dart';
 import 'PostManager.dart';
 
-import '../std/STDConnectionManager.dart';
-
 import '../core/NetDevice.dart';
 import '../core/MCD.dart';
 
@@ -72,11 +70,7 @@ class PollManager {
 
     pollIds.remove(pollId);
 
-    if (pollType == PollType.StdPoll) {
-      stdPollRounds.remove(deviceId);
-      return true;
-    }
-
+    if (pollType == PollType.StdPoll) return true;
     if (pollType == PollType.AfterAlarmPoll) return true;
 
     if (!_hasOneMorePollPackage(pollType)) _pollFinished(pollType);
@@ -98,14 +92,12 @@ class PollManager {
     if (device == null) return true;
 
     if (pollType == PollType.StdPoll) {
-      if (stdPollRounds[deviceId]! < stdPollRoundsNumber) {
-        _checkAndRebootStd(deviceId);
-        _sendPackagesToStd(deviceId);
-      } else {
-        stdPollRounds.remove(deviceId);
-        if (device.isOnline) {
-          _deviceStatusChanged(deviceId, false);
-        }
+      global.std!.disconnect();
+      global.std = null;
+      global.stdConnectionManager.startConnectRoutine();
+
+      if (device.isOnline) {
+        _deviceStatusChanged(deviceId, false);
       }
 
       return true;
@@ -127,10 +119,7 @@ class PollManager {
         _deviceStatusChanged(device.id, false);
       }
 
-      if(_offlineDevicesPollTimer != null){
-        _offlineDevicesPollTimer!.cancel();
-      }
-
+      _offlineDevicesPollTimer?.cancel();
       _offlineDevicesPollTimer = Timer(const Duration(milliseconds: offlineDevicesPollIntervalMs), _runOfflineDevicesPoll);
     }
 
@@ -141,7 +130,6 @@ class PollManager {
 
   void _pollStarted(PollType pollType) {
     global.deviceParametersPage.addProtocolLine('Poll started: ${pollTypeToName(pollType)}');
-
   }
 
   void _pollFinished(PollType pollType) {
@@ -156,17 +144,11 @@ class PollManager {
       device.state = NDState.Online;
       global.pageWithMap.activateMapMarker(deviceId);
       global.deviceParametersPage.addProtocolLine('Device #$deviceId online');
-
     } else {
       device.state = NDState.Offline;
       global.pageWithMap.deactivateMapMarker(deviceId);
       global.deviceParametersPage.addProtocolLine('Device #$deviceId offline');
-
     }
-  }
-
-  void _checkAndRebootStd(int stdId) {
-    //todo call connectionmanger check and reboot std
   }
 
   void _runInitPoll() {
@@ -212,6 +194,8 @@ class PollManager {
         pollIds[tid] = pollType;
       }
     }
+
+    _regularPollTimer?.cancel();
     _regularPollTimer = Timer(const Duration(milliseconds: regularPollIntervalMs), _runRegularPoll);
   }
 
@@ -240,31 +224,27 @@ class PollManager {
     }
 
     if (anyPackageSended) {
+      _offlineDevicesPollTimer?.cancel();
       _offlineDevicesPollTimer = Timer(const Duration(milliseconds: offlineDevicesPollIntervalMs), _runOfflineDevicesPoll);
     }
   }
 
   void _runStdPoll() {
+    _stdPollTimer?.cancel();
     _stdPollTimer = Timer(const Duration(milliseconds: stdPollIntervalMs), _runStdPoll);
 
     if (global.std == null) return;
 
     var id = global.std!.stdId;
 
-    // TODO: uncomment when stdConnectionManager added
-    /* var hasStd = STDConnectionManager().hasStd(id);
+    /*var hasStd = global.stdConnectionManager.hasStd(id);
       if (!hasStd) continue;*/
 
     var lastTime = global.std!.lastActiveTime;
-    var diff = lastTime.difference(DateTime.now());
+    var diff = DateTime.now().difference(lastTime);
     if (diff.inMilliseconds < stdPollIntervalMs) return;
 
-    // check if previous algorithm has finished, otherwise skip
-    if (stdPollRounds.containsKey(id)) return;
-
-    stdPollRounds[id] = 0;
     _sendPackagesToStd(id);
-
   }
 
   TimePackage _makeTimePackage(int receiver) {
@@ -297,15 +277,12 @@ class PollManager {
   void _sendPackagesToStd(int stdId) {
     if (stdId == 0) return;
 
+    print('Send poll package to STD');
     var req = BasePackage.makeBaseRequest(stdId, PackageType.GET_MODEM_FREQUENCY);
     var tid = global.postManager.sendPackage(req, PostType.Poll, _StdPollAttemptsNumber);
 
-    if (tid == -1) {
-    return;
-    }
+    if (tid == -1) return;
 
-    var round = stdPollRounds[stdId] ?? 0;
-    stdPollRounds[stdId] = round + 1;
     pollIds[tid] = PollType.StdPoll;
   }
 
@@ -317,9 +294,6 @@ class PollManager {
       _StdPollAttemptsNumber = 4;
 
   Map<int, PollType> pollIds = {};
-
-  Map<int, int> stdPollRounds = {};
-  static const int stdPollRoundsNumber = 3;
 
   bool routinesStarted = false;
 

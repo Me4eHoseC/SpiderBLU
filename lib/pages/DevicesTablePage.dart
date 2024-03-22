@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:projects/pages/PageWithMap.dart';
 
 import '../core/Marker.dart';
 import '../global.dart' as global;

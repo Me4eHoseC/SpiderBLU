@@ -22,7 +22,7 @@ import '../radionet/PostManager.dart';
 import '../radionet/BasePackage.dart';
 import '../radionet/PackageProcessor.dart';
 
-import '../pages/BluetoothPage.dart';
+import '../pages/SettingsPage.dart';
 import '../pages/SeismicPage.dart';
 import '../pages/DeviceParametersPage.dart';
 import '../pages/ImagePage.dart';
@@ -47,7 +47,7 @@ abstract class TIDManagement {
   void ranOutOfSendAttempts(int tid, BasePackage? pb) {}
 }
 
-String deviceName = 'HC-05-DMRS1', STDNum = '195';
+String STDNum = '195';
 String statusBarString = '';
 
 Text mainBottomSelectedDev = Text('');
@@ -55,7 +55,7 @@ Timer? timer;
 
 Widget list = Container();
 
-final BluetoothPage bluetoothPage = BluetoothPage();
+final SettingsPage bluetoothPage = SettingsPage();
 final PageWithMap pageWithMap = PageWithMap();
 final DeviceParametersPage deviceParametersPage = DeviceParametersPage();
 final ImagePage imagePage = ImagePage();
@@ -161,6 +161,7 @@ STDConnectionManager stdConnectionManager = STDConnectionManager();
 PollManager pollManager = PollManager();
 
 ISTD? std;
+StdInfo stdInfo = StdInfo();
 
 class Pair<T1, T2> {
   T1 first;

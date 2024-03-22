@@ -406,7 +406,6 @@ class PackageProcessor {
 
   void timerClearStatusBar() {
     if (global.timer != null) {
-      print(global.timer);
       global.timer!.cancel();
       global.timer = Timer(const Duration(seconds: 5), () {
         global.statusBarString = " ";

@@ -509,6 +509,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
   void initState() {
     super.initState();
     widget.loadMapMarkersFromFile();
+    global.stdConnectionManager.startConnectRoutine();
     Timer.periodic(Duration.zero, (timer) {
       setState(() {});
     });

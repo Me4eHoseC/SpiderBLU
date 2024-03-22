@@ -53,8 +53,7 @@ class PostManager {
   int _transactionIdCounter = 0;
   int _packagesIdCounter = 0;
 
-  final List<global.Pair<int, int>> _transactions =
-      List<global.Pair<int, int>>.empty(growable: true);
+  final List<global.Pair<int, int>> _transactions = [];
 
   PostManager() {
     _packagesIdCounter = _random.nextInt(32767) + 1;
@@ -141,8 +140,7 @@ class PostManager {
     _currentRequestId = req.getId();
 
     DateTime currentSendTime = DateTime.now();
-    var diffMs = currentSendTime.millisecondsSinceEpoch -
-        _previousSendTime.millisecondsSinceEpoch;
+    var diffMs = currentSendTime.millisecondsSinceEpoch - _previousSendTime.millisecondsSinceEpoch;
 
     if (diffMs < mandatoryPauseMs) {
       print("Extra pause ${mandatoryPauseMs - diffMs}ms "
@@ -200,9 +198,9 @@ class PostManager {
 
   int _currentRequestId = -1;
   Request _currentRequest = Request();
-  List<Request> _requests = List<Request>.empty(growable: true);
+  List<Request> _requests = [];
 
-  List<BasePackage> _responses = List<BasePackage>.empty(growable: true);
+  List<BasePackage> _responses = [];
   Timer? _offsetTimer;
 
   bool _doInterleave = false;
@@ -253,8 +251,7 @@ class PostManager {
     bool hasResponse = false;
 
     for (int i = 0; i < _responses.length; ++i) {
-      if (_responses[i].getId() == invId &&
-          _responses[i].getPartner() == request.getPartner()) {
+      if (_responses[i].getId() == invId && _responses[i].getPartner() == request.getPartner()) {
         hasResponse = true;
         _responses.removeAt(i);
         break;
@@ -280,8 +277,7 @@ class PostManager {
     global.std!.write(acknowledge.toBytesArray());
   }
 
-  int sendPackage(BasePackage? package,
-      [PostType type = PostType.Package, int attemptNumber = -1]) {
+  int sendPackage(BasePackage? package, [PostType type = PostType.Package, int attemptNumber = -1]) {
     if (package == null) {
       return -1;
     }

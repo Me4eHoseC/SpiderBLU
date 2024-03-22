@@ -5,38 +5,43 @@ import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 
 import 'ISTD.dart';
 
-class BluSTD extends ISTD {
+class BTSTD extends ISTD {
   BluetoothConnection? _connection;
-  String? _deviceAddress;
+  String _macAddress = '';
 
-  BluSTD(int stdId, void Function(Uint8List) onData) {
+  BTSTD(int stdId, String btAddress, BluetoothConnection? connection) {
     super.stdId = stdId;
-    super.onReadyRead = onData;
+    _connection = connection;
+    _macAddress = btAddress;
   }
 
   void setBTHost(String deviceAddress) {
-    _deviceAddress = deviceAddress;
+    _macAddress = deviceAddress;
   }
 
   @override
   Future<bool> connect() async {
     if (_connection != null) {
-      return _connection!.isConnected;
+       if (!_connection!.isConnected) {
+         _connection!.input!.listen(onReadyRead);
+       }
+
+      Timer.run(onConnected);
+      return true;
     }
 
-    return BluetoothConnection.toAddress(_deviceAddress)
-        .then((value) {
-        _connection = value;
+    if (_macAddress.isEmpty) return false;
 
-        _connection!.input?.listen(onReadyRead);
+    return BluetoothConnection.toAddress(_macAddress).then((value) {
+      _connection = value;
+      _connection!.input?.listen(onReadyRead);
 
-        Timer.run(onConnected);
-        return true;
-    })
-        .catchError((err) {
-          _connection = null;
-          Timer.run(onDisconnected);
-          //return false;
+      Timer.run(onConnected);
+      return true;
+    }).catchError((err) {
+      _connection = null;
+      Timer.run(onDisconnected);
+      return false;
     });
   }
 
@@ -44,7 +49,6 @@ class BluSTD extends ISTD {
   Future disconnect() async {
     if (_connection != null) {
       await _connection!.finish();
-      _connection!.close();
       _connection = null;
     }
 
@@ -59,9 +63,7 @@ class BluSTD extends ISTD {
 
   @override
   void awake() {
-    if (!isValid()) {
-      return;
-    }
+    if (!isValid()) return;
 
     _connection!.output.add(Uint8List(50));
     _connection!.output.allSent;
@@ -69,9 +71,7 @@ class BluSTD extends ISTD {
 
   @override
   int write(Uint8List data) {
-    if (!isValid()) {
-      return 0;
-    }
+    if (!isValid()) return 0;
 
     awake();
 
@@ -86,6 +86,17 @@ class BluSTD extends ISTD {
     if (isValid()) {
       _connection!.close();
     }
+
     connect();
+  }
+
+  void onDone() {
+    print('BT connection done');
+    disconnect();
+  }
+
+  void onError(err) {
+    print("BT error occurred: $err");
+    disconnect();
   }
 }

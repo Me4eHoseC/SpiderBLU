@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'package:usb_serial/usb_serial.dart';
 
 import '../global.dart' as global;
 
@@ -16,14 +18,21 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
   bool get wantKeepAlive => true;
+
   StreamSubscription<BluetoothDiscoveryResult>? _streamSubscription;
   List<BluetoothDiscoveryResult> results = [];
   bool isDiscovering = false;
-  List<DropdownMenuItem<String>> dropdownItems = [];
-  String dropdownValue = '';
+  List<DropdownMenuItem<String>> dropdownBTItems = [];
+  String dropdownBTValue = '';
   String bluetoothMAC = '';
   String selectedBluetoothMacFromFile = '';
   bool btState = false;
+
+  List<DropdownMenuItem<UsbDevice>> dropdownSerialItems = [];
+  String selectedSerialManNameFromFile = ''; // todo remove when file
+  int selectedSerialVIDFromFile = 0; // todo remove when file
+  UsbDevice? usbDevice;
+  List<UsbDevice> listUsbDevices = [];
 
   @override
   void initState() {
@@ -32,10 +41,71 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
     Timer.periodic(const Duration(milliseconds: 200), (timer) => setState(() {}));
   }
 
+  void refillSerialInDropdown(List<UsbDevice> devices) {
+    dropdownSerialItems = [];
+    for (var device in devices) {
+      usbDevice = device;
+      var newItem = DropdownMenuItem(
+        value: usbDevice,
+        child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          Expanded(
+            flex: (selectedSerialManNameFromFile == usbDevice!.manufacturerName && selectedSerialVIDFromFile == usbDevice!.vid) ? 1 : 0,
+            child: selectedSerialManNameFromFile == usbDevice!.manufacturerName && selectedSerialVIDFromFile == usbDevice!.vid
+                ? const Icon(Icons.check)
+                : Container(),
+          ),
+          Expanded(
+            flex: 6,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  device.manufacturerName!,
+                  textScaleFactor: 1.2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  device.vid!.toString(),
+                  textScaleFactor: 0.8,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ]),
+      );
+      dropdownSerialItems.add(newItem);
+    }
+  }
+
+  void serialDiscovery() async {
+    UsbSerial.listDevices().then((value) {
+      listUsbDevices = value;
+      refillSerialInDropdown(value);
+    });
+
+    /* UsbPort? port;
+    port = await devices[0].create();
+
+    bool openResult = await port!.open();
+    if (!openResult) {
+      print('Failed to open');
+      return;
+    }
+
+    await port.setDTR(true);
+    await port.setRTS(true);
+
+    port.setPortParameters(115200, UsbPort.DATABITS_8, UsbPort.STOPBITS_1, UsbPort.PARITY_NONE);
+    port.inputStream?.listen((Uint8List event) {
+      print(event);
+    });*/
+  }
+
   void addBluetoothInDropdown(String name, String mac) {
-    dropdownValue = mac;
+    dropdownBTValue = mac;
     var newItem = DropdownMenuItem(
-      value: dropdownValue,
+      value: dropdownBTValue,
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
         Expanded(
           flex: selectedBluetoothMacFromFile == mac ? 1 : 0,
@@ -62,15 +132,15 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
       ]),
     );
     bluetoothMAC = mac;
-    dropdownItems.add(newItem);
+    dropdownBTItems.add(newItem);
   }
 
   void refillDropdownMenuItems() {
-    dropdownItems = [];
+    dropdownBTItems = [];
     for (int i = 0; i < results.length; i++) {
       addBluetoothInDropdown(results[i].device.name!, results[i].device.address);
     }
-    dropdownValue = selectedBluetoothMacFromFile;
+    dropdownBTValue = selectedBluetoothMacFromFile;
     bluetoothMAC = selectedBluetoothMacFromFile;
   }
 
@@ -82,7 +152,7 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
   }
 
   void repeatDiscovery() {
-    dropdownItems = [];
+    dropdownBTItems = [];
     results = [];
 
     isDiscovering = true;
@@ -157,6 +227,19 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
       },
     );
 
+    var serialStateCheckBox = CheckboxListTile(
+        title: const Text(
+          "COM STD",
+          style: TextStyle(fontSize: headingTextSize),
+        ),
+        value: global.stdConnectionManager.isUseSerial,
+        controlAffinity: ListTileControlAffinity.leading,
+        onChanged: (bool? value) {
+          setState(() {
+            global.stdConnectionManager.isUseSerial = value!;
+          });
+        });
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
@@ -208,14 +291,14 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                     child: DropdownButton<String>(
                       icon: const Icon(Icons.keyboard_double_arrow_down),
                       isExpanded: true,
-                      value: dropdownValue,
-                      items: dropdownItems,
+                      value: dropdownBTValue,
+                      items: dropdownBTItems,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       hint: const Text('Select device'),
                       onChanged: btState
                           ? (String? value) {
                               setState(() {
-                                dropdownValue = value!;
+                                dropdownBTValue = value!;
                                 bluetoothMAC = value;
                               });
                             }
@@ -231,8 +314,77 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                               selectedBluetoothMacFromFile = bluetoothMAC;
                               global.stdConnectionManager.btMacAddress = bluetoothMAC;
                               refillDropdownMenuItems();
+
+                              global.stdConnectionManager.startConnectRoutine();
                             }
                           : null,
+                      child: const Icon(Icons.save),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: Container(),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: serialStateCheckBox,
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Container(),
+                )
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: OutlinedButton(
+                      onPressed: serialDiscovery,
+                      child: const Icon(Icons.replay),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 5,
+                    child: DropdownButton<UsbDevice>(
+                      icon: const Icon(Icons.keyboard_double_arrow_down),
+                      isExpanded: true,
+                      value: usbDevice,
+                      items: dropdownSerialItems,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      hint: const Text('Select device'),
+                      onChanged: (UsbDevice? value) {
+                        setState(() {
+                          usbDevice = value!;
+                          print(usbDevice?.vid);
+                          print(usbDevice?.manufacturerName);
+                        });
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        if (usbDevice == null) return;
+                        selectedSerialManNameFromFile = usbDevice!.manufacturerName ?? '';
+                        selectedSerialVIDFromFile = usbDevice!.vid ?? 0;
+
+                        global.stdConnectionManager.serialManName = selectedSerialManNameFromFile;
+                        global.stdConnectionManager.serialVID = selectedSerialVIDFromFile;
+
+                        refillSerialInDropdown(listUsbDevices);
+                        global.stdConnectionManager.startConnectRoutine();
+                      },
                       child: const Icon(Icons.save),
                     ),
                   ),

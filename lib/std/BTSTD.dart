@@ -15,16 +15,12 @@ class BTSTD extends ISTD {
     _macAddress = btAddress;
   }
 
-  void setBTHost(String deviceAddress) {
-    _macAddress = deviceAddress;
-  }
-
   @override
   Future<bool> connect() async {
     if (_connection != null) {
-       if (!_connection!.isConnected) {
-         _connection!.input!.listen(onReadyRead);
-       }
+      if (!_connection!.isConnected) {
+        _connection!.input!.listen(onReadyRead);
+      }
 
       Timer.run(onConnected);
       return true;
@@ -90,11 +86,13 @@ class BTSTD extends ISTD {
     connect();
   }
 
+  @override
   void onDone() {
     print('BT connection done');
     disconnect();
   }
 
+  @override
   void onError(err) {
     print("BT error occurred: $err");
     disconnect();

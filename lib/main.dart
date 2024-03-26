@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter_gif/flutter_gif.dart';
 import 'package:projects/core/NetDevice.dart';
+import 'package:projects/std/STDConnectionManager.dart';
 import 'package:provider/provider.dart';
 
 import 'core/CPD.dart';
@@ -118,6 +119,18 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    late Text stdIndicatorText;
+
+    if (global.std != null) {
+      int stdId = global.std!.stdId;
+      var std = global.itemsMan.get<STD>(stdId);
+
+      var connectionType = global.stdInfo.type != StdConnectionType.UNDEFINED ? ' (${global.stdInfo.getConnectionType()})' : '';
+      stdIndicatorText = Text('${STD().typeName()} #$stdId $connectionType - ${std?.channel}${std!.isMain ? '' : 'r'}');
+    } else {
+      stdIndicatorText = Text(STD().typeName());
+    }
+
     return WillPopScope(
       onWillPop: () async {
         //alert();
@@ -166,10 +179,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                       Icons.circle,
                       color: global.std != null ? Colors.green : Colors.red,
                     ),
-                    global.std != null && global.itemsMan.get<STD>(int.parse(global.STDNum)) != null
-                        ? Text('${STD().typeName()} #${global.STDNum} - ${global.itemsMan.get<STD>(int.parse(global.STDNum))?.channel}'
-                            '${global.itemsMan.get<STD>(int.parse(global.STDNum))!.isMain ? '' : 'r'}')
-                        : Text('${STD().typeName()} #${global.STDNum}'),
+                    stdIndicatorText,
                   ],
                 ),
               ),

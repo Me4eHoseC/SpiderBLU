@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'dart:typed_data';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'package:usb_serial/usb_serial.dart';
 
 import '../core/NetDevice.dart';
 import '../global.dart' as global;
@@ -11,6 +12,7 @@ import '../radionet/PackageTypes.dart';
 import '../radionet/PackagesParser.dart';
 import 'BTSTD.dart';
 import 'ISTD.dart';
+import 'SerialSTD.dart';
 
 enum StdConnectionType {
   TCPSTD,
@@ -23,6 +25,20 @@ class StdInfo {
   StdConnectionType type = StdConnectionType.UNDEFINED;
   ISTD? std;
   bool isConnected = false;
+
+  String getConnectionType() {
+    switch (type) {
+      case StdConnectionType.TCPSTD:
+        return "TCP";
+      case StdConnectionType.SERIALSTD:
+        return "COM";
+      case StdConnectionType.BTSTD:
+        return "BT";
+
+      case StdConnectionType.UNDEFINED:
+        return "";
+    }
+  }
 }
 
 class STDConnectionManager {
@@ -40,6 +56,15 @@ class STDConnectionManager {
   BluetoothConnection? _connection;
   StreamSubscription<Uint8List>? btSubscription;
 
+  bool isUseSerial = true;
+  String serialManName = 'FTDI';
+  int serialVID = 1027;
+  int serialSTDId = -1;
+  Timer? serialReadTimer;
+  Uint8List serialBuffer = Uint8List(0);
+  StreamSubscription<Uint8List>? serialSubscription;
+  UsbPort? serialPort;
+
   void freeBtConnectionResources() {
     btSTDId = -1;
     btReadTimer?.cancel();
@@ -47,6 +72,15 @@ class STDConnectionManager {
     btBuffer = Uint8List(0);
     _connection = null;
     btSubscription = null;
+  }
+
+  void freeSerialConnectionResources() {
+    serialSTDId = -1;
+    serialReadTimer?.cancel();
+    serialReadTimer = null;
+    serialBuffer = Uint8List(0);
+    serialSubscription = null;
+    serialPort = null;
   }
 
   Timer? connectRoutineTimer;
@@ -59,7 +93,7 @@ class STDConnectionManager {
     restartConnectRoutineTimer(0);
   }
 
-  void restartConnectRoutineTimer([int seconds = 15]){
+  void restartConnectRoutineTimer([int seconds = 15]) {
     connectRoutineTimer?.cancel();
     connectRoutineTimer = Timer(Duration(seconds: seconds), connectRoutine);
   }
@@ -99,6 +133,128 @@ class STDConnectionManager {
         restartConnectRoutineTimer();
       });
     }
+
+    if (std == null && isUseSerial && serialManName != '' && serialVID != 0) {
+      print('Connecting to serial port...');
+
+      serialSTDId = id;
+
+      getSerialPort(serialManName, serialVID).then(onSerialPortFound);
+    }
+  }
+
+  Future<UsbPort?> getSerialPort(String portManName, int portVID) async {
+    var devices = await UsbSerial.listDevices();
+    if (devices.isEmpty) return null;
+
+    UsbDevice? usbDevice;
+    for (var device in devices) {
+      if (device.manufacturerName == portManName && device.vid == portVID) {
+        usbDevice = device;
+      }
+    }
+
+    if (usbDevice == null) return null;
+
+    var port = await usbDevice.create();
+    if (port == null) return null;
+
+    bool openResult = await port.open();
+    if (!openResult) {
+      print("Failed to open serial port");
+      return null;
+    }
+
+    await port.setDTR(true);
+    await port.setRTS(true);
+
+    port.setPortParameters(115200, UsbPort.DATABITS_8, UsbPort.STOPBITS_1, UsbPort.PARITY_NONE);
+    return port;
+  }
+
+  void onSerialPortFound(UsbPort? port) {
+    if (port == null) {
+      restartConnectRoutineTimer();
+      return;
+    }
+
+    serialPort = port;
+
+    serialSubscription = port.inputStream!.listen(onSerialReadyRead);
+
+    print("Sending request...");
+
+    // send test package
+    var package = BasePackage.makeBaseRequest(serialSTDId, PackageType.GET_VERSION);
+    var bytes = package.toBytesArray();
+
+    // Add some bytes to wake up STD
+    // the amount of bytes should be more than 22
+    // otherwise BT STD may not wake up
+
+    Uint8List trash = Uint8List(50);
+    Uint8List req = Uint8List(trash.length + bytes.length);
+
+    req.setAll(0, trash);
+    req.setAll(trash.length, bytes);
+
+    port.write(req);
+    // wait for ready read
+    serialReadTimer?.cancel();
+    serialReadTimer = Timer(const Duration(seconds: 10), onSerialReadTimerTimeout);
+  }
+
+  void onSerialReadyRead(Uint8List data) {
+    print("Reading Serial data...");
+
+    serialReadTimer?.cancel();
+
+    Uint8List tmp = Uint8List(serialBuffer.length + data.length);
+    tmp.setAll(0, serialBuffer);
+    tmp.setAll(serialBuffer.length, data);
+    serialBuffer = tmp;
+
+    BasePackage? receivedPackage;
+    bool mayHaveOneMorePackage = true;
+    while (mayHaveOneMorePackage) {
+      var ref = Reference<Uint8List>(serialBuffer);
+      var pair = PackagesParser.tryFindAndParsePackage(ref);
+
+      receivedPackage = pair.first;
+      mayHaveOneMorePackage = pair.second;
+
+      serialBuffer = ref.value;
+
+      if (receivedPackage != null) break;
+    }
+
+    if (receivedPackage == null) {
+      serialReadTimer = Timer(const Duration(seconds: 10), onSerialReadTimerTimeout);
+      return;
+    }
+
+    var isSTD = checkStdPackage(serialSTDId, receivedPackage);
+    if (isSTD) {
+      print("Serial STD connected");
+
+      StdInfo info = StdInfo();
+      info.std = SerialSTD(serialSTDId, serialPort);
+      info.type = StdConnectionType.SERIALSTD;
+
+      newSTDConnected(info);
+    } else {
+      print("Wrong Serial STD ID");
+
+      restartConnectRoutineTimer();
+    }
+
+    freeSerialConnectionResources();
+  }
+
+  void onSerialReadTimerTimeout() {
+    print('No package received from serial connection');
+    freeSerialConnectionResources();
+    restartConnectRoutineTimer();
   }
 
   void onBTConnected(BluetoothConnection value) {
@@ -256,11 +412,12 @@ class STDConnectionManager {
       global.packagesParser.addData(data);
     };
 
-    if (std is BTSTD) {
-      btSubscription?.onData(std.onReadyRead);
-      btSubscription?.onDone(std.onDone);
-      btSubscription?.onError(std.onError);
-    }
+    var subscription = btSubscription;
+    if (std is SerialSTD) subscription = serialSubscription;
+
+    subscription?.onData(std.onReadyRead);
+    subscription?.onDone(std.onDone);
+    subscription?.onError(std.onError);
 
     std.connect();
   }

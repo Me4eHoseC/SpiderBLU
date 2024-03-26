@@ -9,9 +9,11 @@ abstract class ISTD {
   }
 
   void connect();
+
   void disconnect();
 
   bool isValid();
+
   void reboot();
 
   void awake();
@@ -21,4 +23,8 @@ abstract class ISTD {
   late void Function(Uint8List data) onReadyRead;
   late void Function() onConnected;
   late void Function() onDisconnected;
+
+  void onDone();
+
+  void onError(err);
 }

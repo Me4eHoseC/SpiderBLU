@@ -148,7 +148,7 @@ class PostManager {
       sleep(Duration(milliseconds: mandatoryPauseMs - diffMs));
     }
 
-    global.std!.write(req.toBytesArray());
+    global.std?.write(req.toBytesArray());
 
     _previousSendTime = DateTime.now();
 

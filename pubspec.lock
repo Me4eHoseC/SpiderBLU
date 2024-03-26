@@ -613,6 +613,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.3.1"
+  usb_serial:
+    dependency: "direct main"
+    description:
+      name: usb_serial
+      sha256: "74c1c1eeeb2bc0f20a6c4ab0fe9e420d7910ac51306f5984838cbd5371b65f8e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.1"
   vector_graphics:
     dependency: transitive
     description:

@@ -878,14 +878,14 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                 IconButton(
                   onPressed: () {
                     var success = global.seismicPage.getSeismic();
-                    if (success) global.globalKey.currentState?.changePage(4);
+                    if (success) global.globalKey.currentState?.changePage(5);
                   },
                   icon: const Icon(Icons.show_chart),
                 ),
                 IconButton(
                   onPressed: () {
                     var success = global.seismicPage.getLastSeismic();
-                    if (success) global.globalKey.currentState?.changePage(4);
+                    if (success) global.globalKey.currentState?.changePage(5);
                   },
                   icon: const Icon(
                     Icons.show_chart,
@@ -920,27 +920,27 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                 IconButton(
                   onPressed: () {
                     var success = global.imagePage.getPhoto(PhotoImageSize.IMAGE_160X120);
-                    if (success) global.globalKey.currentState?.changePage(3);
+                    if (success) global.globalKey.currentState?.changePage(4);
                   },
                   icon: const Icon(Icons.photo_size_select_small),
                 ),
                 IconButton(
                   onPressed: () {
                     var success = global.imagePage.getPhoto(PhotoImageSize.IMAGE_320X240);
-                    if (success) global.globalKey.currentState?.changePage(3);
+                    if (success) global.globalKey.currentState?.changePage(4);
                   },
                   icon: const Icon(Icons.photo_size_select_large),
                 ),
                 IconButton(
                   onPressed: () {
                     var success = global.imagePage.getPhoto(PhotoImageSize.IMAGE_640X480);
-                    if (success) global.globalKey.currentState?.changePage(3);
+                    if (success) global.globalKey.currentState?.changePage(4);
                   },
                   icon: const Icon(Icons.photo_size_select_actual),
                 ),
                 IconButton(
                   onPressed: () {
-                    global.globalKey.currentState?.changePage(3);
+                    global.globalKey.currentState?.changePage(4);
                     global.imagePage.openListFromOther();
                   },
                   icon: const Icon(Icons.photo_album_outlined),

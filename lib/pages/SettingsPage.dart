@@ -83,23 +83,6 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
       listUsbDevices = value;
       refillSerialInDropdown(value);
     });
-
-    /* UsbPort? port;
-    port = await devices[0].create();
-
-    bool openResult = await port!.open();
-    if (!openResult) {
-      print('Failed to open');
-      return;
-    }
-
-    await port.setDTR(true);
-    await port.setRTS(true);
-
-    port.setPortParameters(115200, UsbPort.DATABITS_8, UsbPort.STOPBITS_1, UsbPort.PARITY_NONE);
-    port.inputStream?.listen((Uint8List event) {
-      print(event);
-    });*/
   }
 
   void addBluetoothInDropdown(String name, String mac) {

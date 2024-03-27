@@ -92,7 +92,7 @@ class PollManager {
     if (device == null) return true;
 
     if (pollType == PollType.StdPoll) {
-      global.std!.disconnect();
+      global.std?.disconnect();
       global.std = null;
       global.stdConnectionManager.startConnectRoutine();
 

@@ -38,29 +38,23 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
   }
 
   void stdConnected(int stdId) {
-    Timer(const Duration(seconds: 4), () {
-      if ((global.listMapMarkers.isEmpty || global.flagCheckSPPU == false) && global.pageWithMap.coord() != null) {
-        global.pageWithMap.createFirstSTDAutomatically(
-            int.parse(global.STDNum), global.pageWithMap.coord()!.latitude, global.pageWithMap.coord()!.longitude);
-      }
-      var req = BasePackage.makeBaseRequest(stdId, PackageType.GET_MODEM_FREQUENCY);
-      var tid = global.postManager.sendPackage(req);
-      tits.add(tid);
+    var req = BasePackage.makeBaseRequest(stdId, PackageType.GET_MODEM_FREQUENCY);
+    var tid = global.postManager.sendPackage(req);
+    tits.add(tid);
 
-      var tp = TimePackage();
-      tp.setTime(DateTime.now());
-      tp.setReceiver(stdId);
-      tp.setSender(RoutesManager.getLaptopAddress());
+    var tp = TimePackage();
+    tp.setTime(DateTime.now());
+    tp.setReceiver(stdId);
+    tp.setSender(RoutesManager.getLaptopAddress());
 
-      tid = global.postManager.sendPackage(tp);
-      setRequests[tid] = tp;
-      tits.add(tid);
+    tid = global.postManager.sendPackage(tp);
+    setRequests[tid] = tp;
+    tits.add(tid);
 
-      req = BasePackage.makeBaseRequest(stdId, PackageType.GET_ALLOWED_HOPS);
-      tid = global.postManager.sendPackage(req);
-      tits.add(tid);
-      global.stdHopsCheckRequests.add(tid);
-    });
+    req = BasePackage.makeBaseRequest(stdId, PackageType.GET_ALLOWED_HOPS);
+    tid = global.postManager.sendPackage(req);
+    tits.add(tid);
+    global.stdHopsCheckRequests.add(tid);
 
     global.pollManager.startPollRoutines();
   }
@@ -257,11 +251,13 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         return;
       }
       if (newType == STD.Name() && global.flagCheckSPPU == true) {
-        showError('STD on map');
+        showError('STD is already on the map');
         return;
       }
       if (newType != STD.Name() && oldType == STD.Name() && global.flagCheckSPPU == true) {
+        global.stdConnectionManager.setSTDId(0);
         global.flagCheckSPPU = false;
+        global.std?.disconnect();
       }
       global.pageWithMap.changeMapMarkerType(id, oldType, newType);
       setAllNums();
@@ -844,8 +840,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
   }
 
   _changeId() {
-    setState(() {widget._cloneItem.id = int.parse(_controllerId.text);
-    global.initSendingState(widget._cloneItem.id);
+    setState(() {
+      widget._cloneItem.id = int.parse(_controllerId.text);
+      global.initSendingState(widget._cloneItem.id);
     });
   }
 
@@ -942,7 +939,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       return Container();
     }
 
-    var nd = widget._cloneItem as NetDevice;
+    var nd = widget._cloneItem as NetDevice?;
+
+    if (nd == null) return Container();
 
     return Column(
       children: [
@@ -1025,9 +1024,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[nd.id]![global.ParametersGroup.dateTime] == global.SendingState.notAnswerState
+                color: global.sendingState[nd.id]?[global.ParametersGroup.dateTime] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[nd.id]![global.ParametersGroup.dateTime] == global.SendingState.sendingState
+                    : global.sendingState[nd.id]?[global.ParametersGroup.dateTime] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: Text(nd.time.toString().substring(0, 19), textAlign: TextAlign.center),
@@ -1072,9 +1071,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[nd.id]![global.ParametersGroup.firmwareVersion] == global.SendingState.notAnswerState
+                color: global.sendingState[nd.id]?[global.ParametersGroup.firmwareVersion] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[nd.id]![global.ParametersGroup.firmwareVersion] == global.SendingState.sendingState
+                    : global.sendingState[nd.id]?[global.ParametersGroup.firmwareVersion] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: Text(nd.firmwareVersion.toString(), textAlign: TextAlign.center),
@@ -1117,9 +1116,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[nd.id]![global.ParametersGroup.coordinates] == global.SendingState.notAnswerState
+                color: global.sendingState[nd.id]?[global.ParametersGroup.coordinates] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[nd.id]![global.ParametersGroup.coordinates] == global.SendingState.sendingState
+                    : global.sendingState[nd.id]?[global.ParametersGroup.coordinates] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: TextField(
@@ -1150,9 +1149,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[nd.id]![global.ParametersGroup.coordinates] == global.SendingState.notAnswerState
+                color: global.sendingState[nd.id]?[global.ParametersGroup.coordinates] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[nd.id]![global.ParametersGroup.coordinates] == global.SendingState.sendingState
+                    : global.sendingState[nd.id]?[global.ParametersGroup.coordinates] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: TextField(
@@ -1211,9 +1210,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[rt.id]![global.ParametersGroup.signalStrength] == global.SendingState.notAnswerState
+                color: global.sendingState[rt.id]?[global.ParametersGroup.signalStrength] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[rt.id]![global.ParametersGroup.signalStrength] == global.SendingState.sendingState
+                    : global.sendingState[rt.id]?[global.ParametersGroup.signalStrength] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: Text(rt.RSSI.toString(), textAlign: TextAlign.center),
@@ -1243,9 +1242,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[rt.id]![global.ParametersGroup.allowedHops] == global.SendingState.notAnswerState
+                color: global.sendingState[rt.id]?[global.ParametersGroup.allowedHops] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[rt.id]![global.ParametersGroup.allowedHops] == global.SendingState.sendingState
+                    : global.sendingState[rt.id]?[global.ParametersGroup.allowedHops] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: Text(''),
@@ -1275,9 +1274,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[rt.id]![global.ParametersGroup.unallowedHops] == global.SendingState.notAnswerState
+                color: global.sendingState[rt.id]?[global.ParametersGroup.unallowedHops] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[rt.id]![global.ParametersGroup.unallowedHops] == global.SendingState.sendingState
+                    : global.sendingState[rt.id]?[global.ParametersGroup.unallowedHops] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: Text(''),
@@ -1307,9 +1306,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[rt.id]![global.ParametersGroup.rebroadcastToEveryone] == global.SendingState.notAnswerState
+                color: global.sendingState[rt.id]?[global.ParametersGroup.rebroadcastToEveryone] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[rt.id]![global.ParametersGroup.rebroadcastToEveryone] == global.SendingState.sendingState
+                    : global.sendingState[rt.id]?[global.ParametersGroup.rebroadcastToEveryone] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: Checkbox(
@@ -1515,9 +1514,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[rt.id]![global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
+                color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[rt.id]![global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
+                    : global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: Checkbox(
@@ -1552,9 +1551,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[rt.id]![global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
+                color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[rt.id]![global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
+                    : global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: Checkbox(
@@ -1612,9 +1611,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[rt.id]![global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
+                color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[rt.id]![global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
+                    : global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: Checkbox(
@@ -1668,9 +1667,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[rt.id]![global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
+                color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[rt.id]![global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
+                    : global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: Checkbox(
@@ -1734,9 +1733,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[rt.id]![global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
+                color: global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[rt.id]![global.ParametersGroup.deviceStatus] == global.SendingState.sendingState
+                    : global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: Checkbox(
@@ -1771,9 +1770,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[rt.id]![global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
+                color: global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[rt.id]![global.ParametersGroup.deviceStatus] == global.SendingState.sendingState
+                    : global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: Checkbox(
@@ -1820,9 +1819,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[rt.id]![global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
+                color: global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[rt.id]![global.ParametersGroup.deviceStatus] == global.SendingState.sendingState
+                    : global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: Checkbox(
@@ -1880,9 +1879,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             child: Padding(
               padding: const EdgeInsets.only(left: 4),
               child: Container(
-                color: global.sendingState[rt.id]![global.ParametersGroup.safetyCatch] == global.SendingState.notAnswerState
+                color: global.sendingState[rt.id]?[global.ParametersGroup.safetyCatch] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[rt.id]![global.ParametersGroup.safetyCatch] == global.SendingState.sendingState
+                    : global.sendingState[rt.id]?[global.ParametersGroup.safetyCatch] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: Checkbox(
@@ -2019,9 +2018,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           Expanded(
             flex: 1,
             child: Container(
-              color: global.sendingState[rt.id]![global.ParametersGroup.switchingBreak] == global.SendingState.notAnswerState
+              color: global.sendingState[rt.id]?[global.ParametersGroup.switchingBreak] == global.SendingState.notAnswerState
                   ? notSend
-                  : global.sendingState[rt.id]![global.ParametersGroup.switchingBreak] == global.SendingState.sendingState
+                  : global.sendingState[rt.id]?[global.ParametersGroup.switchingBreak] == global.SendingState.sendingState
                       ? trySend
                       : defaultColor,
               child: Checkbox(
@@ -2073,9 +2072,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           Expanded(
             flex: 1,
             child: Container(
-              color: global.sendingState[rt.id]![global.ParametersGroup.power] == global.SendingState.notAnswerState
+              color: global.sendingState[rt.id]?[global.ParametersGroup.power] == global.SendingState.notAnswerState
                   ? notSend
-                  : global.sendingState[rt.id]![global.ParametersGroup.power] == global.SendingState.sendingState
+                  : global.sendingState[rt.id]?[global.ParametersGroup.power] == global.SendingState.sendingState
                       ? trySend
                       : defaultColor,
               child: Checkbox(
@@ -2133,9 +2132,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[rt.id]![global.ParametersGroup.powerSupply] == global.SendingState.notAnswerState
+                color: global.sendingState[rt.id]?[global.ParametersGroup.powerSupply] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[rt.id]![global.ParametersGroup.powerSupply] == global.SendingState.sendingState
+                    : global.sendingState[rt.id]?[global.ParametersGroup.powerSupply] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: Text(rt.batMonVoltage.toStringAsFixed(2), textAlign: TextAlign.center),
@@ -2159,9 +2158,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[rt.id]![global.ParametersGroup.powerSupply] == global.SendingState.notAnswerState
+                color: global.sendingState[rt.id]?[global.ParametersGroup.powerSupply] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[rt.id]![global.ParametersGroup.powerSupply] == global.SendingState.sendingState
+                    : global.sendingState[rt.id]?[global.ParametersGroup.powerSupply] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: Text(rt.batMonTemperature.toStringAsFixed(2), textAlign: TextAlign.center),
@@ -2203,9 +2202,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           Expanded(
             flex: 1,
             child: Container(
-              color: global.sendingState[csd.id]![global.ParametersGroup.humanTransport] == global.SendingState.notAnswerState
+              color: global.sendingState[csd.id]?[global.ParametersGroup.humanTransport] == global.SendingState.notAnswerState
                   ? notSend
-                  : global.sendingState[csd.id]![global.ParametersGroup.humanTransport] == global.SendingState.sendingState
+                  : global.sendingState[csd.id]?[global.ParametersGroup.humanTransport] == global.SendingState.sendingState
                       ? trySend
                       : defaultColor,
               child: Checkbox(
@@ -2238,9 +2237,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           Expanded(
             flex: 1,
             child: Container(
-              color: global.sendingState[csd.id]![global.ParametersGroup.humanTransport] == global.SendingState.notAnswerState
+              color: global.sendingState[csd.id]?[global.ParametersGroup.humanTransport] == global.SendingState.notAnswerState
                   ? notSend
-                  : global.sendingState[csd.id]![global.ParametersGroup.humanTransport] == global.SendingState.sendingState
+                  : global.sendingState[csd.id]?[global.ParametersGroup.humanTransport] == global.SendingState.sendingState
                       ? trySend
                       : defaultColor,
               child: Checkbox(
@@ -2289,9 +2288,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           Expanded(
             flex: 1,
             child: Container(
-              color: global.sendingState[csd.id]![global.ParametersGroup.ratioSign] == global.SendingState.notAnswerState
+              color: global.sendingState[csd.id]?[global.ParametersGroup.ratioSign] == global.SendingState.notAnswerState
                   ? notSend
-                  : global.sendingState[csd.id]![global.ParametersGroup.ratioSign] == global.SendingState.sendingState
+                  : global.sendingState[csd.id]?[global.ParametersGroup.ratioSign] == global.SendingState.sendingState
                       ? trySend
                       : defaultColor,
               child: Text(csd.signalSwing.toString(), textAlign: TextAlign.center),
@@ -2321,9 +2320,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           Expanded(
             flex: 1,
             child: Container(
-              color: global.sendingState[csd.id]![global.ParametersGroup.humSens] == global.SendingState.notAnswerState
+              color: global.sendingState[csd.id]?[global.ParametersGroup.humSens] == global.SendingState.notAnswerState
                   ? notSend
-                  : global.sendingState[csd.id]![global.ParametersGroup.humSens] == global.SendingState.sendingState
+                  : global.sendingState[csd.id]?[global.ParametersGroup.humSens] == global.SendingState.sendingState
                       ? trySend
                       : defaultColor,
               child: TextField(
@@ -2377,9 +2376,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           Expanded(
             flex: 1,
             child: Container(
-              color: global.sendingState[csd.id]![global.ParametersGroup.autoSens] == global.SendingState.notAnswerState
+              color: global.sendingState[csd.id]?[global.ParametersGroup.autoSens] == global.SendingState.notAnswerState
                   ? notSend
-                  : global.sendingState[csd.id]![global.ParametersGroup.autoSens] == global.SendingState.sendingState
+                  : global.sendingState[csd.id]?[global.ParametersGroup.autoSens] == global.SendingState.sendingState
                       ? trySend
                       : defaultColor,
               child: TextField(
@@ -2433,9 +2432,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           Expanded(
             flex: 1,
             child: Container(
-              color: global.sendingState[csd.id]![global.ParametersGroup.critFilter] == global.SendingState.notAnswerState
+              color: global.sendingState[csd.id]?[global.ParametersGroup.critFilter] == global.SendingState.notAnswerState
                   ? notSend
-                  : global.sendingState[csd.id]![global.ParametersGroup.critFilter] == global.SendingState.sendingState
+                  : global.sendingState[csd.id]?[global.ParametersGroup.critFilter] == global.SendingState.sendingState
                       ? trySend
                       : defaultColor,
               child: DropdownButton<CriterionFilter>(
@@ -2488,9 +2487,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           Expanded(
             flex: 1,
             child: Container(
-              color: global.sendingState[csd.id]![global.ParametersGroup.snr] == global.SendingState.notAnswerState
+              color: global.sendingState[csd.id]?[global.ParametersGroup.snr] == global.SendingState.notAnswerState
                   ? notSend
-                  : global.sendingState[csd.id]![global.ParametersGroup.snr] == global.SendingState.sendingState
+                  : global.sendingState[csd.id]?[global.ParametersGroup.snr] == global.SendingState.sendingState
                       ? trySend
                       : defaultColor,
               child: TextField(
@@ -2547,9 +2546,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           Expanded(
             flex: 1,
             child: Container(
-              color: global.sendingState[csd.id]![global.ParametersGroup.recogParam] == global.SendingState.notAnswerState
+              color: global.sendingState[csd.id]?[global.ParametersGroup.recogParam] == global.SendingState.notAnswerState
                   ? notSend
-                  : global.sendingState[csd.id]![global.ParametersGroup.recogParam] == global.SendingState.sendingState
+                  : global.sendingState[csd.id]?[global.ParametersGroup.recogParam] == global.SendingState.sendingState
                       ? trySend
                       : defaultColor,
               child: TextField(
@@ -2580,9 +2579,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           Expanded(
             flex: 1,
             child: Container(
-              color: global.sendingState[csd.id]![global.ParametersGroup.recogParam] == global.SendingState.notAnswerState
+              color: global.sendingState[csd.id]?[global.ParametersGroup.recogParam] == global.SendingState.notAnswerState
                   ? notSend
-                  : global.sendingState[csd.id]![global.ParametersGroup.recogParam] == global.SendingState.sendingState
+                  : global.sendingState[csd.id]?[global.ParametersGroup.recogParam] == global.SendingState.sendingState
                       ? trySend
                       : defaultColor,
               child: TextField(
@@ -2642,9 +2641,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           Expanded(
             flex: 1,
             child: Container(
-              color: global.sendingState[csd.id]![global.ParametersGroup.alarmFilter] == global.SendingState.notAnswerState
+              color: global.sendingState[csd.id]?[global.ParametersGroup.alarmFilter] == global.SendingState.notAnswerState
                   ? notSend
-                  : global.sendingState[csd.id]![global.ParametersGroup.alarmFilter] == global.SendingState.sendingState
+                  : global.sendingState[csd.id]?[global.ParametersGroup.alarmFilter] == global.SendingState.sendingState
                       ? trySend
                       : defaultColor,
               child: TextField(
@@ -2675,9 +2674,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           Expanded(
             flex: 1,
             child: Container(
-              color: global.sendingState[csd.id]![global.ParametersGroup.alarmFilter] == global.SendingState.notAnswerState
+              color: global.sendingState[csd.id]?[global.ParametersGroup.alarmFilter] == global.SendingState.notAnswerState
                   ? notSend
-                  : global.sendingState[csd.id]![global.ParametersGroup.alarmFilter] == global.SendingState.sendingState
+                  : global.sendingState[csd.id]?[global.ParametersGroup.alarmFilter] == global.SendingState.sendingState
                       ? trySend
                       : defaultColor,
               child: DropdownButton<int>(
@@ -2725,9 +2724,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           Expanded(
             flex: 1,
             child: Container(
-              color: global.sendingState[csd.id]![global.ParametersGroup.alarmFilter] == global.SendingState.notAnswerState
+              color: global.sendingState[csd.id]?[global.ParametersGroup.alarmFilter] == global.SendingState.notAnswerState
                   ? notSend
-                  : global.sendingState[csd.id]![global.ParametersGroup.alarmFilter] == global.SendingState.sendingState
+                  : global.sendingState[csd.id]?[global.ParametersGroup.alarmFilter] == global.SendingState.sendingState
                       ? trySend
                       : defaultColor,
               child: TextField(
@@ -2758,9 +2757,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           Expanded(
             flex: 1,
             child: Container(
-              color: global.sendingState[csd.id]![global.ParametersGroup.alarmFilter] == global.SendingState.notAnswerState
+              color: global.sendingState[csd.id]?[global.ParametersGroup.alarmFilter] == global.SendingState.notAnswerState
                   ? notSend
-                  : global.sendingState[csd.id]![global.ParametersGroup.alarmFilter] == global.SendingState.sendingState
+                  : global.sendingState[csd.id]?[global.ParametersGroup.alarmFilter] == global.SendingState.sendingState
                       ? trySend
                       : defaultColor,
               child: DropdownButton<int>(
@@ -2848,9 +2847,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[cpd.id]![global.ParametersGroup.cameraSettings] == global.SendingState.notAnswerState
+                color: global.sendingState[cpd.id]?[global.ParametersGroup.cameraSettings] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[cpd.id]![global.ParametersGroup.cameraSettings] == global.SendingState.sendingState
+                    : global.sendingState[cpd.id]?[global.ParametersGroup.cameraSettings] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: TextField(
@@ -2881,9 +2880,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             Expanded(
               flex: 1,
               child: Container(
-                color: global.sendingState[cpd.id]![global.ParametersGroup.cameraSettings] == global.SendingState.notAnswerState
+                color: global.sendingState[cpd.id]?[global.ParametersGroup.cameraSettings] == global.SendingState.notAnswerState
                     ? notSend
-                    : global.sendingState[cpd.id]![global.ParametersGroup.cameraSettings] == global.SendingState.sendingState
+                    : global.sendingState[cpd.id]?[global.ParametersGroup.cameraSettings] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
                 child: DropdownButton<PhotoImageCompression>(

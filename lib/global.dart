@@ -47,7 +47,6 @@ abstract class TIDManagement {
   void ranOutOfSendAttempts(int tid, BasePackage? pb) {}
 }
 
-String STDNum = '195';
 String statusBarString = '';
 
 Text mainBottomSelectedDev = Text('');

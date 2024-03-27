@@ -26,20 +26,25 @@ import '../global.dart' as global;
 
 class HomeNotifier with ChangeNotifier {
   HomeNotifier();
+
   String imageName = '.png';
   String imageStatus = 'offline';
   String imageSelected = '';
 
   bool _active = false;
+
   bool get active => _active;
 
   bool _selected = false;
+
   bool get selected => _selected;
 
   bool _alarm = false;
+
   bool get alarm => _alarm;
 
   bool _warning = false;
+
   bool get warning => _warning;
 
   void changeActive() {
@@ -140,10 +145,12 @@ class MarkerData {
   LatLng? cord;
 
   MarkerData(this.id, this.type, this.cord);
+
   factory MarkerData.fromJson(Map<String, Object?> jsonMap) {
     return MarkerData(
         jsonMap["id"] as int, jsonMap["type"] as String, LatLng(jsonMap["latitude"] as double, jsonMap["longitude"] as double));
   }
+
   Map toJson() => {'id': id, 'type': type, 'latitude': cord?.latitude, 'longitude': cord?.longitude};
   HomeNotifier notifier = HomeNotifier();
 }
@@ -241,7 +248,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     await file.writeAsString(bufJson);
   }
 
-  void loadMapMarkersFromFile() async {
+  Future<void> loadMapMarkersFromFile() async {
     global.getPermission();
     var dir = global.pathToProject;
     File file = File('${dir.path}/first.json');
@@ -275,6 +282,9 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     global.itemsMan.itemAdded = addItem;
     global.itemsMan.selectionChanged = selectedItem;
 
+    global.stdConnectionManager.setSTDId(id);
+    global.stdConnectionManager.startConnectRoutine();
+
     global.deviceParametersPage.addDeviceInDropdown(id, data.type!);
     selectMapMarker(id);
     saveMapMarkersInFile();
@@ -298,6 +308,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     } else if (type == STD.Name()) {
       pin = STD();
       global.flagCheckSPPU = true;
+      global.stdConnectionManager.setSTDId(id);
     } else if (type == CPD.Name()) {
       pin = CPD();
     } else if (type == CSD.Name()) {
@@ -320,11 +331,11 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     saveMapMarkersInFile();
   }
 
-  void addNewDeviceOnMap(LatLng cord){
+  void addNewDeviceOnMap(LatLng cord) {
     _page.addNewDeviceOnMap(cord);
   }
 
-  LatLngBounds takeMapBounds(){
+  LatLngBounds takeMapBounds() {
     return _page.takeBounds();
   }
 
@@ -342,22 +353,37 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
   }
 
   void changeMapMarkerID(int oldId, int newId) {
-    if (oldId != newId) {
-      global.itemsMan.changeItemId(oldId, newId);
+    if (oldId == newId) return;
 
-      var buf = global.listMapMarkers[oldId];
-      buf!.markerData.id = newId;
-
-      var localMarker =
-          MapMarker(_page, buf.markerData, buf.markerData.cord!, newId.toString(), buf.markerData.type!, buf.imageTypePackage);
-
-      global.listMapMarkers[newId] = localMarker;
-      global.deviceParametersPage.changeDeviceInDropdown(newId, buf.markerData.type!, oldId.toString());
-      selectMapMarker(newId);
-      global.listMapMarkers.remove(oldId);
-
-      saveMapMarkersInFile();
+    if (global.std != null && global.std?.stdId == oldId) {
+      global.std!.disconnect();
     }
+
+    var oldDevice = global.itemsMan.get<NetDevice>(oldId);
+
+    oldDevice?.state = NDState.Offline;
+    global.pageWithMap.deactivateMapMarker(oldId);
+    global.deviceParametersPage.addProtocolLine('Device #$oldId offline');
+
+    global.itemsMan.changeItemId(oldId, newId);
+
+    var std = global.itemsMan.get<STD>(newId);
+    if (std != null) {
+      global.stdConnectionManager.setSTDId(newId);
+      global.stdConnectionManager.startConnectRoutine();
+    }
+
+    var buf = global.listMapMarkers[oldId];
+    buf!.markerData.id = newId;
+
+    var localMarker = MapMarker(_page, buf.markerData, buf.markerData.cord!, newId.toString(), buf.markerData.type!, buf.imageTypePackage);
+
+    global.listMapMarkers[newId] = localMarker;
+    global.deviceParametersPage.changeDeviceInDropdown(newId, buf.markerData.type!, oldId.toString());
+    selectMapMarker(newId);
+    global.listMapMarkers.remove(oldId);
+
+    saveMapMarkersInFile();
   }
 
   void changeMapMarkerType(int id, String oldType, String newType) {
@@ -369,7 +395,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
         newItem = mark.Marker();
       } else if (newType == STD.Name()) {
         newItem = STD();
-        //_page.startDiscovery();
       } else if (newType == CPD.Name()) {
         newItem = CPD();
       } else if (newType == CSD.Name()) {
@@ -397,19 +422,28 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
       selectMapMarker(newItem.id);
 
       global.itemsMan.blockSignals = false;
+
+      if (newType == STD.Name()) {
+        global.flagCheckSPPU = true;
+        global.stdConnectionManager.setSTDId(id);
+        global.stdConnectionManager.startConnectRoutine();
+      }
+
       global.deviceParametersPage.changeDeviceInDropdown(id, newType, id.toString());
       saveMapMarkersInFile();
     }
   }
 
-  void askDeleteMapMarker(int id){
+  void askDeleteMapMarker(int id) {
     _page.askDeleteMapMarker(id);
   }
 
   void deleteMapMarker(int id) {
     if (global.itemsMan.get<STD>(id) != null) {
+      global.stdConnectionManager.setSTDId(0);
+
       global.flagCheckSPPU = false;
-      //_page.disconnect();
+      global.std?.disconnect();
     }
     if (global.itemsMan.isSelected(id)) {
       unselectMapMarker();
@@ -508,11 +542,24 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
   @override
   void initState() {
     super.initState();
-    widget.loadMapMarkersFromFile();
-    global.stdConnectionManager.startConnectRoutine();
+
+    widget.loadMapMarkersFromFile().then((_) {
+      if (global.flagCheckSPPU == false) {
+        Timer(const Duration(seconds: 4), () {
+          var coord = global.pageWithMap.coord();
+          if (coord == null) return;
+
+          global.pageWithMap.createFirstSTDAutomatically(195, coord.latitude, coord.longitude);
+        });
+      } else {
+        global.stdConnectionManager.startConnectRoutine();
+      }
+    });
+
     Timer.periodic(Duration.zero, (timer) {
       setState(() {});
     });
+
     Timer.periodic(const Duration(seconds: 1), (timer) {
       location.getLocation().then((p) {
         myCords = LatLng(p.latitude!, p.longitude!);
@@ -978,25 +1025,24 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
 
   void changeLocationMarkerOnMap(LatLng point) {}
 
-  void saveTile(String name) async{
-      Directory? root = global.pathToProject;
-      String directoryPath = '${root.path}/mapTiles';
-      await Directory(directoryPath).create(recursive: true);
-      String filePath = '$directoryPath/$name';
-      //await File(filePath).create().then((file) => file.writeAsBytes());
-      print(filePath);
-
+  void saveTile(String name) async {
+    Directory? root = global.pathToProject;
+    String directoryPath = '${root.path}/mapTiles';
+    await Directory(directoryPath).create(recursive: true);
+    String filePath = '$directoryPath/$name';
+    //await File(filePath).create().then((file) => file.writeAsBytes());
+    print(filePath);
   }
 
-  LatLngBounds takeBounds(){
-    var bounds =  mapController.bounds!;
+  LatLngBounds takeBounds() {
+    var bounds = mapController.bounds!;
     print(mapController.bounds!.northWest);
     return bounds;
   }
 
   void chan(MapPosition pos, bool flag) {
     //print(mapController.bounds!.northWest);
-   // print(mapController.bounds!.southEast);
+    // print(mapController.bounds!.southEast);
 
     if (global.flagMoveMarker) {
       global.listMapMarkers[global.itemsMan.getSelected<mark.Marker>()!.id]!.point.latitude = pos.center!.latitude;
@@ -1036,10 +1082,10 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
         mapController: mapController,
         layers: [
           TileLayerOptions(
-              urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-              subdomains: ['a', 'b', 'c'],
+            urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            subdomains: ['a', 'b', 'c'],
             userAgentPackageName: 'com.example.app',
-            ),
+          ),
           MarkerLayerOptions(markers: [myLocalPosition!]),
           MarkerLayerOptions(markers: global.listMapMarkers.values.toList()),
         ],
@@ -1059,7 +1105,9 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                   icon: const Icon(
                     Icons.crop_free,
                     color: Color.fromARGB(250, 61, 174, 233),
-                    shadows: [Shadow(color: Colors.black, blurRadius: 1), ],
+                    shadows: [
+                      Shadow(color: Colors.black, blurRadius: 1),
+                    ],
                   ),
                 ),
               ),
@@ -1073,7 +1121,9 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                   icon: const Icon(
                     Icons.arrow_upward,
                     color: Color.fromARGB(250, 61, 174, 233),
-                    shadows: [Shadow(color: Colors.black, blurRadius: 1), ],
+                    shadows: [
+                      Shadow(color: Colors.black, blurRadius: 1),
+                    ],
                   ),
                 ),
               ),
@@ -1087,7 +1137,9 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                   icon: const Icon(
                     Icons.location_searching,
                     color: Color.fromARGB(250, 61, 174, 233),
-                    shadows: [Shadow(color: Colors.black, blurRadius: 1), ],
+                    shadows: [
+                      Shadow(color: Colors.black, blurRadius: 1),
+                    ],
                   ),
                 ),
               ),
@@ -1103,7 +1155,9 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                             icon: const Icon(
                               Icons.pin_drop,
                               color: Colors.white,
-                              shadows: [Shadow(color: Colors.black, blurRadius: 1), ],
+                              shadows: [
+                                Shadow(color: Colors.black, blurRadius: 1),
+                              ],
                             ),
                           )
                         : IconButton(
@@ -1111,7 +1165,9 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                             icon: const Icon(
                               Icons.pin_drop,
                               color: Color.fromARGB(250, 61, 174, 233),
-                              shadows: [Shadow(color: Colors.black, blurRadius: 1), ],
+                              shadows: [
+                                Shadow(color: Colors.black, blurRadius: 1),
+                              ],
                             ),
                           )
                     : null,

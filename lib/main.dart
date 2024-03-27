@@ -121,12 +121,12 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     late Text stdIndicatorText;
 
-    if (global.std != null) {
-      int stdId = global.std!.stdId;
-      var std = global.itemsMan.get<STD>(stdId);
+    int stdId = global.std?.stdId ?? -1;
+    var std = global.itemsMan.get<STD>(stdId);
 
+    if (global.std != null && std != null) {
       var connectionType = global.stdInfo.type != StdConnectionType.UNDEFINED ? ' (${global.stdInfo.getConnectionType()})' : '';
-      stdIndicatorText = Text('${STD().typeName()} #$stdId $connectionType - ${std?.channel}${std!.isMain ? '' : 'r'}');
+      stdIndicatorText = Text('${STD().typeName()} #$stdId $connectionType - ${std.channel}${std.isMain ? '' : 'r'}');
     } else {
       stdIndicatorText = Text(STD().typeName());
     }

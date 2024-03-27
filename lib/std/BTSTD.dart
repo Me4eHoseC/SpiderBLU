@@ -35,6 +35,7 @@ class BTSTD extends ISTD {
       Timer.run(onConnected);
       return true;
     }).catchError((err) {
+      print(err);
       _connection = null;
       Timer.run(onDisconnected);
       return false;
@@ -44,7 +45,7 @@ class BTSTD extends ISTD {
   @override
   Future disconnect() async {
     if (_connection != null) {
-      await _connection!.finish();
+      _connection!.close();
       _connection = null;
     }
 

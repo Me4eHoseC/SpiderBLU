@@ -42,7 +42,7 @@ class StdInfo {
 }
 
 class STDConnectionManager {
-  int _stdId = 195; // todo remove when correct STD map management implemented
+  int _stdId = 0;
 
   late void Function(int) stdConnected;
 
@@ -50,63 +50,63 @@ class STDConnectionManager {
   bool isUseBT = true;
   String btMacAddress = '00:21:07:00:21:4F'; //todo remove when setting storage implemented
 
-  int btSTDId = -1;
-  Timer? btReadTimer;
-  Uint8List btBuffer = Uint8List(0);
+  int _btSTDId = -1;
+  Timer? _btReadTimer;
+  Uint8List _btBuffer = Uint8List(0);
   BluetoothConnection? _connection;
-  StreamSubscription<Uint8List>? btSubscription;
+  StreamSubscription<Uint8List>? _btSubscription;
 
   bool isUseSerial = true;
   String serialManName = 'FTDI';
   int serialVID = 1027;
-  int serialSTDId = -1;
-  Timer? serialReadTimer;
-  Uint8List serialBuffer = Uint8List(0);
-  StreamSubscription<Uint8List>? serialSubscription;
-  UsbPort? serialPort;
+  int _serialSTDId = -1;
+  Timer? _serialReadTimer;
+  Uint8List _serialBuffer = Uint8List(0);
+  StreamSubscription<Uint8List>? _serialSubscription;
+  UsbPort? _serialPort;
 
-  void freeBtConnectionResources() {
-    btSTDId = -1;
-    btReadTimer?.cancel();
-    btReadTimer = null;
-    btBuffer = Uint8List(0);
+  void _freeBtConnectionResources() {
+    _btSTDId = -1;
+    _btReadTimer?.cancel();
+    _btReadTimer = null;
+    _btBuffer = Uint8List(0);
     _connection = null;
-    btSubscription = null;
+    _btSubscription = null;
   }
 
-  void freeSerialConnectionResources() {
-    serialSTDId = -1;
-    serialReadTimer?.cancel();
-    serialReadTimer = null;
-    serialBuffer = Uint8List(0);
-    serialSubscription = null;
-    serialPort = null;
+  void _freeSerialConnectionResources() {
+    _serialSTDId = -1;
+    _serialReadTimer?.cancel();
+    _serialReadTimer = null;
+    _serialBuffer = Uint8List(0);
+    _serialSubscription = null;
+    _serialPort = null;
   }
 
-  Timer? connectRoutineTimer;
+  Timer? _connectRoutineTimer;
 
   void setSTDId(int stdID) {
     _stdId = stdID;
   }
 
   void startConnectRoutine() {
-    restartConnectRoutineTimer(0);
+    _restartConnectRoutineTimer(0);
   }
 
-  void restartConnectRoutineTimer([int seconds = 15]) {
-    connectRoutineTimer?.cancel();
-    connectRoutineTimer = Timer(Duration(seconds: seconds), connectRoutine);
+  void _restartConnectRoutineTimer([int seconds = 15]) {
+    _connectRoutineTimer?.cancel();
+    _connectRoutineTimer = Timer(Duration(seconds: seconds), _connectRoutine);
   }
 
   void stopConnectRoutine() {
-    connectRoutineTimer?.cancel();
+    _connectRoutineTimer?.cancel();
   }
 
-  void connectRoutine() {
+  void _connectRoutine() {
     if (_stdId == 0) {
       print("STD ID is set to 0");
 
-      restartConnectRoutineTimer();
+      _restartConnectRoutineTimer();
       return;
     }
 
@@ -117,33 +117,34 @@ class STDConnectionManager {
       return;
     }
 
-    tryConnectSTD(_stdId);
+    _tryConnectSTD(_stdId);
   }
 
-  void tryConnectSTD(int id) {
+  void _tryConnectSTD(int id) {
     ISTD? std;
 
-    if (std == null && isUseBT && btMacAddress != '') {
+    if (std == null && _connection == null && isUseBT && btMacAddress != '') {
       print('Connecting to BT service...');
 
-      btSTDId = id;
+      _btSTDId = id;
 
-      BluetoothConnection.toAddress(btMacAddress).then(onBTConnected).catchError((err) {
-        freeBtConnectionResources();
-        restartConnectRoutineTimer();
+      BluetoothConnection.toAddress(btMacAddress).then(_onBTConnected).catchError((err) {
+        print(err);
+        _freeBtConnectionResources();
+        _restartConnectRoutineTimer();
       });
     }
 
-    if (std == null && isUseSerial && serialManName != '' && serialVID != 0) {
+    if (std == null && _serialPort == null && isUseSerial && serialManName != '' && serialVID != 0) {
       print('Connecting to serial port...');
 
-      serialSTDId = id;
+      _serialSTDId = id;
 
-      getSerialPort(serialManName, serialVID).then(onSerialPortFound);
+      _getSerialPort(serialManName, serialVID).then(_onSerialPortFound);
     }
   }
 
-  Future<UsbPort?> getSerialPort(String portManName, int portVID) async {
+  Future<UsbPort?> _getSerialPort(String portManName, int portVID) async {
     var devices = await UsbSerial.listDevices();
     if (devices.isEmpty) return null;
 
@@ -172,20 +173,20 @@ class STDConnectionManager {
     return port;
   }
 
-  void onSerialPortFound(UsbPort? port) {
+  void _onSerialPortFound(UsbPort? port) {
     if (port == null) {
-      restartConnectRoutineTimer();
+      _restartConnectRoutineTimer();
       return;
     }
 
-    serialPort = port;
+    _serialPort = port;
 
-    serialSubscription = port.inputStream!.listen(onSerialReadyRead);
+    _serialSubscription = port.inputStream!.listen(_onSerialReadyRead);
 
     print("Sending request...");
 
     // send test package
-    var package = BasePackage.makeBaseRequest(serialSTDId, PackageType.GET_VERSION);
+    var package = BasePackage.makeBaseRequest(_serialSTDId, PackageType.GET_VERSION);
     var bytes = package.toBytesArray();
 
     // Add some bytes to wake up STD
@@ -200,71 +201,71 @@ class STDConnectionManager {
 
     port.write(req);
     // wait for ready read
-    serialReadTimer?.cancel();
-    serialReadTimer = Timer(const Duration(seconds: 10), onSerialReadTimerTimeout);
+    _serialReadTimer?.cancel();
+    _serialReadTimer = Timer(const Duration(seconds: 10), _onSerialReadTimerTimeout);
   }
 
-  void onSerialReadyRead(Uint8List data) {
+  void _onSerialReadyRead(Uint8List data) {
     print("Reading Serial data...");
 
-    serialReadTimer?.cancel();
+    _serialReadTimer?.cancel();
 
-    Uint8List tmp = Uint8List(serialBuffer.length + data.length);
-    tmp.setAll(0, serialBuffer);
-    tmp.setAll(serialBuffer.length, data);
-    serialBuffer = tmp;
+    Uint8List tmp = Uint8List(_serialBuffer.length + data.length);
+    tmp.setAll(0, _serialBuffer);
+    tmp.setAll(_serialBuffer.length, data);
+    _serialBuffer = tmp;
 
     BasePackage? receivedPackage;
     bool mayHaveOneMorePackage = true;
     while (mayHaveOneMorePackage) {
-      var ref = Reference<Uint8List>(serialBuffer);
+      var ref = Reference<Uint8List>(_serialBuffer);
       var pair = PackagesParser.tryFindAndParsePackage(ref);
 
       receivedPackage = pair.first;
       mayHaveOneMorePackage = pair.second;
 
-      serialBuffer = ref.value;
+      _serialBuffer = ref.value;
 
       if (receivedPackage != null) break;
     }
 
     if (receivedPackage == null) {
-      serialReadTimer = Timer(const Duration(seconds: 10), onSerialReadTimerTimeout);
+      _serialReadTimer = Timer(const Duration(seconds: 10), _onSerialReadTimerTimeout);
       return;
     }
 
-    var isSTD = checkStdPackage(serialSTDId, receivedPackage);
+    var isSTD = _checkStdPackage(_serialSTDId, receivedPackage);
     if (isSTD) {
       print("Serial STD connected");
 
       StdInfo info = StdInfo();
-      info.std = SerialSTD(serialSTDId, serialPort);
+      info.std = SerialSTD(_serialSTDId, _serialPort);
       info.type = StdConnectionType.SERIALSTD;
 
-      newSTDConnected(info);
+      _newSTDConnected(info);
     } else {
       print("Wrong Serial STD ID");
 
-      restartConnectRoutineTimer();
+      _restartConnectRoutineTimer();
     }
 
-    freeSerialConnectionResources();
+    _freeSerialConnectionResources();
   }
 
-  void onSerialReadTimerTimeout() {
+  void _onSerialReadTimerTimeout() {
     print('No package received from serial connection');
-    freeSerialConnectionResources();
-    restartConnectRoutineTimer();
+    _freeSerialConnectionResources();
+    _restartConnectRoutineTimer();
   }
 
-  void onBTConnected(BluetoothConnection value) {
+  void _onBTConnected(BluetoothConnection value) {
     _connection = value;
-    btSubscription = _connection!.input?.listen(onBTReadyRead);
+    _btSubscription = _connection!.input?.listen(_onBTReadyRead);
 
     print("Sending request...");
 
     // send test package
-    var package = BasePackage.makeBaseRequest(btSTDId, PackageType.GET_VERSION);
+    var package = BasePackage.makeBaseRequest(_btSTDId, PackageType.GET_VERSION);
     var bytes = package.toBytesArray();
 
     // Add some bytes to wake up STD
@@ -281,65 +282,69 @@ class STDConnectionManager {
     _connection!.output.allSent;
 
     // wait for ready read
-    btReadTimer?.cancel();
-    btReadTimer = Timer(const Duration(seconds: 10), onBTReadTimerTimeout);
+    _btReadTimer?.cancel();
+    _btReadTimer = Timer(const Duration(seconds: 10), _onBTReadTimerTimeout);
   }
 
-  void onBTReadyRead(Uint8List data) {
+  void _onBTReadyRead(Uint8List data) {
     print("Reading BT data...");
 
-    btReadTimer?.cancel();
+    _btReadTimer?.cancel();
 
-    Uint8List tmp = Uint8List(btBuffer.length + data.length);
-    tmp.setAll(0, btBuffer);
-    tmp.setAll(btBuffer.length, data);
-    btBuffer = tmp;
+    Uint8List tmp = Uint8List(_btBuffer.length + data.length);
+    tmp.setAll(0, _btBuffer);
+    tmp.setAll(_btBuffer.length, data);
+    _btBuffer = tmp;
 
     BasePackage? receivedPackage;
     bool mayHaveOneMorePackage = true;
     while (mayHaveOneMorePackage) {
-      var ref = Reference<Uint8List>(btBuffer);
+      var ref = Reference<Uint8List>(_btBuffer);
       var pair = PackagesParser.tryFindAndParsePackage(ref);
 
       receivedPackage = pair.first;
       mayHaveOneMorePackage = pair.second;
 
-      btBuffer = ref.value;
+      _btBuffer = ref.value;
 
       if (receivedPackage != null) break;
     }
 
     if (receivedPackage == null) {
-      btReadTimer = Timer(const Duration(seconds: 10), onBTReadTimerTimeout);
+      _btReadTimer = Timer(const Duration(seconds: 10), _onBTReadTimerTimeout);
       return;
     }
 
-    var isSTD = checkStdPackage(btSTDId, receivedPackage);
+    var isSTD = _checkStdPackage(_btSTDId, receivedPackage);
     if (isSTD) {
       print("BT STD connected");
 
       StdInfo info = StdInfo();
-      info.std = BTSTD(btSTDId, btMacAddress, _connection);
+      info.std = BTSTD(_btSTDId, btMacAddress, _connection);
       info.type = StdConnectionType.BTSTD;
 
-      newSTDConnected(info);
+      _newSTDConnected(info);
     } else {
       print("Wrong BT STD ID");
 
-      restartConnectRoutineTimer();
+      _restartConnectRoutineTimer();
+
+      _connection?.close();
     }
 
-    freeBtConnectionResources();
+    _freeBtConnectionResources();
   }
 
-  void onBTReadTimerTimeout() {
+  void _onBTReadTimerTimeout() {
     print('No package received from BT connection');
 
-    freeBtConnectionResources();
-    restartConnectRoutineTimer();
+    _connection?.close();
+
+    _freeBtConnectionResources();
+    _restartConnectRoutineTimer();
   }
 
-  bool checkStdPackage(int stdId, BasePackage? package) {
+  bool _checkStdPackage(int stdId, BasePackage? package) {
     if (package == null) return false;
 
     print("Checking hops");
@@ -372,7 +377,7 @@ class STDConnectionManager {
     return false;
   }
 
-  void newSTDConnected(StdInfo info) {
+  void _newSTDConnected(StdInfo info) {
     var std = info.std;
 
     if (std == null) return;
@@ -412,8 +417,8 @@ class STDConnectionManager {
       global.packagesParser.addData(data);
     };
 
-    var subscription = btSubscription;
-    if (std is SerialSTD) subscription = serialSubscription;
+    var subscription = _btSubscription;
+    if (std is SerialSTD) subscription = _serialSubscription;
 
     subscription?.onData(std.onReadyRead);
     subscription?.onDone(std.onDone);

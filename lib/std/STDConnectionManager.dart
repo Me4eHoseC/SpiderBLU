@@ -46,6 +46,8 @@ class STDConnectionManager {
 
   late void Function(int) stdConnected;
 
+  bool connectRoutineIsRunning = false;
+
   // BT STD parameters
   bool isUseBT = true;
   String btMacAddress = '00:21:07:00:21:4F'; //todo remove when setting storage implemented
@@ -90,15 +92,21 @@ class STDConnectionManager {
   }
 
   void startConnectRoutine() {
+    if (connectRoutineIsRunning) return;
+    connectRoutineIsRunning = true;
+
     _restartConnectRoutineTimer(0);
   }
 
   void _restartConnectRoutineTimer([int seconds = 15]) {
+    if (!connectRoutineIsRunning) return;
+
     _connectRoutineTimer?.cancel();
     _connectRoutineTimer = Timer(Duration(seconds: seconds), _connectRoutine);
   }
 
   void stopConnectRoutine() {
+    connectRoutineIsRunning = false;
     _connectRoutineTimer?.cancel();
   }
 
@@ -396,6 +404,12 @@ class STDConnectionManager {
 
     std.onDisconnected = () {
       var stdId = global.std?.stdId;
+
+      if (global.std != null) {
+        global.std!.onReadyRead = (_) {};
+        global.std!.onConnected = () {};
+        global.std!.onDisconnected = () {};
+      }
 
       global.std = null;
       global.stdInfo = StdInfo();

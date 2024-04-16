@@ -1,4 +1,5 @@
 library projects.globals;
+
 import 'dart:async';
 import 'dart:core';
 import 'dart:io';
@@ -27,7 +28,6 @@ import '../pages/SeismicPage.dart';
 import '../pages/DeviceParametersPage.dart';
 import '../pages/ImagePage.dart';
 import '../pages/PageWithMap.dart';
-import '../pages/ScanPage.dart';
 
 import 'core/CPD.dart';
 import 'core/NetDevice.dart';
@@ -102,40 +102,43 @@ enum ParametersGroup {
   //MCD
   priority,
   gps,
+  //AIRS
+  tresholdIRS,
   //TODO: save/reset settings???
-
 }
 
 //List<String> ParametersGroup = ['dateTime', 'firmwareVersion'];
 
 Map<int, Map<ParametersGroup, SendingState>> sendingState = {};
 
-void initSendingState(int devId){
+void initSendingState(int devId) {
   Map<ParametersGroup, SendingState> init = {
-    ParametersGroup.dateTime : SendingState.defaultState,
-    ParametersGroup.firmwareVersion : SendingState.defaultState,
-    ParametersGroup.coordinates : SendingState.defaultState,
-    ParametersGroup.signalStrength : SendingState.defaultState,
-    ParametersGroup.allowedHops : SendingState.defaultState,
-    ParametersGroup.unallowedHops : SendingState.defaultState,
-    ParametersGroup.rebroadcastToEveryone : SendingState.defaultState,
-    ParametersGroup.onOffInDev : SendingState.defaultState,
-    ParametersGroup.deviceStatus : SendingState.defaultState,
-    ParametersGroup.safetyCatch : SendingState.defaultState,
-    ParametersGroup.switchingBreak : SendingState.defaultState,
-    ParametersGroup.power : SendingState.defaultState,
-    ParametersGroup.powerSupply : SendingState.defaultState,
-    ParametersGroup.cameraSettings : SendingState.defaultState,
-    ParametersGroup.humanTransport : SendingState.defaultState,
-    ParametersGroup.snr : SendingState.defaultState,
-    ParametersGroup.humSens : SendingState.defaultState,
-    ParametersGroup.autoSens : SendingState.defaultState,
-    ParametersGroup.critFilter : SendingState.defaultState,
-    ParametersGroup.ratioSign : SendingState.defaultState,
-    ParametersGroup.recogParam : SendingState.defaultState,
-    ParametersGroup.alarmFilter : SendingState.defaultState,
-    ParametersGroup.priority : SendingState.defaultState,
-    ParametersGroup.gps : SendingState.defaultState,};
+    ParametersGroup.dateTime: SendingState.defaultState,
+    ParametersGroup.firmwareVersion: SendingState.defaultState,
+    ParametersGroup.coordinates: SendingState.defaultState,
+    ParametersGroup.signalStrength: SendingState.defaultState,
+    ParametersGroup.allowedHops: SendingState.defaultState,
+    ParametersGroup.unallowedHops: SendingState.defaultState,
+    ParametersGroup.rebroadcastToEveryone: SendingState.defaultState,
+    ParametersGroup.onOffInDev: SendingState.defaultState,
+    ParametersGroup.deviceStatus: SendingState.defaultState,
+    ParametersGroup.safetyCatch: SendingState.defaultState,
+    ParametersGroup.switchingBreak: SendingState.defaultState,
+    ParametersGroup.power: SendingState.defaultState,
+    ParametersGroup.powerSupply: SendingState.defaultState,
+    ParametersGroup.cameraSettings: SendingState.defaultState,
+    ParametersGroup.humanTransport: SendingState.defaultState,
+    ParametersGroup.snr: SendingState.defaultState,
+    ParametersGroup.humSens: SendingState.defaultState,
+    ParametersGroup.autoSens: SendingState.defaultState,
+    ParametersGroup.critFilter: SendingState.defaultState,
+    ParametersGroup.ratioSign: SendingState.defaultState,
+    ParametersGroup.recogParam: SendingState.defaultState,
+    ParametersGroup.alarmFilter: SendingState.defaultState,
+    ParametersGroup.priority: SendingState.defaultState,
+    ParametersGroup.gps: SendingState.defaultState,
+    ParametersGroup.tresholdIRS: SendingState.defaultState,
+  };
   sendingState[devId] = init;
 }
 
@@ -169,9 +172,7 @@ class Pair<T1, T2> {
   Pair(this.first, this.second);
 }
 
-bool flagConnect = false, flagMapPage = true,
-    flagCheckSPPU = false, flagMoveMarker = false, transLang = false;
-
+bool flagConnect = false, flagMapPage = true, flagCheckSPPU = false, flagMoveMarker = false, transLang = false;
 
 Map<int, MapMarker> listMapMarkers = {};
 
@@ -188,11 +189,50 @@ List<int> serialTransport = [1, 2, 3];
 GlobalKey<HomePageState> globalKey = GlobalKey<HomePageState>();
 ItemsManager itemsMan = ItemsManager();
 
-const int baseFrequency = 432999960;         // Hz
-const int channelFrequencyStep = 1999946;    // Hz
-const int reserveFrequencyOffset = 2999980;  // Hz
+const int baseFrequency = 432999960; // Hz
+const int channelFrequencyStep = 1999946; // Hz
+const int reserveFrequencyOffset = 2999980; // Hz
 
 Directory pathToProject = Directory('/storage/emulated/0/SpiderNet/com.example.projects/files');
+
+class SettingsForSave {
+  bool btFlag = true;
+  String? btMacAddressSave;
+
+  bool serialFlag = true;
+  String? serialManNameSave;
+  int? serialVIDSave;
+
+  bool tcpFlag = true;
+  String? IPAddressSave;
+  int? IPPortSave;
+
+  SettingsForSave(this.btFlag, this.btMacAddressSave, this.serialFlag, this.serialManNameSave, this.serialVIDSave, this.tcpFlag,
+      this.IPAddressSave, this.IPPortSave);
+
+  factory SettingsForSave.fromJson(Map<String, Object?> jsonMap) {
+    return SettingsForSave(
+        jsonMap["btFlag"] as bool,
+        jsonMap["btMacAddressSave"] as String,
+        jsonMap["serialFlag"] as bool,
+        jsonMap["serialManNameSave"] as String,
+        jsonMap["serialVIDSave"] as int,
+        jsonMap["tcpFlag"] as bool,
+        jsonMap["IPAddressSave"] as String,
+        jsonMap["IPPortSave"] as int);
+  }
+
+  Map toJson() => {
+    'btFlag': btFlag,
+    'btMacAddressSave': btMacAddressSave,
+    'serialFlag': serialFlag,
+    'serialManNameSave': serialManNameSave,
+    'serialVIDSave': serialVIDSave,
+    'tcpFlag': tcpFlag,
+    'IPAddressSave': IPAddressSave,
+    'IPPortSave': IPPortSave,
+  };
+}
 
 void getPermission() async {
   var status1 = await Permission.storage.status;
@@ -203,12 +243,12 @@ void getPermission() async {
   }
 }
 
-void stopMedia(){
-  print ('CANCEL DOWNLOAD');
+void stopMedia() {
+  print('CANCEL DOWNLOAD');
   var selected = itemsMan.getSelected<NetDevice>();
   if (selected == null) return;
   var type = PackageType.STOP_SEISMIC_WAVE;
-  if (selected is CPD){
+  if (selected is CPD) {
     type = PackageType.STOP_PHOTO;
   }
   var tid = postManager.sendPackage(BasePackage.makeBaseRequest(selected.id, type));

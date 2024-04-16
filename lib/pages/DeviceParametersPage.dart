@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../core/AIRS.dart';
 import '../radionet/BasePackage.dart';
 import '../radionet/NetCommonPackages.dart';
 import '../radionet/NetPackagesDataTypes.dart';
@@ -35,6 +36,14 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
           '#$id'),
     );
     dropdownItems.add(newItem);
+  }
+
+  void getCordForNewDevice(int devId){
+    _page.takeCordClick(devId);
+  }
+
+  void setTimeForNewDevice(int devId){
+    _page.setTimeClick(devId);
   }
 
   void stdConnected(int stdId) {
@@ -190,6 +199,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
   TextEditingController _controllerRatioPersonToTransport = TextEditingController();
   TextEditingController _controllerSingleTransport = TextEditingController();
   TextEditingController _controllerSinglePerson = TextEditingController();
+  TextEditingController _controllerTresholdIRS = TextEditingController();
   Color notSend = Colors.orange;
   Color defaultColor = Colors.white;
   Color trySend = Colors.yellow;
@@ -597,6 +607,28 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     });
   }
 
+  void takeAIRSSensitivityClick(int devId) {
+    setState(() {
+      BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_HUMAN_SENSITIVITY);
+      var tid = global.postManager.sendPackage(getInfo);
+      widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.tresholdIRS] = global.SendingState.sendingState;
+    });
+  }
+
+  void setAIRSSensitivityClick(int devId, int sensitivity) {
+    setState(() {
+      HumanSensitivityPackage airsSensitivityPackage = HumanSensitivityPackage();
+      airsSensitivityPackage.setReceiver(devId);
+      airsSensitivityPackage.setSender(RoutesManager.getLaptopAddress());
+      airsSensitivityPackage.setHumanSensitivity(sensitivity);
+      var tid = global.postManager.sendPackage(airsSensitivityPackage);
+      widget.setRequests[tid] = airsSensitivityPackage;
+      widget.tits.add(tid);
+      global.sendingState[devId]![global.ParametersGroup.humSens] = global.SendingState.sendingState;
+    });
+  }
+
   void setStateHumanTransportSensitivityClick(int devId, int mask) {
     setState(() {
       AlarmReasonMaskPackage alarmReasonMaskPackage = AlarmReasonMaskPackage();
@@ -894,6 +926,11 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     setState(() => cpd.cameraSensitivity = int.parse(_controllerCameraSensitivity.text));
   }
 
+  _changeTresholdIRS() {
+    var airs = widget._cloneItem as AIRS;
+    setState(() => airs.sensitivity = int.parse(_controllerTresholdIRS.text));
+  }
+
   void setAllNums() {
     setState(() {
       var item = global.itemsMan.getSelected<Marker>();
@@ -930,6 +967,12 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         var cpd = widget._cloneItem as CPD;
         _controllerCameraSensitivity.text = cpd.cameraSensitivity.toString();
         _controllerCameraSensitivity.addListener(_changeCameraSensitivity);
+      }
+
+      if (widget._cloneItem is AIRS) {
+        var airs = widget._cloneItem as AIRS;
+        _controllerTresholdIRS.text = airs.sensitivity.toString();
+        _controllerTresholdIRS.addListener(_changeTresholdIRS);
       }
     });
   }
@@ -1482,374 +1525,393 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
   }
 
   Widget buildConnectedDevices(BuildContext context) {
-    if (widget._cloneItem is! RT) {
+    if (widget._cloneItem is! RT && widget._cloneItem is! AIRS) {
       return Container();
     }
 
-    var rt = widget._cloneItem as RT;
-
     List<Widget> children = [];
 
-    if (widget._cloneItem is RT) {
-      children.add(
-        const Row(
-          children: [
-            Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text("On/Off in. dev.:"),
-            ),
-          ],
-        ),
-      );
-      children.add(
-        Row(
-          children: [
-            const Expanded(
-              flex: 1,
-              child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text("In. dev. 1:"),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Container(
-                color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
-                    ? notSend
-                    : global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
-                        ? trySend
-                        : defaultColor,
-                child: Checkbox(
-                    value: rt.stateMask & DeviceState.MONITORING_LINE1 != 0,
-                    onChanged: (bool? value) {
-                      if (value!) {
-                        rt.stateMask |= DeviceState.MONITORING_LINE1;
-                      } else {
-                        rt.stateMask &= ~DeviceState.MONITORING_LINE1;
-                      }
-                      setState(() {});
-                    }),
-              ),
-            ),
-            const Expanded(
-              flex: 1,
-              child: SizedBox(),
-            ),
-          ],
-        ),
-      );
-      children.add(
-        Row(
-          children: [
-            const Expanded(
-              flex: 1,
-              child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text("In. dev. 2:"),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Container(
-                color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
-                    ? notSend
-                    : global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
-                        ? trySend
-                        : defaultColor,
-                child: Checkbox(
-                    value: rt.stateMask & DeviceState.MONITORING_LINE2 != 0,
-                    onChanged: (bool? value) {
-                      if (value!) {
-                        rt.stateMask |= DeviceState.MONITORING_LINE2;
-                      } else {
-                        rt.stateMask &= ~DeviceState.MONITORING_LINE2;
-                      }
-                      setState(() {});
-                    }),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: (widget._cloneItem is! CSD && widget._cloneItem is! CPD)
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          onPressed: () => takeInternalDeviceParamClick(rt.id),
-                          icon: const Icon(
-                            Icons.refresh,
-                            color: Colors.blue,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => setInternalDeviceParamClick(rt.id, rt.stateMask),
-                          icon: const Icon(Icons.check),
-                          color: Colors.green,
-                        ),
-                      ],
-                    )
-                  : const SizedBox(
-                      width: 100,
-                    ),
-            ),
-          ],
-        ),
-      );
-    }
+    if (widget._cloneItem is! RT && widget._cloneItem is AIRS) {
+      var airs = widget._cloneItem as AIRS;
 
-    if (widget._cloneItem is CSD) {
-      children.add(
-        Row(
-          children: [
-            const Expanded(
-              flex: 1,
-              child: Padding(
+      if (widget._cloneItem is AIRS) {
+        children.add(
+          const Row(
+            children: [
+              Padding(
                 padding: EdgeInsets.only(left: 4),
-                child: Text("Geophone:"),
+                child: Text("On/Off in. dev.:"),
               ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Container(
-                color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
-                    ? notSend
-                    : global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
-                        ? trySend
-                        : defaultColor,
-                child: Checkbox(
-                    value: rt.stateMask & DeviceState.MONITOR_SEISMIC != 0,
-                    onChanged: (bool? value) {
-                      if (value!) {
-                        rt.stateMask |= DeviceState.MONITOR_SEISMIC;
-                      } else {
-                        rt.stateMask &= ~DeviceState.MONITOR_SEISMIC;
-                      }
-                      setState(() {});
-                    }),
+            ],
+          ),
+        );
+        children.add(
+          Row(
+            children: [
+              const Expanded(
+                flex: 1,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text("In. dev. 1:"),
+                ),
               ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    onPressed: () => takeInternalDeviceParamClick(rt.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => setInternalDeviceParamClick(rt.id, rt.stateMask),
-                    icon: const Icon(Icons.check),
-                    color: Colors.green,
-                  ),
-                ],
+              Expanded(
+                flex: 1,
+                child: Container(
+                  color: global.sendingState[airs.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
+                      ? notSend
+                      : global.sendingState[airs.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
+                          ? trySend
+                          : defaultColor,
+                  child: Checkbox(
+                      value: airs.stateMask & DeviceState.MONITORING_LINE1 != 0,
+                      onChanged: (bool? value) {
+                        if (value!) {
+                          airs.stateMask |= DeviceState.MONITORING_LINE1;
+                        } else {
+                          airs.stateMask &= ~DeviceState.MONITORING_LINE1;
+                        }
+                        setState(() {});
+                      }),
+                ),
               ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (widget._cloneItem is CPD) {
-      children.add(
-        Row(
-          children: [
-            const Expanded(
-              flex: 1,
-              child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text("Camera trap:"),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Container(
-                color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
-                    ? notSend
-                    : global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
-                        ? trySend
-                        : defaultColor,
-                child: Checkbox(
-                    value: rt.stateMask & DeviceState.LINES_CAMERA_TRAP != 0,
-                    onChanged: (bool? value) {
-                      if (value!) {
-                        rt.stateMask |= DeviceState.LINES_CAMERA_TRAP;
-                      } else {
-                        rt.stateMask &= ~DeviceState.LINES_CAMERA_TRAP;
-                      }
-                      setState(() {});
-                    }),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    onPressed: () => takeInternalDeviceParamClick(rt.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => setInternalDeviceParamClick(rt.id, rt.stateMask),
-                    icon: const Icon(Icons.check),
-                    color: Colors.green,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (widget._cloneItem is RT) {
-      children.add(
-        const Row(
-          children: [
-            Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text("Device status:"),
-            ),
-          ],
-        ),
-      );
-      children.add(
-        Row(
-          children: [
-            const Expanded(
-              flex: 1,
-              child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text("In. dev. 1:"),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Container(
-                color: global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
-                    ? notSend
-                    : global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.sendingState
-                        ? trySend
-                        : defaultColor,
-                child: Checkbox(
-                    value: rt.peripheryMask & PeripheryMask.LINE1 != 0,
-                    onChanged: (bool? value) {
-                      if (value!) {
-                        rt.peripheryMask |= PeripheryMask.LINE1;
-                      } else {
-                        rt.peripheryMask &= ~PeripheryMask.LINE1;
-                      }
-                      setState(() {});
-                    }),
-              ),
-            ),
-            const Expanded(
-              flex: 1,
-              child: SizedBox(),
-            ),
-          ],
-        ),
-      );
-      children.add(
-        Row(
-          children: [
-            const Expanded(
-              flex: 1,
-              child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text("In. dev. 2:"),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Container(
-                color: global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
-                    ? notSend
-                    : global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.sendingState
-                        ? trySend
-                        : defaultColor,
-                child: Checkbox(
-                    value: rt.peripheryMask & PeripheryMask.LINE2 != 0,
-                    onChanged: (bool? value) {
-                      if (value!) {
-                        rt.peripheryMask |= PeripheryMask.LINE2;
-                      } else {
-                        rt.peripheryMask &= ~PeripheryMask.LINE2;
-                      }
-
-                      setState(() {});
-                    }),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: widget._cloneItem is CPD
-                  ? SizedBox()
-                  : IconButton(
-                      onPressed: () => takeInternalDeviceStateClick(rt.id),
+              Expanded(
+                flex: 1,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      onPressed: () => takeInternalDeviceParamClick(airs.id),
                       icon: const Icon(
                         Icons.refresh,
                         color: Colors.blue,
                       ),
                     ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (widget._cloneItem is CPD) {
-      children.add(
-        Row(
-          children: [
-            const Expanded(
-              flex: 1,
-              child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text("Camera:"),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Container(
-                color: global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
-                    ? notSend
-                    : global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.sendingState
-                        ? trySend
-                        : defaultColor,
-                child: Checkbox(
-                    value: rt.peripheryMask & PeripheryMask.CAMERA != 0,
-                    onChanged: (bool? value) {
-                      if (value!) {
-                        rt.peripheryMask |= PeripheryMask.CAMERA;
-                      } else {
-                        rt.peripheryMask &= ~PeripheryMask.CAMERA;
-                      }
-
-                      setState(() {});
-                    }),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: IconButton(
-                onPressed: () => takeInternalDeviceStateClick(rt.id),
-                icon: const Icon(
-                  Icons.refresh,
-                  color: Colors.blue,
+                    IconButton(
+                      onPressed: () => setInternalDeviceParamClick(airs.id, airs.stateMask),
+                      icon: const Icon(Icons.check),
+                      color: Colors.green,
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
-        ),
-      );
+            ],
+          ),
+        );
+        children.add(
+          const Row(
+            children: [
+              Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Text("Device status:"),
+              ),
+            ],
+          ),
+        );
+        children.add(
+          Row(
+            children: [
+              const Expanded(
+                flex: 1,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text("A-IRS:"),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Container(
+                  color: global.sendingState[airs.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
+                      ? notSend
+                      : global.sendingState[airs.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.sendingState
+                          ? trySend
+                          : defaultColor,
+                  child: Checkbox(
+                      value: airs.peripheryMask & PeripheryMask.IRS != 0,
+                      onChanged: (bool? value) {
+                        if (value!) {
+                          airs.peripheryMask |= PeripheryMask.IRS;
+                        } else {
+                          airs.peripheryMask &= ~PeripheryMask.IRS;
+                        }
+
+                        setState(() {});
+                      }),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: IconButton(
+                  onPressed: () => takeInternalDeviceStateClick(airs.id),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+
+    if (widget._cloneItem is RT && widget._cloneItem is! AIRS) {
+      var rt = widget._cloneItem as RT;
+
+      if (widget._cloneItem is CSD) {
+        children.add(
+          Row(
+            children: [
+              const Expanded(
+                flex: 1,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text("Geophone:"),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Container(
+                  color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
+                      ? notSend
+                      : global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
+                          ? trySend
+                          : defaultColor,
+                  child: Checkbox(
+                      value: rt.stateMask & DeviceState.MONITOR_SEISMIC != 0,
+                      onChanged: (bool? value) {
+                        if (value!) {
+                          rt.stateMask |= DeviceState.MONITOR_SEISMIC;
+                        } else {
+                          rt.stateMask &= ~DeviceState.MONITOR_SEISMIC;
+                        }
+                        setState(() {});
+                      }),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      onPressed: () => takeInternalDeviceParamClick(rt.id),
+                      icon: const Icon(
+                        Icons.refresh,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => setInternalDeviceParamClick(rt.id, rt.stateMask),
+                      icon: const Icon(Icons.check),
+                      color: Colors.green,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      if (widget._cloneItem is CPD) {
+        children.add(
+          Row(
+            children: [
+              const Expanded(
+                flex: 1,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text("Camera trap:"),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Container(
+                  color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
+                      ? notSend
+                      : global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
+                          ? trySend
+                          : defaultColor,
+                  child: Checkbox(
+                      value: rt.stateMask & DeviceState.LINES_CAMERA_TRAP != 0,
+                      onChanged: (bool? value) {
+                        if (value!) {
+                          rt.stateMask |= DeviceState.LINES_CAMERA_TRAP;
+                        } else {
+                          rt.stateMask &= ~DeviceState.LINES_CAMERA_TRAP;
+                        }
+                        setState(() {});
+                      }),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      onPressed: () => takeInternalDeviceParamClick(rt.id),
+                      icon: const Icon(
+                        Icons.refresh,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => setInternalDeviceParamClick(rt.id, rt.stateMask),
+                      icon: const Icon(Icons.check),
+                      color: Colors.green,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      if (widget._cloneItem is RT) {
+        children.add(
+          const Row(
+            children: [
+              Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Text("Device status:"),
+              ),
+            ],
+          ),
+        );
+        children.add(
+          Row(
+            children: [
+              const Expanded(
+                flex: 1,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text("In. dev. 1:"),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Container(
+                  color: global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
+                      ? notSend
+                      : global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.sendingState
+                          ? trySend
+                          : defaultColor,
+                  child: Checkbox(
+                      value: rt.peripheryMask & PeripheryMask.LINE1 != 0,
+                      onChanged: (bool? value) {
+                        if (value!) {
+                          rt.peripheryMask |= PeripheryMask.LINE1;
+                        } else {
+                          rt.peripheryMask &= ~PeripheryMask.LINE1;
+                        }
+                        setState(() {});
+                      }),
+                ),
+              ),
+              const Expanded(
+                flex: 1,
+                child: SizedBox(),
+              ),
+            ],
+          ),
+        );
+        children.add(
+          Row(
+            children: [
+              const Expanded(
+                flex: 1,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text("In. dev. 2:"),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Container(
+                  color: global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
+                      ? notSend
+                      : global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.sendingState
+                          ? trySend
+                          : defaultColor,
+                  child: Checkbox(
+                      value: rt.peripheryMask & PeripheryMask.LINE2 != 0,
+                      onChanged: (bool? value) {
+                        if (value!) {
+                          rt.peripheryMask |= PeripheryMask.LINE2;
+                        } else {
+                          rt.peripheryMask &= ~PeripheryMask.LINE2;
+                        }
+
+                        setState(() {});
+                      }),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: widget._cloneItem is CPD
+                    ? SizedBox()
+                    : IconButton(
+                        onPressed: () => takeInternalDeviceStateClick(rt.id),
+                        icon: const Icon(
+                          Icons.refresh,
+                          color: Colors.blue,
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      if (widget._cloneItem is CPD) {
+        children.add(
+          Row(
+            children: [
+              const Expanded(
+                flex: 1,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text("Camera:"),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Container(
+                  color: global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
+                      ? notSend
+                      : global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.sendingState
+                          ? trySend
+                          : defaultColor,
+                  child: Checkbox(
+                      value: rt.peripheryMask & PeripheryMask.CAMERA != 0,
+                      onChanged: (bool? value) {
+                        if (value!) {
+                          rt.peripheryMask |= PeripheryMask.CAMERA;
+                        } else {
+                          rt.peripheryMask &= ~PeripheryMask.CAMERA;
+                        }
+
+                        setState(() {});
+                      }),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: IconButton(
+                  onPressed: () => takeInternalDeviceStateClick(rt.id),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
     }
 
     return Column(
@@ -2112,74 +2174,115 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
   }
 
   Widget buildPowerSupply(BuildContext context) {
-    if (widget._cloneItem is! RT) {
+    if (widget._cloneItem is! RT && widget._cloneItem is! AIRS) {
       return Container();
     }
 
-    var rt = widget._cloneItem as RT;
+    if (widget._cloneItem is RT) {
+      var rt = widget._cloneItem as RT;
 
-    return Column(
-      children: [
-        Row(
-          children: [
-            const Expanded(
-              flex: 1,
-              child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text('Voltage, V:'),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Container(
-                color: global.sendingState[rt.id]?[global.ParametersGroup.powerSupply] == global.SendingState.notAnswerState
-                    ? notSend
-                    : global.sendingState[rt.id]?[global.ParametersGroup.powerSupply] == global.SendingState.sendingState
-                        ? trySend
-                        : defaultColor,
-                child: Text(rt.batMonVoltage.toStringAsFixed(2), textAlign: TextAlign.center),
-              ),
-            ),
-            const Expanded(
-              flex: 1,
-              child: SizedBox(),
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            const Expanded(
-              flex: 1,
-              child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text('Temperature, °С:'),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Container(
-                color: global.sendingState[rt.id]?[global.ParametersGroup.powerSupply] == global.SendingState.notAnswerState
-                    ? notSend
-                    : global.sendingState[rt.id]?[global.ParametersGroup.powerSupply] == global.SendingState.sendingState
-                        ? trySend
-                        : defaultColor,
-                child: Text(rt.batMonTemperature.toStringAsFixed(2), textAlign: TextAlign.center),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: IconButton(
-                onPressed: () => takeBatteryMonitorClick(rt.id),
-                icon: const Icon(
-                  Icons.refresh,
-                  color: Colors.blue,
+      return Column(
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                flex: 1,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text('Voltage, V:'),
                 ),
               ),
-            ),
-          ],
-        ),
-      ],
-    );
+              Expanded(
+                flex: 1,
+                child: Container(
+                  color: global.sendingState[rt.id]?[global.ParametersGroup.powerSupply] == global.SendingState.notAnswerState
+                      ? notSend
+                      : global.sendingState[rt.id]?[global.ParametersGroup.powerSupply] == global.SendingState.sendingState
+                          ? trySend
+                          : defaultColor,
+                  child: Text(rt.batMonVoltage.toStringAsFixed(2), textAlign: TextAlign.center),
+                ),
+              ),
+              const Expanded(
+                flex: 1,
+                child: SizedBox(),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              const Expanded(
+                flex: 1,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text('Temperature, °С:'),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Container(
+                  color: global.sendingState[rt.id]?[global.ParametersGroup.powerSupply] == global.SendingState.notAnswerState
+                      ? notSend
+                      : global.sendingState[rt.id]?[global.ParametersGroup.powerSupply] == global.SendingState.sendingState
+                          ? trySend
+                          : defaultColor,
+                  child: Text(rt.batMonTemperature.toStringAsFixed(2), textAlign: TextAlign.center),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: IconButton(
+                  onPressed: () => takeBatteryMonitorClick(rt.id),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    } else {
+      var airs = widget._cloneItem as AIRS;
+
+      return Column(
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                flex: 1,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text('Voltage, V:'),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Container(
+                  color: global.sendingState[airs.id]?[global.ParametersGroup.powerSupply] == global.SendingState.notAnswerState
+                      ? notSend
+                      : global.sendingState[airs.id]?[global.ParametersGroup.powerSupply] == global.SendingState.sendingState
+                          ? trySend
+                          : defaultColor,
+                  child: Text(airs.batMonVoltage.toStringAsFixed(2), textAlign: TextAlign.center),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: IconButton(
+                  onPressed: () => takeBatteryMonitorClick(airs.id),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
   }
 
   Widget buildSeismicSettings(BuildContext context) {
@@ -3084,11 +3187,78 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     );
   }
 
+  Widget buildAIRSSettings(BuildContext context) {
+    if (widget._cloneItem is! AIRS) {
+      return Container();
+    }
+
+    var airs = widget._cloneItem as AIRS;
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Text('Treshold IRS:'),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[airs.id]?[global.ParametersGroup.tresholdIRS] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[airs.id]?[global.ParametersGroup.tresholdIRS] == global.SendingState.sendingState
+                        ? trySend
+                        : defaultColor,
+                child: TextField(
+                  controller: _controllerTresholdIRS,
+                  keyboardType: TextInputType.number,
+                  maxLength: 3,
+                  inputFormatters: <TextInputFormatter>[
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: () => takeAIRSSensitivityClick(airs.id),
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      airs.sensitivity > -1 && airs.sensitivity < 256
+                          ? setAIRSSensitivityClick(airs.id, airs.sensitivity)
+                          : showError('Parameters from 0 to 255');
+                    },
+                    icon: const Icon(Icons.check),
+                    color: Colors.green,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   final List<bool> _isOpenMain = List.filled(4, false);
   final List<bool> _isOpenCSD = List.filled(8, false);
   final List<bool> _isOpenCFU = List.filled(8, false);
   final List<bool> _isOpenRT = List.filled(7, false);
   final List<bool> _isOpenMCD = List.filled(5, false);
+  final List<bool> _isOpenAIRS = List.filled(6, false);
 
   @override
   Widget build(BuildContext context) {
@@ -3498,6 +3668,79 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                     },
                     body: buildDeviceSettings(context),
                     isExpanded: _isOpenMCD[4],
+                    canTapOnHeader: true,
+                  ),
+                ],
+              ),
+            ),
+            Visibility(
+              visible: widget._cloneItem.typeName() == AIRS.Name(),
+              child: ExpansionPanelList(
+                elevation: 2,
+                expansionCallback: (int index, bool isExpanded) {
+                  setState(() {
+                    _isOpenAIRS[index] = !isExpanded;
+                  });
+                },
+                children: [
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return const ListTile(
+                        title: Text('Main'),
+                      );
+                    },
+                    body: buildMainSettings(context),
+                    isExpanded: _isOpenAIRS[0],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return const ListTile(
+                        title: Text('Coordinates'),
+                      );
+                    },
+                    body: buildCoordSettings(context),
+                    isExpanded: _isOpenAIRS[1],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return const ListTile(
+                        title: Text('Connected devices'),
+                      );
+                    },
+                    body: buildConnectedDevices(context),
+                    isExpanded: _isOpenAIRS[2],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return const ListTile(
+                        title: Text('Power supply'),
+                      );
+                    },
+                    body: buildPowerSupply(context),
+                    isExpanded: _isOpenAIRS[3],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return const ListTile(
+                        title: Text('A-IRS'),
+                      );
+                    },
+                    body: buildAIRSSettings(context),
+                    isExpanded: _isOpenAIRS[4],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return const ListTile(
+                        title: Text('Save/Reset settings'),
+                      );
+                    },
+                    body: buildDeviceSettings(context),
+                    isExpanded: _isOpenAIRS[5],
                     canTapOnHeader: true,
                   ),
                 ],

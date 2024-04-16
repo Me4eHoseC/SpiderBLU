@@ -104,7 +104,7 @@ class FileManager {
 
         startPartTimer(filePart.getSender());
       } else {
-        print("Async part recieved");
+        print("Async part received");
         _fileParts.insert(0, filePart);
       }
 

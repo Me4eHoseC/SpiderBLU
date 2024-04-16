@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../core/AIRS.dart';
 import 'BasePackage.dart';
 import 'FileManager.dart';
 import 'NetCommonPackages.dart';
@@ -163,6 +164,8 @@ class PackageProcessor {
     var nd = global.itemsMan.get<NetDevice>(partner);
     if (nd == null) return;
 
+    global.pageWithMap.activateMapMarker(nd.id);
+
     if (package is VersionPackage) {
       nd.firmwareVersion = package.getVersion();
       global.sendingState[partner]?[global.ParametersGroup.firmwareVersion] = global.SendingState.defaultState;
@@ -227,12 +230,22 @@ class PackageProcessor {
     } else if (package is ModemFrequencyPackage) {
       nd.modemFrequency = package.getModemFrequency();
       global.sendingState[partner]?[global.ParametersGroup.signalStrength] = global.SendingState.defaultState;
-    } else if (package is StatePackage && nd is RT) {
-      nd.stateMask = package.getStateMask();
-      global.sendingState[partner]?[global.ParametersGroup.onOffInDev] = global.SendingState.defaultState;
-    } else if (package is PeripheryMaskPackage && nd is RT) {
-      nd.peripheryMask = package.getPeripheryMask();
-      global.sendingState[partner]?[global.ParametersGroup.deviceStatus] = global.SendingState.defaultState;
+    } else if (package is StatePackage) {
+      if (nd is RT) {
+        nd.stateMask = package.getStateMask();
+        global.sendingState[partner]?[global.ParametersGroup.onOffInDev] = global.SendingState.defaultState;
+      } else if (nd is AIRS){
+        nd.stateMask = package.getStateMask();
+        global.sendingState[partner]?[global.ParametersGroup.onOffInDev] = global.SendingState.defaultState;
+      }
+    } else if (package is PeripheryMaskPackage) {
+      if (nd is RT) {
+        nd.peripheryMask = package.getPeripheryMask();
+        global.sendingState[partner]?[global.ParametersGroup.deviceStatus] = global.SendingState.defaultState;
+      } else if (nd is AIRS) {
+        nd.peripheryMask = package.getPeripheryMask();
+        global.sendingState[partner]?[global.ParametersGroup.deviceStatus] = global.SendingState.defaultState;
+      }
     } else if (package is ExternalPowerPackage) {
       if (nd is RT) {
         nd.extPower = package.getExternalPowerState();
@@ -249,6 +262,9 @@ class PackageProcessor {
       } else if (nd is MCD) {
         nd.setBatMonParameters(package.getVoltage(), package.getTemperature());
         global.sendingState[partner]?[global.ParametersGroup.powerSupply] = global.SendingState.defaultState;
+      } else if (nd is AIRS){
+        nd.batMonVoltage = package.getVoltage();
+        global.sendingState[partner]?[global.ParametersGroup.powerSupply] = global.SendingState.defaultState;
       }
     }
     // TODO: add Battery state
@@ -256,7 +272,7 @@ class PackageProcessor {
       var isWeakBattery = package.getBatteryState() == BatteryState.BAD;
 
       if (isWeakBattery && !nd.weakBattery) {
-        //AlarmWeaBattery(nd.id());
+        //AlarmWeakBattery(nd.id());
       } else if (!isWeakBattery && nd.weakBattery) {
         //DeviceSettingsEvent(nd.id(), BatteryChanged);
       }
@@ -268,9 +284,14 @@ class PackageProcessor {
     } else if (package is SeismicSignalSwingPackage && nd is CSD) {
       nd.signalSwing = package.getSignalSwing();
       global.sendingState[partner]?[global.ParametersGroup.ratioSign] = global.SendingState.defaultState;
-    } else if (package is HumanSensitivityPackage && nd is CSD) {
-      nd.humanSensitivity = package.getHumanSensitivity();
-      global.sendingState[partner]?[global.ParametersGroup.humSens] = global.SendingState.defaultState;
+    } else if (package is HumanSensitivityPackage) {
+      if (nd is CSD) {
+        nd.humanSensitivity = package.getHumanSensitivity();
+        global.sendingState[partner]?[global.ParametersGroup.humSens] = global.SendingState.defaultState;
+      } else if (nd is AIRS) {
+        nd.sensitivity = package.getHumanSensitivity();
+        global.sendingState[partner]?[global.ParametersGroup.tresholdIRS] = global.SendingState.defaultState;
+      }
     } else if (package is HumanFreqThresholdPackage && nd is CSD) {
       nd.humanFreqThreshold = package.getHumanFreqThresholdPackage();
     } else if (package is TransportSensitivityPackage && nd is CSD) {
@@ -354,9 +375,9 @@ class PackageProcessor {
       global.sendingState[partner]?[global.ParametersGroup.unallowedHops] = global.SendingState.notAnswerState;
     } else if (pb is ModemFrequencyPackage || type == PackageType.GET_MODEM_FREQUENCY) {
       global.sendingState[partner]?[global.ParametersGroup.signalStrength] = global.SendingState.notAnswerState;
-    } else if (pb is StatePackage && nd is RT || type == PackageType.GET_STATE) {
+    } else if (pb is StatePackage || type == PackageType.GET_STATE) {
       global.sendingState[partner]?[global.ParametersGroup.onOffInDev] = global.SendingState.notAnswerState;
-    } else if (pb is PeripheryMaskPackage && nd is RT || type == PackageType.GET_PERIPHERY) {
+    } else if (pb is PeripheryMaskPackage || type == PackageType.GET_PERIPHERY) {
       global.sendingState[partner]?[global.ParametersGroup.deviceStatus] = global.SendingState.notAnswerState;
     } else if (pb is ExternalPowerPackage || type == PackageType.GET_EXTERNAL_POWER) {
       if (nd is RT) {
@@ -364,7 +385,7 @@ class PackageProcessor {
       } else if (nd is MCD) {
         global.sendingState[partner]?[global.ParametersGroup.gps] = global.SendingState.notAnswerState;
       }
-    } else if (pb is BatteryMonitorPackage|| type == PackageType.GET_BATTERY_MONITOR) {
+    } else if (pb is BatteryMonitorPackage || type == PackageType.GET_BATTERY_MONITOR) {
       global.sendingState[partner]?[global.ParametersGroup.powerSupply] = global.SendingState.notAnswerState;
     }
     // TODO: add Battery state
@@ -374,6 +395,8 @@ class PackageProcessor {
       global.sendingState[partner]?[global.ParametersGroup.ratioSign] = global.SendingState.notAnswerState;
     } else if (pb is HumanSensitivityPackage && nd is CSD || type == PackageType.GET_HUMAN_SENSITIVITY) {
       global.sendingState[partner]?[global.ParametersGroup.humSens] = global.SendingState.notAnswerState;
+    } else if (pb is HumanSensitivityPackage && nd is AIRS || type == PackageType.GET_HUMAN_SENSITIVITY) {
+      global.sendingState[partner]?[global.ParametersGroup.tresholdIRS] = global.SendingState.notAnswerState;
     } else if (pb is TransportSensitivityPackage && nd is CSD || type == PackageType.GET_TRANSPORT_SENSITIVITY) {
       global.sendingState[partner]?[global.ParametersGroup.autoSens] = global.SendingState.notAnswerState;
     } else if (pb is CriterionFilterPackage && nd is CSD || type == PackageType.GET_CRITERION_FILTER) {
@@ -390,8 +413,7 @@ class PackageProcessor {
       global.sendingState[partner]?[global.ParametersGroup.safetyCatch] = global.SendingState.notAnswerState;
     } else if (pb is AutoExternalPowerPackage && nd is RT || type == PackageType.GET_AUTO_EXT_POWER) {
       global.sendingState[partner]?[global.ParametersGroup.switchingBreak] = global.SendingState.notAnswerState;
-    }
-    else if (pb is ExternalPowerPackage && nd is RT || type == PackageType.GET_EXTERNAL_POWER) {
+    } else if (pb is ExternalPowerPackage && nd is RT || type == PackageType.GET_EXTERNAL_POWER) {
       global.sendingState[partner]?[global.ParametersGroup.power] = global.SendingState.notAnswerState;
     }
     global.pollManager.packageNotSent(pb, transactionId);

@@ -7,7 +7,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
+import 'package:projects/core/AIRS.dart';
 
+import '../radionet/NetCommonPackages.dart';
 import '../radionet/PackageTypes.dart';
 
 import '../radionet/BasePackage.dart';
@@ -139,6 +141,30 @@ class HomeNotifier with ChangeNotifier {
   }
 }
 
+class AddDeviceNotifier with ChangeNotifier {
+  AddDeviceNotifier();
+
+  String imageName = '.png';
+  String imageStatus = 'online';
+  String imageSelected = '';
+
+  bool _selected = false;
+
+  bool get selected => _selected;
+
+  void changeSelected() {
+    if (_selected) {
+      _selected = false;
+      imageSelected = '';
+      notifyListeners();
+    } else {
+      _selected = true;
+      imageSelected = ' selected';
+      notifyListeners();
+    }
+  }
+}
+
 class MarkerData {
   int? id;
   String? type;
@@ -224,9 +250,20 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     }
     if (type == MCD.Name(global.transLang)) {
       return 'assets/devices/mcd';
+    }
+    if (type == AIRS.Name(global.transLang)) {
+      return 'assets/devices/airs';
     } else {
       return '';
     }
+  }
+
+  void setTimeForNewDevice(int devId) {
+    global.deviceParametersPage.setTimeForNewDevice(devId);
+  }
+
+  void getCordForNewDevice(int devId) {
+    global.deviceParametersPage.getCordForNewDevice(devId);
   }
 
   void saveMapMarkersInFile() async {
@@ -315,6 +352,8 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
       pin = CSD();
     } else if (type == MCD.Name()) {
       pin = MCD();
+    } else if (type == AIRS.Name()) {
+      pin = AIRS();
     } else {
       pin = RT();
     }
@@ -327,6 +366,14 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     global.itemsMan.selectionChanged = selectedItem;
     global.itemsMan.itemRemoved = itemRemoved;
     global.deviceParametersPage.addDeviceInDropdown(id, type);
+
+    if (_page.flagGetCord){
+      getCordForNewDevice(id);
+    }
+    if (_page.flagGetTime){
+      setTimeForNewDevice(id);
+    }
+
     selectMapMarker(id);
     saveMapMarkersInFile();
   }
@@ -401,6 +448,8 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
         newItem = CSD();
       } else if (newType == MCD.Name()) {
         newItem = MCD();
+      } else if (newType == AIRS.Name()) {
+        newItem = AIRS();
       } else {
         newItem = RT();
       }
@@ -447,6 +496,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     }
     if (global.itemsMan.isSelected(id)) {
       unselectMapMarker();
+      _page.clearBottomMenu(null,null);
     }
 
     global.itemsMan.removeItem(id);
@@ -535,13 +585,28 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
   Location location = Location();
   LatLng? myCords;
   MapController mapController = MapController();
+  Widget? listOfDevices;
 
-  int bufferId = 195;
-  String bufferType = STD.Name();
+  String bufferType = '';
+  int bufferId = global.itemsMan.getNextId();
+  bool flagGetTime = false;
+  bool flagGetCord = false;
+  TextEditingController controllerId = TextEditingController();
+
+  List<Expanded> bufListButton = [];
+
+  LatLng? pointForNewDevice;
+
+  Map<String, AddDeviceNotifier> mapSelectedDevices = {};
 
   @override
   void initState() {
     super.initState();
+    makeListOfDevices();
+    if (bufferType == ''){
+      bufferType = global.deviceTypeList[0];
+      mapSelectedDevices[bufferType]!.changeSelected();
+    }
 
     widget.loadMapMarkersFromFile().then((_) {
       if (global.flagCheckSPPU == false) {
@@ -556,9 +621,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
       }
     });
 
-    Timer.periodic(Duration.zero, (timer) {
-      setState(() {});
-    });
+    Timer.periodic(Duration.zero, (_) => setState(() {}));
 
     Timer.periodic(const Duration(seconds: 1), (timer) {
       location.getLocation().then((p) {
@@ -591,21 +654,6 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
       }
     });
   }
-
-  /*void startDiscovery() {
-    global.stdConnectionManager.setStateOnDone = () {
-      setState(() {});
-    };
-    setState(() {
-      global.stdConnectionManager.searchAndConnect();
-    });
-  }
-
-  void disconnect() {
-    setState(() {
-      global.stdConnectionManager.disconnect();
-    });
-  }*/
 
   void selectMapMarker(int id) {
     widget.selectMapMarker(id);
@@ -647,7 +695,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
     });
   }
 
-  void clearBottomMenu(var tap, LatLng cord) {
+  void clearBottomMenu(var tap, LatLng? cord) {
     setState(() {
       changeBottomBarWidget(-1, null, null);
       widget.unselectMapMarker();
@@ -781,54 +829,121 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
     });
   }
 
-  void addNewDeviceOnMap(LatLng cord) {
+  Expanded iconRadioButton(int index) {
+    return Expanded(
+      flex: 1,
+      child: InkResponse(
+        child: ListenableBuilder(
+          listenable: mapSelectedDevices[global.deviceTypeList[index]]!,
+          builder: (context, child) => Ink.image(
+            width: 70,
+            height: 70,
+            image: Image.asset(
+              mapSelectedDevices[global.deviceTypeList[index]]!.imageStatus +
+                  mapSelectedDevices[global.deviceTypeList[index]]!.imageSelected +
+                  mapSelectedDevices[global.deviceTypeList[index]]!.imageName,
+              package: widget.setImagePackage(global.deviceTypeList[index]),
+            ).image,
+          ),
+        ),
+        onTap: () {
+          if (bufferType != '') {
+            mapSelectedDevices[bufferType]!.changeSelected();
+          }
+          bufferType = global.deviceTypeList[index];
+          mapSelectedDevices[bufferType]!.changeSelected();
+          addNewDeviceOnMap(pointForNewDevice!);
+        },
+      ),
+    );
+  }
+
+  void makeListOfDevices() {
+    for (int j = 0; j < global.deviceTypeList.length; j++) {
+      mapSelectedDevices[global.deviceTypeList[j]] = AddDeviceNotifier();
+      bufListButton.add(iconRadioButton(j));
+      print(j);
+    }
+  }
+
+  _changeId() {
     setState(() {
-      widget.bottomBarWidget = SizedBox(
-        height: 100,
-        child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-          SizedBox(
-            height: 100,
-            width: 200,
-            child: TextField(
-              keyboardType: TextInputType.number,
-              inputFormatters: <TextInputFormatter>[
-                FilteringTextInputFormatter.digitsOnly,
-              ],
-              maxLength: 3,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                icon: Icon(Icons.developer_board),
-                labelText: 'Device ID',
-                hintText: '',
-                helperText: 'Input device ID',
-              ),
-              onChanged: (num) => bufferId = int.parse(num),
-              onSubmitted: (num) => bufferId = int.parse(num),
-            ),
-          ),
-          DropdownButton<String>(
-            icon: const Icon(Icons.keyboard_double_arrow_down),
-            onChanged: (String? value) {
-              bufferType = value!;
-              addNewDeviceOnMap(cord);
-            },
-            value: bufferType,
-            items: global.deviceTypeList.map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-          ),
-          TextButton(onPressed: () => checkCorrectIdAndType(bufferId, bufferType, cord), child: const Text('Add device'))
-        ]),
-      );
+      bufferId = int.parse(controllerId.text);
+      global.initSendingState(bufferId);
     });
+  }
+
+  void addNewDeviceOnMap(LatLng cord) {
+    pointForNewDevice = cord;
+    bufferId = int.parse(controllerId.text);
+    controllerId.addListener(_changeId);
+    widget.bottomBarWidget = SizedBox(
+      height: 150,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Row(
+            children: bufListButton,
+          ),
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: CheckboxListTile(
+                  title: const Icon(Icons.access_time_outlined),
+                  value: flagGetTime,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  onChanged: (bool? value) {
+                    flagGetTime = value!;
+                    addNewDeviceOnMap(pointForNewDevice!);
+                  },
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: CheckboxListTile(
+                  title: const Icon(Icons.location_pin),
+                  value: flagGetCord,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  onChanged: (bool? value) {
+                    flagGetCord = value!;
+                    addNewDeviceOnMap(pointForNewDevice!);
+                  },
+                ),
+              ),
+              Expanded(
+                flex: 3,
+                child: TextField(
+                  controller: controllerId,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: <TextInputFormatter>[
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  maxLength: 3,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Device ID',
+                    counterText: '',
+                  ),
+                ),
+              ),
+              Expanded(
+                child: IconButton(
+                  onPressed: () => checkCorrectIdAndType(bufferId, bufferType, cord),
+                  icon: const Icon(Icons.add),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   void changeBottomBarWidget(int counter, int? id, LatLng? point) {
     setState(() {
       if (counter == 0) {
+        controllerId.text = global.itemsMan.getNextId().toString();
         addNewDeviceOnMap(point!);
       }
       if (counter == -1) {

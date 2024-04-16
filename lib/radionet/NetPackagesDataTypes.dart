@@ -57,6 +57,7 @@ class PeripheryMask {
   static const int LINE2 = 1 << 1;
   static const int AUDIO = 1 << 2;
   static const int CAMERA = 1 << 3;
+  static const int IRS = 1 << 4;
 }
 
 class YellowAlarm {

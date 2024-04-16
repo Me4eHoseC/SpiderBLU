@@ -5,6 +5,7 @@ import 'package:projects/core/NetDevice.dart';
 import 'package:projects/std/STDConnectionManager.dart';
 import 'package:provider/provider.dart';
 
+import 'core/AIRS.dart';
 import 'core/CPD.dart';
 import 'core/CSD.dart';
 import 'core/MCD.dart';
@@ -86,6 +87,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     global.deviceTypeList.add(CSD.Name());
     global.deviceTypeList.add(CPD.Name());
     global.deviceTypeList.add(MCD.Name());
+    global.deviceTypeList.add(AIRS.Name());
 
     Timer.periodic(Duration.zero, (_) {
       setState(() {

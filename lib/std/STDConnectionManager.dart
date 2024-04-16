@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
 import 'dart:typed_data';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
@@ -13,6 +15,7 @@ import '../radionet/PackagesParser.dart';
 import 'BTSTD.dart';
 import 'ISTD.dart';
 import 'SerialSTD.dart';
+import 'TCPSTD.dart';
 
 enum StdConnectionType {
   TCPSTD,
@@ -50,7 +53,7 @@ class STDConnectionManager {
 
   // BT STD parameters
   bool isUseBT = true;
-  String btMacAddress = '00:21:07:00:21:4F'; //todo remove when setting storage implemented
+  String btMacAddress = ''; //todo remove when setting storage implemented
 
   int _btSTDId = -1;
   Timer? _btReadTimer;
@@ -59,13 +62,78 @@ class STDConnectionManager {
   StreamSubscription<Uint8List>? _btSubscription;
 
   bool isUseSerial = true;
-  String serialManName = 'FTDI';
-  int serialVID = 1027;
+  String serialManName = '';
+  int serialVID = 0;
   int _serialSTDId = -1;
   Timer? _serialReadTimer;
   Uint8List _serialBuffer = Uint8List(0);
   StreamSubscription<Uint8List>? _serialSubscription;
   UsbPort? _serialPort;
+
+  bool isUseTCP = true;
+
+  String IPAddress = '';
+  int IPPort = 0;
+  int _tcpSTDId = -1;
+  Timer? _tcpReadTimer;
+  Uint8List _tcpBuffer = Uint8List(0);
+  StreamSubscription<Uint8List>? _tcpSubscription;
+  Socket? _tcpSocket;
+
+  global.SettingsForSave? settingsForSave;
+
+  void initSaveSettings() {
+    settingsForSave = global.SettingsForSave(isUseBT, btMacAddress, isUseSerial, serialManName, serialVID, isUseTCP, IPAddress, IPPort);
+  }
+
+  Future<void> loadSettingsFromFile() async {
+    global.getPermission();
+    var dir = global.pathToProject;
+    File file = File('${dir.path}/settings.json');
+    if (!await file.exists()) {
+      await file.create(recursive: true);
+      return;
+    }
+    final data = await file.readAsString();
+    final decoded = json.decode(data);
+    for (final item in decoded) {
+      isUseBT = global.SettingsForSave.fromJson(item).btFlag;
+      if (global.SettingsForSave.fromJson(item).btMacAddressSave != ''){
+        btMacAddress = global.SettingsForSave.fromJson(item).btMacAddressSave!;
+      }
+
+      isUseSerial = global.SettingsForSave.fromJson(item).serialFlag;
+      if (global.SettingsForSave.fromJson(item).serialManNameSave != ''){
+        serialManName = global.SettingsForSave.fromJson(item).serialManNameSave!;
+      }
+      if (global.SettingsForSave.fromJson(item).serialVIDSave != null){
+        serialVID = global.SettingsForSave.fromJson(item).serialVIDSave!;
+      }
+
+      isUseTCP = global.SettingsForSave.fromJson(item).tcpFlag;
+      if (global.SettingsForSave.fromJson(item).IPAddressSave != ''){
+        IPAddress = global.SettingsForSave.fromJson(item).IPAddressSave!;
+      }
+      if (global.SettingsForSave.fromJson(item).IPPortSave != null){
+        IPPort = global.SettingsForSave.fromJson(item).IPPortSave!;
+      }
+    }
+  }
+
+  void saveSettingsInFile() async {
+    initSaveSettings();
+    global.getPermission();
+    var dir = global.pathToProject;
+    File file = File('${dir.path}/settings.json');
+    if (!await file.exists()) {
+      await file.create(recursive: true);
+    }
+    var bufJson = '[';
+    bufJson += json.encode(settingsForSave);
+    bufJson += ']';
+    print (bufJson);
+    await file.writeAsString(bufJson);
+  }
 
   void _freeBtConnectionResources() {
     _btSTDId = -1;
@@ -85,6 +153,15 @@ class STDConnectionManager {
     _serialPort = null;
   }
 
+  void _freeTCPConnectionResources() {
+    _tcpSTDId = -1;
+    _tcpReadTimer?.cancel();
+    _tcpReadTimer = null;
+    _tcpBuffer = Uint8List(0);
+    _tcpSubscription = null;
+    _tcpSocket = null;
+  }
+
   Timer? _connectRoutineTimer;
 
   void setSTDId(int stdID) {
@@ -93,14 +170,16 @@ class STDConnectionManager {
 
   void startConnectRoutine() {
     if (connectRoutineIsRunning) return;
+
     connectRoutineIsRunning = true;
 
     _restartConnectRoutineTimer(0);
   }
 
   void _restartConnectRoutineTimer([int seconds = 15]) {
-    if (!connectRoutineIsRunning) return;
-
+    print ('TRY TO RESTART');
+    if (_connection != null || _tcpSocket != null || _serialPort != null) return;
+    print ('CONNECT ROUTINE RESTARTED');
     _connectRoutineTimer?.cancel();
     _connectRoutineTimer = Timer(Duration(seconds: seconds), _connectRoutine);
   }
@@ -129,9 +208,11 @@ class STDConnectionManager {
   }
 
   void _tryConnectSTD(int id) {
-    ISTD? std;
+    bool nothingExecuted = true;
 
-    if (std == null && _connection == null && isUseBT && btMacAddress != '') {
+    if (_connection == null && isUseBT && btMacAddress != '') {
+      nothingExecuted = false;
+
       print('Connecting to BT service...');
 
       _btSTDId = id;
@@ -143,12 +224,31 @@ class STDConnectionManager {
       });
     }
 
-    if (std == null && _serialPort == null && isUseSerial && serialManName != '' && serialVID != 0) {
+    if (_serialPort == null && isUseSerial && serialManName != '' && serialVID != 0) {
+      nothingExecuted = false;
+
       print('Connecting to serial port...');
 
       _serialSTDId = id;
 
       _getSerialPort(serialManName, serialVID).then(_onSerialPortFound);
+    }
+
+    if (_tcpSocket == null && isUseTCP && IPAddress != '' && IPPort != -1) {
+      nothingExecuted = false;
+
+      _tcpSTDId = id;
+
+      Socket.connect(IPAddress, IPPort).then(_onTCPConnected).catchError((err) {
+        print(err);
+        _freeTCPConnectionResources();
+        _restartConnectRoutineTimer();
+      });
+    }
+
+    if (nothingExecuted) {
+      print('NOTHING');
+      stopConnectRoutine(); // all settings are empty
     }
   }
 
@@ -251,13 +351,13 @@ class STDConnectionManager {
       info.type = StdConnectionType.SERIALSTD;
 
       _newSTDConnected(info);
+      _freeSerialConnectionResources();
     } else {
       print("Wrong Serial STD ID");
 
+      _freeSerialConnectionResources();
       _restartConnectRoutineTimer();
     }
-
-    _freeSerialConnectionResources();
   }
 
   void _onSerialReadTimerTimeout() {
@@ -332,15 +432,16 @@ class STDConnectionManager {
       info.type = StdConnectionType.BTSTD;
 
       _newSTDConnected(info);
+
+      _freeBtConnectionResources();
     } else {
       print("Wrong BT STD ID");
 
+      _freeBtConnectionResources();
       _restartConnectRoutineTimer();
 
       _connection?.close();
     }
-
-    _freeBtConnectionResources();
   }
 
   void _onBTReadTimerTimeout() {
@@ -349,6 +450,92 @@ class STDConnectionManager {
     _connection?.close();
 
     _freeBtConnectionResources();
+    _restartConnectRoutineTimer();
+  }
+
+  void _onTCPConnected(Socket socket) {
+    _tcpSocket = socket;
+    _tcpSubscription = _tcpSocket!.listen(_onTCPReadyRead);
+
+    print("Sending request...");
+
+    // send test package
+    var package = BasePackage.makeBaseRequest(_tcpSTDId, PackageType.GET_VERSION);
+    var bytes = package.toBytesArray();
+
+    // Add some bytes to wake up STD
+    // the amount of bytes should be more than 22
+    // otherwise TCP STD may not wake up
+
+    Uint8List trash = Uint8List(50);
+    Uint8List req = Uint8List(trash.length + bytes.length);
+
+    req.setAll(0, trash);
+    req.setAll(trash.length, bytes);
+
+    _tcpSocket!.add(req);
+    _tcpSocket!.flush();
+
+    // wait for ready read
+    _tcpReadTimer?.cancel();
+    _tcpReadTimer = Timer(const Duration(seconds: 10), _onTCPReadTimerTimeout);
+  }
+
+  void _onTCPReadyRead(Uint8List data) {
+    print("Reading TCP data...");
+
+    _tcpReadTimer?.cancel();
+
+    Uint8List tmp = Uint8List(_tcpBuffer.length + data.length);
+    tmp.setAll(0, _tcpBuffer);
+    tmp.setAll(_tcpBuffer.length, data);
+    _tcpBuffer = tmp;
+
+    BasePackage? receivedPackage;
+    bool mayHaveOneMorePackage = true;
+    while (mayHaveOneMorePackage) {
+      var ref = Reference<Uint8List>(_tcpBuffer);
+      var pair = PackagesParser.tryFindAndParsePackage(ref);
+
+      receivedPackage = pair.first;
+      mayHaveOneMorePackage = pair.second;
+
+      _tcpBuffer = ref.value;
+
+      if (receivedPackage != null) break;
+    }
+
+    if (receivedPackage == null) {
+      _tcpReadTimer = Timer(const Duration(seconds: 10), _onTCPReadTimerTimeout);
+      return;
+    }
+
+    var isSTD = _checkStdPackage(_tcpSTDId, receivedPackage);
+    if (isSTD) {
+      print("TCP STD connected");
+
+      StdInfo info = StdInfo();
+      info.std = TCPSTD(_tcpSTDId, _tcpSocket);
+      info.type = StdConnectionType.TCPSTD;
+
+      _newSTDConnected(info);
+      _freeTCPConnectionResources();
+    } else {
+      print("Wrong TCP STD ID");
+
+      _freeTCPConnectionResources();
+      _restartConnectRoutineTimer();
+
+      _tcpSocket?.close();
+    }
+  }
+
+  void _onTCPReadTimerTimeout() {
+    print('No package received from TCP connection');
+
+    _tcpSocket?.close();
+
+    _freeTCPConnectionResources();
     _restartConnectRoutineTimer();
   }
 
@@ -433,6 +620,7 @@ class STDConnectionManager {
 
     var subscription = _btSubscription;
     if (std is SerialSTD) subscription = _serialSubscription;
+    if (std is TCPSTD) subscription = _tcpSubscription;
 
     subscription?.onData(std.onReadyRead);
     subscription?.onDone(std.onDone);

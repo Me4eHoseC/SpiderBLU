@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:typed_data';
-
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:usb_serial/usb_serial.dart';
@@ -34,11 +34,32 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
   UsbDevice? usbDevice;
   List<UsbDevice> listUsbDevices = [];
 
+  String ipv4Address = global.stdConnectionManager.IPAddress;
+  String port = global.stdConnectionManager.IPPort.toString();
+
+  TextEditingController _controllerIP = TextEditingController();
+  TextEditingController _controllerPort = TextEditingController();
+
   @override
   void initState() {
     //todo read settings file and init name and mac from file
     super.initState();
+    global.stdConnectionManager.loadSettingsFromFile().then((_) => initAfterLoad());
+    global.stdConnectionManager.initSaveSettings();
     Timer.periodic(const Duration(milliseconds: 200), (timer) => setState(() {}));
+  }
+
+  void initAfterLoad(){
+    print('11111111111111111111111111111111');
+    bluetoothMAC = global.stdConnectionManager.btMacAddress;
+    selectedSerialManNameFromFile = global.stdConnectionManager.serialManName;
+    selectedSerialVIDFromFile = global.stdConnectionManager.serialVID;
+    ipv4Address = global.stdConnectionManager.IPAddress;
+    port = global.stdConnectionManager.IPPort.toString();
+    _controllerIP.text = ipv4Address;
+    _controllerIP.addListener(_changeIP);
+    _controllerPort.text = port;
+    _controllerPort.addListener(_changePort);
   }
 
   void refillSerialInDropdown(List<UsbDevice> devices) {
@@ -83,6 +104,14 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
       listUsbDevices = value;
       refillSerialInDropdown(value);
     });
+  }
+
+  _changeIP() {
+    setState(() => ipv4Address = _controllerIP.text);
+  }
+
+  _changePort() {
+    setState(() => port = _controllerPort.text);
   }
 
   void addBluetoothInDropdown(String name, String mac) {
@@ -183,6 +212,7 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
         onChanged: (bool? value) {
           setState(() {
             global.stdConnectionManager.isUseBT = value!;
+            global.stdConnectionManager.saveSettingsInFile();
           });
         });
 
@@ -199,13 +229,15 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
             style: TextStyle(fontSize: commonTextSize),
           ),
           value: btState,
-          onChanged: (isTurnOff) {
-            if (isTurnOff) {
-              FlutterBluetoothSerial.instance.requestEnable();
-            } else {
-              FlutterBluetoothSerial.instance.requestDisable();
-            }
-          },
+          onChanged: global.stdConnectionManager.isUseBT
+              ? (isTurnOff) {
+                  if (isTurnOff) {
+                    FlutterBluetoothSerial.instance.requestEnable();
+                  } else {
+                    FlutterBluetoothSerial.instance.requestDisable();
+                  }
+                }
+              : null,
         );
       },
     );
@@ -220,6 +252,21 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
         onChanged: (bool? value) {
           setState(() {
             global.stdConnectionManager.isUseSerial = value!;
+            global.stdConnectionManager.saveSettingsInFile();
+          });
+        });
+
+    var tcpStateCheckBox = CheckboxListTile(
+        title: const Text(
+          "TCP STD",
+          style: TextStyle(fontSize: headingTextSize),
+        ),
+        value: global.stdConnectionManager.isUseTCP,
+        controlAffinity: ListTileControlAffinity.leading,
+        onChanged: (bool? value) {
+          setState(() {
+            global.stdConnectionManager.isUseTCP = value!;
+            global.stdConnectionManager.saveSettingsInFile();
           });
         });
 
@@ -244,12 +291,18 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
               ],
             ),
             btStateCheckBox,
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Padding(
-                  padding: EdgeInsets.only(left: 16, bottom: 10),
-                  child: Text('Remote BT devices:', style: TextStyle(fontSize: commonTextSize)),
+                  padding: const EdgeInsets.only(left: 16, bottom: 10),
+                  child: Text(
+                    'Remote BT devices:',
+                    style: TextStyle(
+                      fontSize: commonTextSize,
+                      color: btState && global.stdConnectionManager.isUseBT ? null : Theme.of(context).disabledColor,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -261,7 +314,7 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                   Expanded(
                     flex: 1,
                     child: OutlinedButton(
-                      onPressed: btState
+                      onPressed: btState && global.stdConnectionManager.isUseBT
                           ? isDiscovering
                               ? stopDiscovery
                               : repeatDiscovery
@@ -291,12 +344,14 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                   Expanded(
                     flex: 1,
                     child: OutlinedButton(
-                      onPressed: btState
+                      onPressed: btState && global.stdConnectionManager.isUseBT
                           ? () {
                               //todo save in file bluetooth mac
                               selectedBluetoothMacFromFile = bluetoothMAC;
                               global.stdConnectionManager.btMacAddress = bluetoothMAC;
                               refillDropdownMenuItems();
+
+                              global.stdConnectionManager.saveSettingsInFile();
 
                               global.stdConnectionManager.startConnectRoutine();
                             }
@@ -324,6 +379,21 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                 )
               ],
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 16, bottom: 10),
+                  child: Text(
+                    'Available COM devices:',
+                    style: TextStyle(
+                      fontSize: commonTextSize,
+                      color: global.stdConnectionManager.isUseSerial ? null : Theme.of(context).disabledColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
@@ -332,7 +402,7 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                   Expanded(
                     flex: 1,
                     child: OutlinedButton(
-                      onPressed: serialDiscovery,
+                      onPressed: global.stdConnectionManager.isUseSerial ? serialDiscovery : null,
                       child: const Icon(Icons.replay),
                     ),
                   ),
@@ -345,29 +415,157 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                       items: dropdownSerialItems,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       hint: const Text('Select device'),
-                      onChanged: (UsbDevice? value) {
-                        setState(() {
-                          usbDevice = value!;
-                          print(usbDevice?.vid);
-                          print(usbDevice?.manufacturerName);
-                        });
-                      },
+                      onChanged: global.stdConnectionManager.isUseSerial
+                          ? (UsbDevice? value) {
+                              setState(() {
+                                usbDevice = value!;
+                              });
+                            }
+                          : null,
                     ),
                   ),
                   Expanded(
                     flex: 1,
                     child: OutlinedButton(
-                      onPressed: () {
-                        if (usbDevice == null) return;
-                        selectedSerialManNameFromFile = usbDevice!.manufacturerName ?? '';
-                        selectedSerialVIDFromFile = usbDevice!.vid ?? 0;
+                      onPressed: global.stdConnectionManager.isUseSerial
+                          ? () {
+                              if (usbDevice == null) return;
+                              selectedSerialManNameFromFile = usbDevice!.manufacturerName ?? '';
+                              selectedSerialVIDFromFile = usbDevice!.vid ?? 0;
 
-                        global.stdConnectionManager.serialManName = selectedSerialManNameFromFile;
-                        global.stdConnectionManager.serialVID = selectedSerialVIDFromFile;
+                              global.stdConnectionManager.serialManName = selectedSerialManNameFromFile;
+                              global.stdConnectionManager.serialVID = selectedSerialVIDFromFile;
 
-                        refillSerialInDropdown(listUsbDevices);
-                        global.stdConnectionManager.startConnectRoutine();
-                      },
+                              refillSerialInDropdown(listUsbDevices);
+
+                              global.stdConnectionManager.saveSettingsInFile();
+
+                              global.stdConnectionManager.startConnectRoutine();
+                            }
+                          : null,
+                      child: const Icon(Icons.save),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: Container(),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: tcpStateCheckBox,
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Container(),
+                )
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 16, bottom: 10),
+                  child: Text(
+                    'Enter IPv4 address and port:',
+                    style: TextStyle(
+                      fontSize: commonTextSize,
+                      color: global.stdConnectionManager.isUseTCP ? null : Theme.of(context).disabledColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    flex: 6,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: TextFormField(
+                        controller: _controllerIP,
+                        enabled: global.stdConnectionManager.isUseTCP,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        decoration: const InputDecoration(
+                          labelText: 'IPv4',
+                          hintText: '192.168.1.252',
+                        ),
+                        validator: (value) {
+                          if (value == null) return null;
+                          if (value.isEmpty) return "IPv4 address can't be empty";
+
+                          var match = RegExp(r'^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$').hasMatch(value);
+
+                          if (!match) return "Enter correct IPv4 address";
+
+                          return null;
+                        },
+                        keyboardType: TextInputType.number,
+                        maxLength: 15,
+                        onChanged: (value) => ipv4Address = value,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: Container(),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                      flex: 6,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: TextFormField(
+                          enabled: global.stdConnectionManager.isUseTCP,
+                          controller: _controllerPort,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          decoration: const InputDecoration(
+                            labelText: 'Port',
+                            hintText: '20108',
+                          ),
+                          keyboardType: TextInputType.number,
+                          maxLength: 5,
+                          validator: (value) {
+                            if (value == null) return null;
+                            if (value.isEmpty) return "Port value can't be empty";
+
+                            var portCheck = int.parse(value);
+
+                            if (0 < portCheck && portCheck < 65535) return null;
+
+                            return "Enter correct IP port";
+                          },
+                          onChanged: (value) => port = value,
+                        ),
+                      )),
+                  Expanded(
+                    flex: 1,
+                    child: OutlinedButton(
+                      onPressed: global.stdConnectionManager.isUseTCP
+                          ? () {
+                              global.stdConnectionManager.IPAddress = ipv4Address;
+                              global.stdConnectionManager.IPPort = int.parse(port);
+
+                              global.stdConnectionManager.saveSettingsInFile();
+
+                              global.stdConnectionManager.startConnectRoutine();
+                            }
+                          : null,
                       child: const Icon(Icons.save),
                     ),
                   ),

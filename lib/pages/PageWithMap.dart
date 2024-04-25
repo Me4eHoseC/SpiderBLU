@@ -862,7 +862,6 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
     for (int j = 0; j < global.deviceTypeList.length; j++) {
       mapSelectedDevices[global.deviceTypeList[j]] = AddDeviceNotifier();
       bufListButton.add(iconRadioButton(j));
-      print(j);
     }
   }
 

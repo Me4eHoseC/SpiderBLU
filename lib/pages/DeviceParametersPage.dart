@@ -116,6 +116,8 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
 
     if (nd == null) return;
 
+    global.pageWithMap.activateMapMarker(nd.id);
+
     if (basePackage is CoordinatesPackage) {
       global.listMapMarkers[sender]?.point.latitude = nd.latitude;
       global.listMapMarkers[sender]?.point.longitude = nd.longitude;
@@ -158,6 +160,8 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
       if (global.itemsMan.getAllIds().contains(bufDev)) {
         global.pageWithMap.alarmMapMarker(bufDev, package.getAlarmReason());
         addProtocolLine('Alarm: ${package.getAlarmType()} ${package.getAlarmReason()} (${package.getAlarmNumber()})');
+        global.protocolPage.addAlarm('${DateTime.now().toString().substring(0,19)} Device #${package.getSender()} '
+            'Alarm: ${package.getAlarmType().name} ${package.getAlarmReason().name} (${package.getAlarmNumber()})');
       }
     }
   }
@@ -1658,6 +1662,17 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     if (widget._cloneItem is RT && widget._cloneItem is! AIRS) {
       var rt = widget._cloneItem as RT;
 
+      children.add(
+        const Row(
+          children: [
+            Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text("On/Off in. dev.:"),
+            ),
+          ],
+        ),
+      );
+
       if (widget._cloneItem is CSD) {
         children.add(
           Row(
@@ -1689,25 +1704,9 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                       }),
                 ),
               ),
-              Expanded(
+              const Expanded(
                 flex: 1,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      onPressed: () => takeInternalDeviceParamClick(rt.id),
-                      icon: const Icon(
-                        Icons.refresh,
-                        color: Colors.blue,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => setInternalDeviceParamClick(rt.id, rt.stateMask),
-                      icon: const Icon(Icons.check),
-                      color: Colors.green,
-                    ),
-                  ],
-                ),
+                child: SizedBox(),
               ),
             ],
           ),
@@ -1745,30 +1744,106 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                       }),
                 ),
               ),
-              Expanded(
+              const Expanded(
                 flex: 1,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      onPressed: () => takeInternalDeviceParamClick(rt.id),
-                      icon: const Icon(
-                        Icons.refresh,
-                        color: Colors.blue,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => setInternalDeviceParamClick(rt.id, rt.stateMask),
-                      icon: const Icon(Icons.check),
-                      color: Colors.green,
-                    ),
-                  ],
-                ),
+                child: SizedBox(),
               ),
             ],
           ),
         );
       }
+
+      children.add(
+        Row(
+          children: [
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Text("In. dev. 1:"),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
+                    ? trySend
+                    : defaultColor,
+                child: Checkbox(
+                    value: rt.stateMask & DeviceState.MONITORING_LINE1 != 0,
+                    onChanged: (bool? value) {
+                      if (value!) {
+                        rt.stateMask |= DeviceState.MONITORING_LINE1;
+                      } else {
+                        rt.stateMask &= ~DeviceState.MONITORING_LINE1;
+                      }
+                      setState(() {});
+                    }),
+              ),
+            ),
+            const Expanded(
+              flex: 1,
+              child: SizedBox(),
+            ),
+          ],
+        ),
+      );
+      children.add(
+        Row(
+          children: [
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Text("In. dev. 2:"),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
+                    ? notSend
+                    : global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
+                    ? trySend
+                    : defaultColor,
+                child: Checkbox(
+                    value: rt.stateMask & DeviceState.MONITORING_LINE2 != 0,
+                    onChanged: (bool? value) {
+                      if (value!) {
+                        rt.stateMask |= DeviceState.MONITORING_LINE2;
+                      } else {
+                        rt.stateMask &= ~DeviceState.MONITORING_LINE2;
+                      }
+                      setState(() {});
+                    }),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: () => takeInternalDeviceParamClick(rt.id),
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => setInternalDeviceParamClick(rt.id, rt.stateMask),
+                    icon: const Icon(Icons.check),
+                    color: Colors.green,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+
 
       if (widget._cloneItem is RT) {
         children.add(
@@ -1852,7 +1927,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               Expanded(
                 flex: 1,
                 child: widget._cloneItem is CPD
-                    ? SizedBox()
+                    ? const SizedBox()
                     : IconButton(
                         onPressed: () => takeInternalDeviceStateClick(rt.id),
                         icon: const Icon(
@@ -3253,7 +3328,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     );
   }
 
-  final List<bool> _isOpenMain = List.filled(4, false);
+  final List<bool> _isOpenMain = List.filled(6, false);
   final List<bool> _isOpenCSD = List.filled(8, false);
   final List<bool> _isOpenCFU = List.filled(8, false);
   final List<bool> _isOpenRT = List.filled(7, false);
@@ -3321,11 +3396,31 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
                       return const ListTile(
+                        title: Text('Connected devices'),
+                      );
+                    },
+                    body: buildConnectedDevices(context),
+                    isExpanded: _isOpenMain[2],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return const ListTile(
                         title: Text('Radio'),
                       );
                     },
                     body: buildRadioSettings(context),
-                    isExpanded: _isOpenMain[2],
+                    isExpanded: _isOpenMain[3],
+                    canTapOnHeader: true,
+                  ),
+                  ExpansionPanel(
+                    headerBuilder: (context, isExpanded) {
+                      return const ListTile(
+                        title: Text('Radio'),
+                      );
+                    },
+                    body: buildPowerSupply(context),
+                    isExpanded: _isOpenMain[4],
                     canTapOnHeader: true,
                   ),
                   ExpansionPanel(
@@ -3335,7 +3430,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                       );
                     },
                     body: buildDeviceSettings(context),
-                    isExpanded: _isOpenMain[3],
+                    isExpanded: _isOpenMain[5],
                     canTapOnHeader: true,
                   ),
                 ],

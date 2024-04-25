@@ -53,7 +53,7 @@ class PackageProcessor {
     global.pollManager.packageReceived(package, tid);
 
     var subscriber = _getSubscriber(tid);
-    subscriber?.tits.remove(tid); // TODO: may be remove and implement in subscriber?
+    subscriber?.tits.remove(tid);
 
     // data received
     if (package.getSize() != BasePackage.minExpectedSize) {
@@ -89,6 +89,8 @@ class PackageProcessor {
   void fileDownloadStarted(int sender, FilePartPackage filePartPackage) {
     var nd = global.itemsMan.get<NetDevice>(sender);
     if (nd == null) return;
+
+    global.pageWithMap.activateMapMarker(nd.id);
 
     if (nd.typeName() == CPD.Name()) {
       global.imagePage.clearImage(filePartPackage.getCreationTime());
@@ -139,8 +141,8 @@ class PackageProcessor {
     var nd = global.itemsMan.get<NetDevice>(request.getSender());
     if (nd != null) nd.confirmIsActiveNow();
 
-    //var tid = global.postManager.getRequestTransactionId(request.getInvId());
-    //global.pollManager.packageReceived(request, tid); // TODO: uncomment when PollManager implemented
+    var tid = global.postManager.getRequestTransactionId(request.getInvId());
+    global.pollManager.packageReceived(request, tid);
 
     if (request.getType() == PackageType.GET_TIME) {
       var time = TimePackage();

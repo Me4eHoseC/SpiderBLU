@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
-import '../radionet/BasePackage.dart';
 import '../radionet/NetCommonFunctions.dart';
-import '../radionet/NetCommonPackages.dart';
 import '../radionet/NetSeismicPackage.dart';
 import '../radionet/RoutesManager.dart';
 
@@ -94,7 +92,6 @@ class SeismicPage extends StatefulWidget with global.TIDManagement {
 
   void lastPartCome() {
     downloadingCsdId = -1;
-    //global.listMapMarkers[global.itemsManager.getSelectedDevice()?.id]?.markerData.downloadPhoto = false;
   }
 
   void setADPCMMode(bool isADPCM) {
@@ -231,7 +228,6 @@ class _SeismicPage extends State<SeismicPage> with TickerProviderStateMixin {
   }
 
   void cancelSeismicDownload() {
-    print('11111111111111111111111111');
     widget.downloadingCsdId = -1;
     global.stopMedia();
   }

@@ -53,7 +53,7 @@ class STDConnectionManager {
 
   // BT STD parameters
   bool isUseBT = true;
-  String btMacAddress = ''; //todo remove when setting storage implemented
+  String btMacAddress = '';
 
   int _btSTDId = -1;
   Timer? _btReadTimer;
@@ -177,9 +177,7 @@ class STDConnectionManager {
   }
 
   void _restartConnectRoutineTimer([int seconds = 15]) {
-    print ('TRY TO RESTART');
     if (_connection != null || _tcpSocket != null || _serialPort != null) return;
-    print ('CONNECT ROUTINE RESTARTED');
     _connectRoutineTimer?.cancel();
     _connectRoutineTimer = Timer(Duration(seconds: seconds), _connectRoutine);
   }
@@ -584,8 +582,6 @@ class STDConnectionManager {
     std.onConnected = () {
       stdConnected(global.std!.stdId);
 
-      // todo implement emit stdStateChanged(device->getStdId(), device->isValid());
-
       global.stdConnectionManager.stopConnectRoutine();
     };
 
@@ -607,8 +603,6 @@ class STDConnectionManager {
         global.pageWithMap.deactivateMapMarker(stdId!);
         global.deviceParametersPage.addProtocolLine('Device #$stdId offline');
       }
-
-      // todo implement emit stdStateChanged(device->getStdId(), device->isValid());
 
       global.stdConnectionManager.startConnectRoutine();
     };

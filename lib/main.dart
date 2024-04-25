@@ -164,6 +164,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 ],
               ),
               SizedBox(height: 100, child: list),
+
             ],
           ),
         ),
@@ -243,6 +244,14 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     onTap: () {
                       global.flagMapPage = false;
                       changePage(6);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('Protocol'),
+                    onTap: () {
+                      global.flagMapPage = false;
+                      changePage(7);
                       Navigator.pop(context);
                     },
                   ),

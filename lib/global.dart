@@ -6,15 +6,11 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import 'package:permission_handler/permission_handler.dart';
-import 'package:projects/pages/DevicesTablePage.dart';
-import 'package:projects/pages/ScanPage.dart';
-import 'package:projects/radionet/PackageTypes.dart';
 
 import '../std/ISTD.dart';
 import '../std/STDConnectionManager.dart';
-
-import '../core/ItemsManager.dart';
 
 import '../radionet/FileManager.dart';
 import '../radionet/PackagesParser.dart';
@@ -22,15 +18,21 @@ import '../radionet/PollManager.dart';
 import '../radionet/PostManager.dart';
 import '../radionet/BasePackage.dart';
 import '../radionet/PackageProcessor.dart';
+import '../radionet/PackageTypes.dart';
 
 import '../pages/SettingsPage.dart';
 import '../pages/SeismicPage.dart';
 import '../pages/DeviceParametersPage.dart';
 import '../pages/ImagePage.dart';
 import '../pages/PageWithMap.dart';
+import '../pages/DevicesTablePage.dart';
+import '../pages/ProtocolPage.dart';
+import '../pages/ScanPage.dart';
 
+import 'core/ItemsManager.dart';
 import 'core/CPD.dart';
 import 'core/NetDevice.dart';
+
 import 'main.dart';
 
 abstract class TIDManagement {
@@ -61,6 +63,7 @@ final ImagePage imagePage = ImagePage();
 final SeismicPage seismicPage = SeismicPage();
 final ScanPage scanPage = ScanPage();
 final DevicesTablePage devicesTablePage = DevicesTablePage();
+final ProtocolPage protocolPage = ProtocolPage();
 
 enum SendingState {
   defaultState,
@@ -104,10 +107,7 @@ enum ParametersGroup {
   gps,
   //AIRS
   tresholdIRS,
-  //TODO: save/reset settings???
 }
-
-//List<String> ParametersGroup = ['dateTime', 'firmwareVersion'];
 
 Map<int, Map<ParametersGroup, SendingState>> sendingState = {};
 
@@ -150,6 +150,7 @@ final List<StatefulWidget> pages = [
   imagePage,
   seismicPage,
   scanPage,
+  protocolPage,
 ];
 
 PackageProcessor packageProcessor = PackageProcessor();
@@ -244,7 +245,6 @@ void getPermission() async {
 }
 
 void stopMedia() {
-  print('CANCEL DOWNLOAD');
   var selected = itemsMan.getSelected<NetDevice>();
   if (selected == null) return;
   var type = PackageType.STOP_SEISMIC_WAVE;

@@ -29,8 +29,8 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
   bool btState = false;
 
   List<DropdownMenuItem<UsbDevice>> dropdownSerialItems = [];
-  String selectedSerialManNameFromFile = ''; // todo remove when file
-  int selectedSerialVIDFromFile = 0; // todo remove when file
+  String selectedSerialManNameFromFile = '';
+  int selectedSerialVIDFromFile = 0;
   UsbDevice? usbDevice;
   List<UsbDevice> listUsbDevices = [];
 
@@ -42,7 +42,6 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
 
   @override
   void initState() {
-    //todo read settings file and init name and mac from file
     super.initState();
     global.stdConnectionManager.loadSettingsFromFile().then((_) => initAfterLoad());
     global.stdConnectionManager.initSaveSettings();
@@ -50,7 +49,6 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
   }
 
   void initAfterLoad(){
-    print('11111111111111111111111111111111');
     bluetoothMAC = global.stdConnectionManager.btMacAddress;
     selectedSerialManNameFromFile = global.stdConnectionManager.serialManName;
     selectedSerialVIDFromFile = global.stdConnectionManager.serialVID;

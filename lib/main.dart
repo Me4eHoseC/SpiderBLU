@@ -12,7 +12,7 @@ import 'core/MCD.dart';
 import 'core/RT.dart';
 import 'global.dart' as global;
 
-void main(){
+void main() {
   Provider.debugCheckInvalidValueType = null;
   runApp(const MyApp());
 }
@@ -71,6 +71,7 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   late FlutterGifController controller;
 
   int selectedBodyWidget = 1;
+  int lastPage = -1;
 
   @override
   void initState() {
@@ -79,15 +80,21 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     repeatAnim();
     super.initState();
     global.stdConnectionManager.stdConnected = global.deviceParametersPage.stdConnected;
-    global.packageProcessor.subscribers.addAll([global.deviceParametersPage, global.imagePage, global.seismicPage, global.pageWithMap]);
+    global.packageProcessor.subscribers.addAll([global.deviceParametersPage, global.imagePage, global.seismicPage, global.pageWithMap, global.scanPage]);
 
     global.deviceTypeList = [];
+    global.deviceTypeListForScanner = [];
     global.deviceTypeList.add(STD.Name());
     global.deviceTypeList.add(RT.Name());
+    global.deviceTypeListForScanner.add(RT.Name());
     global.deviceTypeList.add(CSD.Name());
+    global.deviceTypeListForScanner.add(CSD.Name());
     global.deviceTypeList.add(CPD.Name());
+    global.deviceTypeListForScanner.add(CPD.Name());
     global.deviceTypeList.add(MCD.Name());
+    global.deviceTypeListForScanner.add(MCD.Name());
     global.deviceTypeList.add(AIRS.Name());
+    global.deviceTypeListForScanner.add(AIRS.Name());
 
     Timer.periodic(Duration.zero, (_) {
       setState(() {
@@ -106,9 +113,13 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   void changePage(int selectedPage) {
-    if (selectedPage != 1) {
+    lastPage = selectedBodyWidget;
+    if (selectedPage != 1 && selectedPage != 2) {
       global.flagMapPage = false;
+    } else {
+      global.flagMapPage = true;
     }
+
     selectedBodyWidget = selectedPage;
     setState(() {});
   }
@@ -164,7 +175,6 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 ],
               ),
               SizedBox(height: 100, child: list),
-
             ],
           ),
         ),
@@ -270,44 +280,64 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Builder(builder: (context) {
-                  return FloatingActionButton(
-                    onPressed: () => Scaffold.of(context).openDrawer(),
-                    child: const Icon(
-                      Icons.menu,
-                      color: Colors.red,
-                    ),
-                  );
-                }),
+                Builder(
+                  builder: (context) {
+                    return FloatingActionButton(
+                      onPressed: () => Scaffold.of(context).openDrawer(),
+                      child: const Icon(
+                        Icons.menu,
+                        color: Colors.red,
+                      ),
+                    );
+                  },
+                ),
                 global.mainBottomSelectedDev,
-                global.flagMapPage
-                    ? Builder(builder: (context) {
-                        return FloatingActionButton(
-                          onPressed: () {
-                            if (global.itemsMan.getSelected<NetDevice>() == null) {
-                              return;
-                            }
-                            changePage(3);
-                            global.flagMapPage = false;
-                          },
-                          child: const Icon(
-                            Icons.settings,
-                            color: Colors.red,
+                Row(
+                  children: [
+                    FloatingActionButton(
+                      onPressed: () {
+                        if (lastPage < 0) {
+                          return;
+                        }
+                        changePage(lastPage);
+                      },
+                      child: const Icon(
+                        Icons.arrow_back_sharp,
+                        color: Colors.red,
+                      ),
+                    ),
+                    global.flagMapPage
+                        ? Builder(
+                            builder: (context) {
+                              return FloatingActionButton(
+                                onPressed: () {
+                                  if (global.itemsMan.getSelected<NetDevice>() == null) {
+                                    return;
+                                  }
+                                  changePage(3);
+                                },
+                                child: const Icon(
+                                  Icons.settings,
+                                  color: Colors.red,
+                                ),
+                              );
+                            },
+                          )
+                        : Builder(
+                            builder: (context) {
+                              return FloatingActionButton(
+                                onPressed: () => {
+                                  changePage(1),
+                                },
+                                child: const Icon(
+                                  Icons.map,
+                                  color: Colors.red,
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      })
-                    : Builder(builder: (context) {
-                        return FloatingActionButton(
-                          onPressed: () => {
-                            changePage(1),
-                            global.flagMapPage = true,
-                          },
-                          child: const Icon(
-                            Icons.map,
-                            color: Colors.red,
-                          ),
-                        );
-                      }),
+                  ],
+                ),
               ],
             ),
           ),

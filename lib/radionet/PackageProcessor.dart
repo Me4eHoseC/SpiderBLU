@@ -26,6 +26,7 @@ class PackageProcessor {
     PackageType type = package.getType();
     int size = package.getSize();
 
+
     // async file part received
     if (FileManager.isFileType(type)) {
       Timer.run(() => global.fileManager.addFilePart(package as FilePartPackage));
@@ -57,6 +58,7 @@ class PackageProcessor {
 
     // data received
     if (package.getSize() != BasePackage.minExpectedSize) {
+
       _unpackPackage(package);
 
       if (subscriber != null) {
@@ -64,6 +66,10 @@ class PackageProcessor {
       }
 
       return;
+    }
+
+    if (package.isAnswer() && type == PackageType.PRESENCE){
+      Timer.run(() => global.scanPage.acknowledgeReceived(tid, package));
     }
 
     // acknowledge received

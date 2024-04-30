@@ -38,36 +38,6 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
     dropdownItems.add(newItem);
   }
 
-  void getCordForNewDevice(int devId){
-    _page.takeCordClick(devId);
-  }
-
-  void setTimeForNewDevice(int devId){
-    _page.setTimeClick(devId);
-  }
-
-  void stdConnected(int stdId) {
-    var req = BasePackage.makeBaseRequest(stdId, PackageType.GET_MODEM_FREQUENCY);
-    var tid = global.postManager.sendPackage(req);
-    tits.add(tid);
-
-    var tp = TimePackage();
-    tp.setTime(DateTime.now());
-    tp.setReceiver(stdId);
-    tp.setSender(RoutesManager.getLaptopAddress());
-
-    tid = global.postManager.sendPackage(tp);
-    setRequests[tid] = tp;
-    tits.add(tid);
-
-    req = BasePackage.makeBaseRequest(stdId, PackageType.GET_ALLOWED_HOPS);
-    tid = global.postManager.sendPackage(req);
-    tits.add(tid);
-    global.stdHopsCheckRequests.add(tid);
-
-    global.pollManager.startPollRoutines();
-  }
-
   void changeDeviceInDropdown(int newId, String newType, String oldId) {
     addDeviceInDropdown(newId, newType);
     deleteDeviceInDropdown(int.parse(oldId));
@@ -96,6 +66,36 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
         break;
       }
     }
+  }
+
+  void getCordForNewDevice(int devId){
+    _page.takeCordClick(devId);
+  }
+
+  void setTimeForNewDevice(int devId){
+    _page.setTimeClick(devId);
+  }
+
+  void stdConnected(int stdId) {
+    var req = BasePackage.makeBaseRequest(stdId, PackageType.GET_MODEM_FREQUENCY);
+    var tid = global.postManager.sendPackage(req);
+    tits.add(tid);
+
+    var tp = TimePackage();
+    tp.setTime(DateTime.now());
+    tp.setReceiver(stdId);
+    tp.setSender(RoutesManager.getLaptopAddress());
+
+    tid = global.postManager.sendPackage(tp);
+    setRequests[tid] = tp;
+    tits.add(tid);
+
+    req = BasePackage.makeBaseRequest(stdId, PackageType.GET_ALLOWED_HOPS);
+    tid = global.postManager.sendPackage(req);
+    tits.add(tid);
+    global.stdHopsCheckRequests.add(tid);
+
+    global.pollManager.startPollRoutines();
   }
 
   void updateDevice() {
@@ -3328,6 +3328,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     );
   }
 
+
+
   final List<bool> _isOpenMain = List.filled(6, false);
   final List<bool> _isOpenCSD = List.filled(8, false);
   final List<bool> _isOpenCFU = List.filled(8, false);
@@ -3351,9 +3353,10 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 global.pageWithMap.unselectMapMarker();
                 global.itemsMan.setSelected(int.parse(widget.dropdownValue));
                 global.pageWithMap.selectMapMarker(global.itemsMan.getSelected<NetDevice>()!.id);
-                global.mainBottomSelectedDev = Text(
+                global.mainBottomSelectedDev = TextButton(onPressed: () => global.goToTablePage(), child:Text(
                   '${global.itemsMan.getSelected<NetDevice>()!.typeName()} #${global.itemsMan.getSelected<NetDevice>()!.id}',
                   textScaleFactor: 1.4,
+                )
                 );
               });
             },

@@ -13,6 +13,10 @@ class DevicesTablePage extends StatefulWidget with global.TIDManagement {
 
   late _DevicesTablePage _page;
 
+  LatLng takeCordForNewDev(){
+    return _page.takeCordForNewDevice();
+  }
+
   void addDevice(int id) {
     /* deviceTableList[id] = TextButton(
       onPressed: () => selectDevice(id),
@@ -53,7 +57,7 @@ class DevicesTablePage extends StatefulWidget with global.TIDManagement {
   }
 
   void deleteDevice(int id) {
-    global.pageWithMap.deleteMapMarker(id);
+    global.pageWithMap.askDeleteMapMarker(id);
   }
 
   void ref() {
@@ -164,34 +168,37 @@ class _DevicesTablePage extends State<DevicesTablePage> with TickerProviderState
     );
   }
 
+  LatLng takeCordForNewDevice() {
+    var size = global.pageWithMap.takeMapBounds();
+    if (cordLon * 8 - 0.001 > size.northWest.longitude - size.southEast.longitude ||
+        cordLon * 8 + 0.001 < size.northWest.longitude - size.southEast.longitude ||
+        cordLat - 0.001 > size.northWest.latitude - size.southEast.latitude ||
+        cordLat + 0.001 < size.northWest.latitude - size.southEast.latitude) {
+      rowDev = 1;
+      colDev = 1;
+    }
+    cordLon = (size.northWest.longitude - size.southEast.longitude) / 8;
+    cordLat = size.northWest.latitude - size.southEast.latitude;
+    if (colDev == 6) {
+      rowDev++;
+      colDev = 1;
+    }
+    colDev++;
+    LatLng coordinates = LatLng(size.northWest.latitude + cordLon * rowDev, size.northWest.longitude - cordLon * colDev);
+    //addNewDevice(coordinates);
+    setState(() {});
+    return coordinates;
+  }
+
   void addNewDevice() {
     setState(() {
-      var size = global.pageWithMap.takeMapBounds();
-      if (cordLon * 8 - 0.001 > size.northWest.longitude - size.southEast.longitude ||
-          cordLon * 8 + 0.001 < size.northWest.longitude - size.southEast.longitude ||
-          cordLat - 0.001 > size.northWest.latitude - size.southEast.latitude ||
-          cordLat + 0.001 < size.northWest.latitude - size.southEast.latitude) {
-        rowDev = 1;
-        colDev = 1;
-      }
-      cordLon = (size.northWest.longitude - size.southEast.longitude) / 8;
-      cordLat = size.northWest.latitude - size.southEast.latitude;
-      if (colDev == 6) {
-        rowDev++;
-        colDev = 1;
-      }
-      colDev++;
-      var coordinates = LatLng(size.northWest.latitude + cordLon * rowDev, size.northWest.longitude - cordLon * colDev);
-      global.pageWithMap.addNewDeviceOnMap(coordinates);
+      global.pageWithMap.addNewDeviceOnMap(takeCordForNewDevice());
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(''),
-      ),
       body: SingleChildScrollView(
         child: devTable,
       ),

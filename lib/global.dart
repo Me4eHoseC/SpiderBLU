@@ -51,7 +51,10 @@ abstract class TIDManagement {
 
 String statusBarString = '';
 
-Text mainBottomSelectedDev = Text('');
+TextButton mainBottomSelectedDev = TextButton(
+  onPressed: () {},
+  child: Text(''),
+);
 Timer? timer;
 
 Widget list = Container();
@@ -155,12 +158,9 @@ final List<StatefulWidget> pages = [
 
 PackageProcessor packageProcessor = PackageProcessor();
 PackagesParser packagesParser = PackagesParser();
-
 FileManager fileManager = FileManager();
-
 PostManager postManager = PostManager();
 STDConnectionManager stdConnectionManager = STDConnectionManager();
-
 PollManager pollManager = PollManager();
 
 ISTD? std;
@@ -173,6 +173,10 @@ class Pair<T1, T2> {
   Pair(this.first, this.second);
 }
 
+void goToTablePage() {
+  globalKey.currentState?.changePage(2);
+}
+
 bool flagConnect = false, flagMapPage = true, flagCheckSPPU = false, flagMoveMarker = false, transLang = false;
 
 Map<int, MapMarker> listMapMarkers = {};
@@ -180,9 +184,24 @@ Map<int, MapMarker> listMapMarkers = {};
 List<int> retransmissionRequests = [];
 List<int> stdHopsCheckRequests = [];
 
+List<DataColumn> dataColumn = [
+  DataColumn(
+    label: Text('ID', textAlign: TextAlign.center),
+  ),
+  DataColumn(
+    label: Text('Type', textAlign: TextAlign.center),
+  ),
+  DataColumn(
+    label: Text('Mapped', textAlign: TextAlign.center),
+  ),
+  DataColumn(
+    label: Text('Represent', textAlign: TextAlign.center),
+  ),
+];
 List<int> delayList = [60, 180, 300];
 List<int> impulseList = [1, 2, 3];
 List<String> deviceTypeList = [];
+List<String> deviceTypeListForScanner = [];
 List<String> photoCompression = ["Min", "Low", "Mid", "High", "Max"];
 List<String> critFilter = ['1 of 3', '2 of 3', '3 of 3', '2 of 4', '3 of 4', '4 of 4'];
 List<int> serialHuman = [1, 2, 3];
@@ -224,15 +243,15 @@ class SettingsForSave {
   }
 
   Map toJson() => {
-    'btFlag': btFlag,
-    'btMacAddressSave': btMacAddressSave,
-    'serialFlag': serialFlag,
-    'serialManNameSave': serialManNameSave,
-    'serialVIDSave': serialVIDSave,
-    'tcpFlag': tcpFlag,
-    'IPAddressSave': IPAddressSave,
-    'IPPortSave': IPPortSave,
-  };
+        'btFlag': btFlag,
+        'btMacAddressSave': btMacAddressSave,
+        'serialFlag': serialFlag,
+        'serialManNameSave': serialManNameSave,
+        'serialVIDSave': serialVIDSave,
+        'tcpFlag': tcpFlag,
+        'IPAddressSave': IPAddressSave,
+        'IPPortSave': IPPortSave,
+      };
 }
 
 void getPermission() async {

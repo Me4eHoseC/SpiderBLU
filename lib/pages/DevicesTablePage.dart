@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -18,36 +17,6 @@ class DevicesTablePage extends StatefulWidget with global.TIDManagement {
   }
 
   void addDevice(int id) {
-    /* deviceTableList[id] = TextButton(
-      onPressed: () => selectDevice(id),
-      onLongPress: () => deleteDevice(id),
-      child: ListenableBuilder(
-        listenable: global.listMapMarkers[id]!.markerData.notifier,
-        builder: (context, child) => Ink.image(
-          width: 70,
-          height: 70,
-          image: Image.asset(
-            global.listMapMarkers[id]!.markerData.notifier.imageStatus +
-                global.listMapMarkers[id]!.markerData.notifier.imageSelected +
-                global.listMapMarkers[id]!.markerData.notifier.imageName,
-            package: global.pageWithMap.setImagePackage(global.itemsMan.get<Marker>(id)!.typeName()),
-          ).image,
-          child: Container(
-            alignment: Alignment.topCenter,
-            padding: const EdgeInsets.only(top: 5),
-            child: Text(
-              id.toString(),
-              style: const TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.w900,
-                fontSize: 20,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      ),
-    );*/
     ref();
   }
 

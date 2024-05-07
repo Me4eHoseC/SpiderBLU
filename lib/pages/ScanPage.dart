@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:projects/radionet/PostManager.dart';
 import 'package:projects/radionet/RoutesManager.dart';
@@ -10,13 +11,14 @@ import '../global.dart' as global;
 import '../radionet/BasePackage.dart';
 import '../radionet/PackageTypes.dart';
 
-class ScanDevices {
+class ScanDevice {
   int? id;
   String? type;
   bool? mapped;
   bool? represent;
+  bool? answerFromDevice;
 
-  ScanDevices(this.id, this.type, this.mapped, this.represent);
+  ScanDevice(this.id, this.type, this.mapped, this.represent, this.answerFromDevice);
 }
 
 class ScanPage extends StatefulWidget with global.TIDManagement {
@@ -24,16 +26,37 @@ class ScanPage extends StatefulWidget with global.TIDManagement {
 
   late _ScanPage _page;
 
-  void addFromMap(int id, String type, bool mapped) {
-    if (type == global.deviceTypeList[0]){
-      return;
-    }
-    ScanDevices item = ScanDevices(id, global.itemsMan.get<Marker>(id)!.typeName(), mapped, mapped);
-    _page.addListDataRow(item);
+  void addAllFromMap() {
+    _page.scanDevicesOnMap();
   }
 
-  void clearScanTable(){
-    _page.clearScanDevices();
+  void addFromMap(int id, String type) {
+    if (type == global.deviceTypeList[0]) {
+      return;
+    }
+    ScanDevice item = ScanDevice(id, type, true, true, false);
+    _page.listIdDevFromScan[id] = item;
+    _page.listDataRow.clear();
+    var list = _page.listIdDevFromScan.keys.toList();
+    list.sort();
+    for (var element in list) {
+      _page.addListDataRow(_page.listIdDevFromScan[element]!);
+    }
+  }
+
+  void addFromScan(int id, String type, bool mapped) {
+    ScanDevice item = ScanDevice(id, type, mapped, true, true);
+    _page.listIdDevFromScan[id] = item;
+    _page.listDataRow.clear();
+    var list = _page.listIdDevFromScan.keys.toList();
+    list.sort();
+    for (var element in list) {
+      _page.addListDataRow(_page.listIdDevFromScan[element]!);
+    }
+  }
+
+  void clearScanTable(int id) {
+    _page.deleteDev(id);
   }
 
   void scan() {
@@ -42,21 +65,24 @@ class ScanPage extends StatefulWidget with global.TIDManagement {
     var tid = global.postManager.sendPackage(getInfo, PostType.Response, 1);
   }
 
+  @override
   void acknowledgeReceived(int tid, BasePackage basePackage) {
     if (basePackage.getType() == PackageType.PRESENCE) {
       var sender = basePackage.getSender();
       if (global.itemsMan.getAllIds().contains(sender)) {
-        print('contains $sender');
         if (global.itemsMan.get<STD>(sender) != null) {
           return;
         } else {
-          ScanDevices item = ScanDevices(sender, global.itemsMan.get<Marker>(sender)!.typeName(), true, true);
-          _page.addListDataRow(item);
+          if (_page.listIdDevFromScan.keys.contains(sender)) {
+            _page.updateStatus(_page.listIdDevFromScan[sender]!);
+          }
+          addFromScan(sender, global.itemsMan.get<Marker>(sender)!.typeName(), true);
         }
       } else {
-        print("don't mapped $sender");
-        ScanDevices item = ScanDevices(sender, global.deviceTypeListForScanner[0], false, false);
-        _page.addListDataRow(item);
+        if (_page.listIdDevFromScan.keys.contains(sender)) {
+          _page.updateStatus(_page.listIdDevFromScan[sender]!);
+        }
+        addFromScan(sender, global.deviceTypeListForScanner[1], false);
       }
     }
   }
@@ -71,99 +97,174 @@ class ScanPage extends StatefulWidget with global.TIDManagement {
 class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
   bool get wantKeepAlive => true;
 
-  bool flagGetTime = false;
+  bool flagGetTime = true;
   bool flagGetCord = false;
+  bool flagSelectAll = false;
+  bool flagScanButton = false;
 
   Row rowChecksAndButtons = Row();
-  Widget? typeDrop, checkRepresent;
+  Widget? deviceStatus, idWithCheck, typeDrop, checkMapped;
 
-  List<DataRow> listDataRow = [];
+  Map<int, DataRow> listDataRow = {};
+  Map<int, ScanDevice> listIdDevFromScan = {};
 
-  Map<int,String> mapScanDev = {};
+  Map<int, String> mapScanDev = {};
+  Timer? timer;
 
   @override
   void initState() {
     super.initState();
     addScanDevices();
+
     Timer.periodic(Duration.zero, (_) {
       setState(() {});
     });
   }
 
-  void addListDataRow(ScanDevices dev) {
+  void updateStatus(ScanDevice dev) {
+    dev.answerFromDevice = true;
+    dev.represent = true;
+    checkRepresentScanDev(dev);
+    listDataRow[dev.id]?.cells[1] = DataCell(
+      Center(
+        child: idWithCheck,
+      ),
+    );
+    listDataRow[dev.id]!.cells[0] = DataCell(
+      Center(
+        child: deviceStatus,
+      ),
+    );
+  }
+
+  void addListDataRow(ScanDevice item) {
     setState(() {
-      dropDownType(dev);
-      checkRepresentScanDev(dev);
+      dropDownType(item);
+      checkRepresentScanDev(item);
       var row = DataRow(
         cells: [
           DataCell(
-            Text(dev.id.toString()),
-          ),
-          DataCell(
-            typeDrop!,
-          ),
-          //DataCell(Text(dev.mapped.toString())),
-          DataCell(
-            Checkbox(
-              value: dev.mapped,
-              onChanged: null,
+            Center(
+              child: deviceStatus!,
             ),
           ),
           DataCell(
-            dev.mapped == true
-                ? Checkbox(
-                    value: dev.represent,
-                    onChanged: null,
-                  )
-                : checkRepresent!,
+            Center(
+              child: idWithCheck!,
+            ),
+          ),
+          DataCell(
+            Center(
+              child: typeDrop!,
+            ),
+          ),
+          DataCell(
+            Center(
+              child: Checkbox(
+                value: item.mapped,
+                onChanged: null,
+              ),
+            ),
           ),
         ],
       );
-      for (int i = 0; i < listDataRow.length; i++) {
-        if (listDataRow[i].cells[0].child.toString() == (Text(dev.id.toString())).toString()) {
-          return;
-        }
-      }
-      listDataRow.add(row);
+      listDataRow[item.id!] = row;
+      mapScanDev[item.id!] = item.type!;
     });
   }
 
-  void checkRepresentScanDev(ScanDevices dev) {
+  void selectAll(bool flag) {
+    listIdDevFromScan.forEach((key, value) {
+      if (flag) {
+        mapScanDev[key] = value.type!;
+        flagSelectAll = flag;
+      } else {
+        mapScanDev.remove(key);
+        flagSelectAll = flag;
+      }
+      value.represent = flag;
+      checkRepresentScanDev(value);
+      listDataRow[key]!.cells[0] = DataCell(
+        Center(
+          child: deviceStatus,
+        ),
+      );
+      listDataRow[key]!.cells[1] = DataCell(
+        Center(
+          child: idWithCheck,
+        ),
+      );
+    });
+    flag ? flagSelectAll = false : flagSelectAll = true;
+  }
+
+  void checkMappedScanDev(ScanDevice dev) {
     setState(() {
-      checkRepresent = Checkbox(
+      checkMapped = Checkbox(
+        value: dev.mapped,
+        onChanged: null,
+      );
+    });
+  }
+
+  void checkRepresentScanDev(ScanDevice dev) {
+    setState(() {
+      deviceStatus = Icon(
+        Icons.circle,
+        color: dev.answerFromDevice != false ? Colors.green : Colors.amber,
+      );
+      idWithCheck = CheckboxListTile(
+        visualDensity: const VisualDensity(horizontal: -4),
+        title: Text(
+          dev.id.toString(),
+          style: const TextStyle(fontSize: 20),
+        ),
         value: dev.represent,
+        controlAffinity: ListTileControlAffinity.leading,
         onChanged: (bool? value) {
-          dev.represent = value;
-          checkRepresentScanDev(dev);
-          for (int i = 0; i < listDataRow.length; i++) {
-            if (listDataRow[i].cells[0].child.toString() == (Text(dev.id.toString())).toString()) {
-              print(dev.represent);
-              if (dev.represent! == true){
+          setState(() {
+            dev.represent = value;
+            checkRepresentScanDev(dev);
+            if (listDataRow.keys.contains(dev.id!)) {
+              if (dev.represent! == true) {
                 mapScanDev[dev.id!] = dev.type!;
               } else {
                 mapScanDev.remove(dev.id!);
               }
-              listDataRow[i].cells[3] = DataCell(checkRepresent!);
-              print(mapScanDev.keys.length);
+              listDataRow[dev.id]!.cells[0] = DataCell(
+                Center(
+                  child: deviceStatus!,
+                ),
+              );
+              listDataRow[dev.id]!.cells[1] = DataCell(
+                Center(
+                  child: idWithCheck!,
+                ),
+              );
             }
-          }
+          });
         },
       );
     });
   }
 
-  void dropDownType(ScanDevices dev) {
+  void dropDownType(ScanDevice dev) {
     setState(() {
       typeDrop = DropdownButton<String>(
         alignment: AlignmentDirectional.topCenter,
         onChanged: (String? value) {
           dev.type = value!;
           dropDownType(dev);
-          for (int i = 0; i < listDataRow.length; i++) {
-            if (listDataRow[i].cells[0].child.toString() == (Text(dev.id.toString())).toString()) {
-              print(dev.type);
-              listDataRow[i].cells[1] = DataCell(typeDrop!);
-            }
+          if (mapScanDev.keys.contains(dev.id!)) {
+            mapScanDev[dev.id!] = dev.type!;
+          }
+
+          if (listDataRow.keys.contains(dev.id!)) {
+            listDataRow[dev.id]!.cells[2] = DataCell(
+              Center(
+                child: typeDrop,
+              ),
+            );
           }
         },
         value: dev.type,
@@ -181,13 +282,14 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
 
   void addScanDevices() {
     rowChecksAndButtons = Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
-          flex: 2,
           child: CheckboxListTile(
             title: const Icon(Icons.access_time_outlined),
             value: flagGetTime,
             controlAffinity: ListTileControlAffinity.leading,
+            visualDensity: const VisualDensity(horizontal: -5),
             onChanged: (bool? value) {
               flagGetTime = value!;
               addScanDevices();
@@ -195,10 +297,10 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
           ),
         ),
         Expanded(
-          flex: 2,
           child: CheckboxListTile(
             title: const Icon(Icons.location_pin),
             value: flagGetCord,
+            visualDensity: const VisualDensity(horizontal: -5),
             controlAffinity: ListTileControlAffinity.leading,
             onChanged: (bool? value) {
               flagGetCord = value!;
@@ -207,13 +309,15 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
           ),
         ),
         Expanded(
-          flex: 2,
+          child: Container(),
+        ),
+        Expanded(
           child: ElevatedButton(
             onPressed: () {
               addCheckedDevOnMap();
             },
             child: const Text(
-              'Add on map',
+              'Apply',
             ),
           ),
         ),
@@ -221,29 +325,86 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
     );
   }
 
-  void addCheckedDevOnMap(){
-    for(int i = 0; i < mapScanDev.entries.length; i++){
-      print(mapScanDev.entries.elementAt(i).key);
-      global.pageWithMap.createMarkerFromScanner(mapScanDev.entries.elementAt(i).key, mapScanDev.entries.elementAt(i).value,
-          global.devicesTablePage.takeCordForNewDev(), flagGetTime, flagGetCord);
-    }
-    if (mapScanDev.isNotEmpty){
-      mapScanDev.clear();
-      clearScanDevices();
-      scanDevices();
-    }
+  void addCheckedDevOnMap() {
+    listIdDevFromScan.forEach((key, value) {
+      var item = global.itemsMan.get<Marker>(key);
+
+      if (mapScanDev.containsKey(key)) {
+        value.mapped = true;
+
+        if (item == null) {
+          global.pageWithMap
+              .createMarkerFromScanner(key, value.type!, global.devicesTablePage.takeCordForNewDev(), flagGetTime, flagGetCord);
+        } else if (item.typeName() != value.type) {
+          global.pageWithMap.changeMapMarkerType(key, item.typeName(), value.type!);
+        }
+      } else if (listDataRow.containsKey(key) && item != null) {
+        global.pageWithMap.deleteMapMarker(key);
+        value.mapped = false;
+      }
+
+      checkMappedScanDev(value);
+      listDataRow[key]!.cells[3] = DataCell(
+        Center(
+          child: checkMapped,
+        ),
+      );
+    });
   }
 
   void clearScanDevices() {
     setState(() {
-      listDataRow.clear();
+      var devicesOnMap = global.itemsMan.getAllIds();
+      var listForDelete = [];
+      listDataRow.forEach((key, value) {
+        if (!devicesOnMap.contains(key)) {
+          listForDelete.add(key);
+        }
+      });
+      for (var element in listForDelete) {
+        mapScanDev.remove(element);
+        listIdDevFromScan.remove(element);
+        listDataRow.remove(element);
+      }
     });
+  }
+
+  void scanDevicesOnMap() {
+    bool flag = false;
+    var devicesOnMap = global.itemsMan.getAllIds();
+
+    for (var i in devicesOnMap) {
+      if (listIdDevFromScan.containsKey(i)) {
+        flag = true;
+        return;
+      }
+      if (!flag) {
+        var dev = global.itemsMan.get<Marker>(i);
+        widget.addFromMap(dev!.id, dev.typeName());
+      }
+      flag = false;
+    }
   }
 
   void scanDevices() {
     setState(() {
+      flagScanButton = true;
+      timer = Timer(Duration(seconds: 15), () {
+        flagScanButton = false;
+      });
+      scanDevicesOnMap();
       widget.scan();
+      flagSelectAll = false;
     });
+  }
+
+  void deleteDev(int id) {
+    var devicesOnMap = global.itemsMan.getAllIds();
+    if (listDataRow.keys.contains(id) && !devicesOnMap.contains(id)) {
+      mapScanDev.remove(id);
+      listDataRow.remove(id);
+      listIdDevFromScan.remove(id);
+    }
   }
 
   @override
@@ -257,17 +418,33 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
             children: [
               ElevatedButton(
                 onPressed: () {
+                  selectAll(flagSelectAll);
+                },
+                child: flagSelectAll
+                    ? const Text(
+                        'Select All',
+                        style: TextStyle(color: Colors.white),
+                      )
+                    : const Text(
+                        'Unselect All',
+                        style: TextStyle(color: Colors.white),
+                      ),
+              ),
+              ElevatedButton(
+                onPressed: () {
                   clearScanDevices();
                 },
                 child: const Text(
-                  'Clear table',
+                  'Clear',
                   style: TextStyle(color: Colors.white),
                 ),
               ),
               ElevatedButton(
-                onPressed: () {
-                  scanDevices();
-                },
+                onPressed: flagScanButton
+                    ? null
+                    : () {
+                        scanDevices();
+                      },
                 child: const Text(
                   'Scan',
                 ),
@@ -281,16 +458,54 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
         child: ListView(
           children: [
             DataTable(
+              horizontalMargin: 10,
+              columnSpacing: 20,
               border: TableBorder.all(width: 1),
-              columns: global.dataColumn,
-              rows: listDataRow,
+              columns: const [
+                DataColumn(
+                  label: Expanded(
+                    child: Text(
+                      '',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Expanded(
+                    child: Text(
+                      'ID',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Expanded(
+                    child: Text(
+                      'Type',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Expanded(
+                    child: Text(
+                      'Mapped',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                )
+              ],
+              rows: listDataRow.values.toList(),
             ),
           ],
         ),
       ),
       bottomNavigationBar: SizedBox(
         height: 50,
-        child: rowChecksAndButtons,
+        child: Padding(
+          padding: const EdgeInsets.only(right: 27),
+          child: rowChecksAndButtons,
+        ),
       ),
     );
   }

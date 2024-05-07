@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../global.dart' as global;
+import '../localNotification.dart';
 
 class ProtocolPage extends StatefulWidget with global.TIDManagement {
   ProtocolPage({super.key});
@@ -16,16 +17,38 @@ class ProtocolPage extends StatefulWidget with global.TIDManagement {
     return _page;
   }
 
-  void addAlarm(String alarm){
+  void addAlarm(String alarm) {
     alarmArray.add(alarm);
     _page.checkNewAlarm();
+  }
+
+  void createNotification(String title, String body, int id){
+    _page.notification(title, body, id);
   }
 }
 
 class _ProtocolPage extends State<ProtocolPage> with TickerProviderStateMixin {
   bool get wantKeepAlive => true;
 
+  late final LocalNotificationService service;
+  int check = 0;
+
   ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    service = LocalNotificationService();
+    service.initialize();
+    super.initState();
+  }
+
+  void notification(String title, String body, int id) {
+    if (check == 0){
+      check = 10;
+    }
+    service.showNotification(id: check, title: title, body: body, payload: id);
+    check--;
+  }
 
   void checkNewAlarm() {
     setState(() {

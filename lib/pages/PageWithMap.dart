@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -237,6 +238,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
 
   late _PageWithMap _page;
   String? bufferDeviceType;
+  final player = AudioPlayer();
 
   Widget bottomBarWidget = Container(height: 0);
 
@@ -378,7 +380,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     if (_page.flagGetTime) {
       setTimeForNewDevice(id);
     }
-    global.scanPage.addFromMap(id, type, true);
 
     selectMapMarker(id);
     saveMapMarkersInFile();
@@ -392,7 +393,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
   }
 
   void createMarkerFromScanner(int id, String type, LatLng cord, bool timeFlag, bool cordFlag){
-    _page.checkCorrectIdAndType(id, type, cord);
+    _page.createNewMapMarker(id, type, cord);
     if (timeFlag){
       setTimeForNewDevice(id);
     }
@@ -416,7 +417,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
 
   void itemRemoved(int id) {
     print('delete device $id');
-    global.scanPage.clearScanTable();
+    //global.scanPage.clearScanTable();
   }
 
   void changeMapMarkerID(int oldId, int newId) {
@@ -503,6 +504,13 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     }
   }
 
+  void updateBottom(int id){
+    if (global.listMapMarkers[id]!.markerData.notifier._alarm){
+      global.listMapMarkers[id]!.markerData.notifier.changeAlarm();
+    }
+    _page.changeBottomBarWidget(1, id, null);
+  }
+
   void askDeleteMapMarker(int id) {
     _page.askDeleteMapMarker(id);
   }
@@ -568,6 +576,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
   }
 
   void alarmMapMarker(int id, AlarmReason reason) {
+    player.play(AssetSource('sounds/sirena.wav'), volume: 30);
     if (!global.listMapMarkers[id]!.markerData.notifier.alarm) {
       if (reason == AlarmReason.HUMAN) {
         global.listMapMarkers[id]!.markerData.notifier.changeAlarmHuman();
@@ -579,12 +588,18 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
         global.listMapMarkers[id]!.markerData.notifier.changeAlarm();
       }
     }
+    var item = global.itemsMan.getSelected<NetDevice>();
+    if (item != null && item.id == id){
+      _page.changeBottomBarWidget(1, id, null);
+    }
+    global.devicesTablePage.ref();
   }
 
   void activateMapMarker(int id) {
     if (!global.listMapMarkers[id]!.markerData.notifier.active && !global.listMapMarkers[id]!.markerData.notifier.alarm) {
       global.listMapMarkers[id]!.markerData.notifier.changeActive();
     }
+    global.devicesTablePage.ref();
   }
 
   void deactivateMapMarker(int id) {
@@ -592,6 +607,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
       print(global.listMapMarkers[id]!.markerData.notifier._active);
       global.listMapMarkers[id]!.markerData.notifier.activeOff();
     }
+    global.devicesTablePage.ref();
   }
 
   LatLng? coord() {
@@ -631,7 +647,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
     super.initState();
     makeListOfDevices();
     if (bufferType == '') {
-      bufferType = global.deviceTypeList[0];
+      bufferType = global.deviceTypeList[2];
       mapSelectedDevices[bufferType]!.changeSelected();
     }
 
@@ -712,6 +728,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
   }
 
   void deleteMapMarker(int id) {
+    global.scanPage.clearScanTable(id);
     widget.deleteMapMarker(id);
   }
 
@@ -848,6 +865,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
         print('flag');
       }
 
+      global.scanPage.addFromMap(idForCheck, typeForCheck);
       createNewMapMarker(idForCheck, typeForCheck, cord);
       global.mainBottomSelectedDev = TextButton(
         onPressed: () => global.goToTablePage(),
@@ -1001,7 +1019,8 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                       ? null
                       : () {
                           global.listMapMarkers[id]!.markerData.notifier.changeAlarm();
-                          changeBottomBarWidget(-1, null, null);
+                          global.devicesTablePage.ref();
+                          changeBottomBarWidget(1, id, null);
                         },
                   icon: !global.listMapMarkers[id]!.markerData.notifier.alarm
                       ? const Icon(Icons.warning_rounded)
@@ -1025,7 +1044,8 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                       ? null
                       : () {
                           global.listMapMarkers[id]!.markerData.notifier.changeAlarm();
-                          changeBottomBarWidget(-1, null, null);
+                          global.devicesTablePage.ref();
+                          changeBottomBarWidget(1, id, null);
                         },
                   icon: !global.listMapMarkers[id]!.markerData.notifier.alarm
                       ? const Icon(Icons.warning_rounded)
@@ -1049,7 +1069,8 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                       ? null
                       : () {
                           global.listMapMarkers[id]!.markerData.notifier.changeAlarm();
-                          changeBottomBarWidget(-1, null, null);
+                          global.devicesTablePage.ref();
+                          changeBottomBarWidget(1, id, null);
                         },
                   icon: !global.listMapMarkers[id]!.markerData.notifier.alarm
                       ? const Icon(Icons.warning_rounded)
@@ -1091,7 +1112,8 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                       ? null
                       : () {
                           global.listMapMarkers[id]!.markerData.notifier.changeAlarm();
-                          changeBottomBarWidget(-1, null, null);
+                          global.devicesTablePage.ref();
+                          changeBottomBarWidget(1, id, null);
                         },
                   icon: !global.listMapMarkers[id]!.markerData.notifier.alarm
                       ? const Icon(Icons.warning_rounded)
@@ -1144,7 +1166,8 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                       ? null
                       : () {
                           global.listMapMarkers[id]!.markerData.notifier.changeAlarm();
-                          changeBottomBarWidget(-1, null, null);
+                          global.devicesTablePage.ref();
+                          changeBottomBarWidget(1, id, null);
                         },
                   icon: !global.listMapMarkers[id]!.markerData.notifier.alarm
                       ? const Icon(Icons.warning_rounded)

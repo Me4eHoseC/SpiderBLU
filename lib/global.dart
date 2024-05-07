@@ -186,16 +186,22 @@ List<int> stdHopsCheckRequests = [];
 
 List<DataColumn> dataColumn = [
   DataColumn(
-    label: Text('ID', textAlign: TextAlign.center),
+    label: Text(
+      '',
+      textAlign: TextAlign.center,
+    ),
+  ),
+  DataColumn(
+    label: Text(
+      'Id',
+      textAlign: TextAlign.center,
+    ),
   ),
   DataColumn(
     label: Text('Type', textAlign: TextAlign.center),
   ),
   DataColumn(
     label: Text('Mapped', textAlign: TextAlign.center),
-  ),
-  DataColumn(
-    label: Text('Represent', textAlign: TextAlign.center),
   ),
 ];
 List<int> delayList = [60, 180, 300];
@@ -257,6 +263,7 @@ class SettingsForSave {
 void getPermission() async {
   var status1 = await Permission.storage.status;
   var status2 = await Permission.manageExternalStorage.status;
+
   if (!status1.isGranted || !status2.isGranted) {
     await Permission.storage.request();
     await Permission.manageExternalStorage.request();

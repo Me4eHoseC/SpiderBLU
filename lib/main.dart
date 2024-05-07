@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter_gif/flutter_gif.dart';
 import 'package:projects/core/NetDevice.dart';
+import 'package:projects/localNotification.dart';
 import 'package:projects/std/STDConnectionManager.dart';
 import 'package:provider/provider.dart';
 
@@ -79,8 +80,10 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     controller = FlutterGifController(vsync: this);
     repeatAnim();
     super.initState();
+
     global.stdConnectionManager.stdConnected = global.deviceParametersPage.stdConnected;
-    global.packageProcessor.subscribers.addAll([global.deviceParametersPage, global.imagePage, global.seismicPage, global.pageWithMap, global.scanPage]);
+    global.packageProcessor.subscribers
+        .addAll([global.deviceParametersPage, global.imagePage, global.seismicPage, global.pageWithMap, global.scanPage]);
 
     global.deviceTypeList = [];
     global.deviceTypeListForScanner = [];
@@ -250,9 +253,10 @@ class HomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     },
                   ),
                   ListTile(
-                    title: const Text('Scan'),
+                    title: const Text('Scanner'),
                     onTap: () {
                       global.flagMapPage = false;
+                      global.scanPage.addAllFromMap();
                       changePage(6);
                       Navigator.pop(context);
                     },

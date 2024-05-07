@@ -50,6 +50,8 @@ dependencies:
   flutter_svg: ^2.0.7
   gallery_saver: ^2.3.2
   usb_serial: ^0.5.1
+  audioplayers: ^5.2.1
+  flutter_local_notifications: ^16.1.1
 
 dev_dependencies:
   flutter_test:
@@ -83,6 +85,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
+    - assets/
     - packages/assets/
     - packages/assets/icons/
     - packages/assets/devices/
@@ -98,6 +101,7 @@ flutter:
     - packages/assets/devices/rt/
     - packages/assets/devices/mcd/
     - packages/assets/devices/airs/
+    - assets/sounds/sirena.wav
 
   # To add assets to your application, add an assets section, like this:
   # assets:

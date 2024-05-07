@@ -68,11 +68,11 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
     }
   }
 
-  void getCordForNewDevice(int devId){
+  void getCordForNewDevice(int devId) {
     _page.takeCordClick(devId);
   }
 
-  void setTimeForNewDevice(int devId){
+  void setTimeForNewDevice(int devId) {
     _page.setTimeClick(devId);
   }
 
@@ -159,9 +159,12 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
       var bufDev = package.getSender();
       if (global.itemsMan.getAllIds().contains(bufDev)) {
         global.pageWithMap.alarmMapMarker(bufDev, package.getAlarmReason());
-        addProtocolLine('Alarm: ${package.getAlarmType()} ${package.getAlarmReason()} (${package.getAlarmNumber()})');
-        global.protocolPage.addAlarm('${DateTime.now().toString().substring(0,19)} Device #${package.getSender()} '
+        addProtocolLine('${DateTime.now().toString().substring(11, 19)} #${package.getSender()} '
+            '${package.getAlarmType().name} ${package.getAlarmReason().name} (${package.getAlarmNumber()})');
+        global.protocolPage.addAlarm('${DateTime.now().toString().substring(0, 19)} Device #${package.getSender()} '
             'Alarm: ${package.getAlarmType().name} ${package.getAlarmReason().name} (${package.getAlarmNumber()})');
+        global.protocolPage.createNotification('Alarm from device #${package.getSender()}',
+            '${DateTime.now().toString().substring(0, 19)} ${package.getAlarmReason().name}', package.getSender());
       }
     }
   }
@@ -218,17 +221,20 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
 
   void checkNewIdDevice() {
     setState(() {
-      global.list = ListView.builder(
-          reverse: true,
-          controller: _scrollController,
-          shrinkWrap: true,
-          itemCount: widget.array.length,
-          itemBuilder: (context, i) {
-            return Text(
-              widget.array[i],
-              textScaleFactor: 0.85,
-            );
-          });
+      global.list = GestureDetector(
+        onTap: () => global.globalKey.currentState?.changePage(7),
+        child: ListView.builder(
+            reverse: true,
+            controller: _scrollController,
+            shrinkWrap: true,
+            itemCount: widget.array.length,
+            itemBuilder: (context, i) {
+              return Text(
+                widget.array[i],
+                textScaleFactor: 0.85,
+              );
+            }),
+      );
       if (widget.array.length > 3) {
         _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       }
@@ -1769,8 +1775,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
                     ? notSend
                     : global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
-                    ? trySend
-                    : defaultColor,
+                        ? trySend
+                        : defaultColor,
                 child: Checkbox(
                     value: rt.stateMask & DeviceState.MONITORING_LINE1 != 0,
                     onChanged: (bool? value) {
@@ -1806,8 +1812,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
                     ? notSend
                     : global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.sendingState
-                    ? trySend
-                    : defaultColor,
+                        ? trySend
+                        : defaultColor,
                 child: Checkbox(
                     value: rt.stateMask & DeviceState.MONITORING_LINE2 != 0,
                     onChanged: (bool? value) {
@@ -1843,7 +1849,6 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           ],
         ),
       );
-
 
       if (widget._cloneItem is RT) {
         children.add(
@@ -3328,8 +3333,6 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     );
   }
 
-
-
   final List<bool> _isOpenMain = List.filled(6, false);
   final List<bool> _isOpenCSD = List.filled(8, false);
   final List<bool> _isOpenCFU = List.filled(8, false);
@@ -3353,11 +3356,12 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 global.pageWithMap.unselectMapMarker();
                 global.itemsMan.setSelected(int.parse(widget.dropdownValue));
                 global.pageWithMap.selectMapMarker(global.itemsMan.getSelected<NetDevice>()!.id);
-                global.mainBottomSelectedDev = TextButton(onPressed: () => global.goToTablePage(), child:Text(
-                  '${global.itemsMan.getSelected<NetDevice>()!.typeName()} #${global.itemsMan.getSelected<NetDevice>()!.id}',
-                  textScaleFactor: 1.4,
-                )
-                );
+                global.mainBottomSelectedDev = TextButton(
+                    onPressed: () => global.goToTablePage(),
+                    child: Text(
+                      '${global.itemsMan.getSelected<NetDevice>()!.typeName()} #${global.itemsMan.getSelected<NetDevice>()!.id}',
+                      textScaleFactor: 1.4,
+                    ));
               });
             },
           ),

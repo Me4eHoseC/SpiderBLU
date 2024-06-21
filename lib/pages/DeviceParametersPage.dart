@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:projects/events/alarmEvents.dart';
 
 import '../core/AIRS.dart';
+import '../localizations/app_localizations.dart';
 import '../radionet/BasePackage.dart';
 import '../radionet/NetCommonPackages.dart';
 import '../radionet/NetPackagesDataTypes.dart';
@@ -22,50 +25,12 @@ import '../global.dart' as global;
 
 class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
   List<String> array = [];
-  List<DropdownMenuItem<String>> dropdownItems = [];
-  String dropdownValue = '';
   late _DeviceParametersPage _page;
 
   Marker _cloneItem = Marker();
 
-  void addDeviceInDropdown(int id, String type) {
-    dropdownValue = id.toString();
-    var newItem = DropdownMenuItem(
-      value: dropdownValue,
-      child: Text('$type '
-          '#$id'),
-    );
-    dropdownItems.add(newItem);
-  }
-
-  void changeDeviceInDropdown(int newId, String newType, String oldId) {
-    addDeviceInDropdown(newId, newType);
-    deleteDeviceInDropdown(int.parse(oldId));
-    selectDeviceInDropdown(newId);
-  }
-
-  void deleteDeviceInDropdown(int id) {
-    for (int i = 0; i < dropdownItems.length; i++) {
-      if (dropdownItems[i].value == id.toString()) {
-        dropdownItems.removeAt(i);
-        if (i == dropdownItems.length && i > 0) {
-          dropdownValue = dropdownItems[i - 1].value.toString();
-        } else {
-          dropdownValue = dropdownItems[i].value.toString();
-        }
-        break;
-      }
-    }
-  }
-
-  void selectDeviceInDropdown(int id) {
-    for (int i = 0; i < dropdownItems.length; i++) {
-      if (dropdownItems[i].value == id.toString()) {
-        dropdownValue = dropdownItems[i].value.toString();
-        _page.setAllNums();
-        break;
-      }
-    }
+  BuildContext getContext(){
+    return _page.context;
   }
 
   void getCordForNewDevice(int devId) {
@@ -157,14 +122,70 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
     if (basePackage.getType() == PackageType.ALARM) {
       var package = basePackage as AlarmPackage;
       var bufDev = package.getSender();
+      var event = AlarmEvent();
+
       if (global.itemsMan.getAllIds().contains(bufDev)) {
         global.pageWithMap.alarmMapMarker(bufDev, package.getAlarmReason());
+        String alarmReason = '', alarmType = '';
+        var loc = AppLocalizations.of(_page.context)!;
+        if (package.getAlarmReason().name == AlarmReason.HUMAN.name) {
+          event = SeismicAlarmEvent(AlarmEventType.Human);
+          alarmReason = loc.reasonHuman;
+        } else if (package.getAlarmReason().name == AlarmReason.AUTO.name) {
+          event = SeismicAlarmEvent(AlarmEventType.Transport);
+          alarmReason = loc.reasonAuto;
+        } else if (package.getAlarmReason().name == AlarmReason.BATTERY.name) {
+          event = SeismicAlarmEvent(AlarmEventType.WeakBattery);
+          alarmReason = loc.reasonBat;
+        } else {
+          alarmReason = '';
+        }
+
+        if (package.getAlarmType().name == AlarmType.LINE1.name) {
+          event = BreaklineAlarmEvent();
+          event.deviceId = package.getSender();
+          alarmType = loc.typeLine1;
+          if (event is BreaklineAlarmEvent) {
+            event.breaklineNumber = 1;
+            event.alarmSeqNumber = package.getAlarmNumber();
+          }
+        } else if (package.getAlarmType().name == AlarmType.LINE2.name) {
+          event = BreaklineAlarmEvent();
+          event.deviceId = package.getSender();
+          alarmType = loc.typeLine2;
+          if (event is BreaklineAlarmEvent) {
+            event.breaklineNumber = 2;
+            event.alarmSeqNumber = package.getAlarmNumber();
+          }
+        } else if (package.getAlarmType().name == AlarmType.SEISMIC.name) {
+          alarmType = loc.typeSeismic;
+        } else if (package.getAlarmType().name == AlarmType.BATTERY.name) {
+          event = SeismicAlarmEvent(AlarmEventType.WeakBattery);
+          alarmType = loc.reasonBat;
+        } else if (package.getAlarmType().name == AlarmType.TRAP.name) {
+          event = PhototrapAlarmEvent();
+          alarmType = loc.typeTrap;
+        } else if (package.getAlarmType().name == AlarmType.RADIATION.name) {
+          event = RadiationAlarmEvent();
+          alarmType = loc.typeRadiation;
+        } else if (package.getAlarmType().name == AlarmType.EXT_POWER_SAFETY_CATCH_OFF.name) {
+          event = SeismicAlarmEvent(AlarmEventType.ExtPowerSafetyCatchOff);
+          alarmType = loc.typeCatchOFF;
+        } else if (package.getAlarmType().name == AlarmType.AUTO_EXT_POWER_TRIGGERED.name) {
+          event = SeismicAlarmEvent(AlarmEventType.AutoExtPowerFired);
+          alarmType = loc.typePowerTriggered;
+        } else {
+          alarmType = '';
+        }
+
         addProtocolLine('${DateTime.now().toString().substring(11, 19)} #${package.getSender()} '
-            '${package.getAlarmType().name} ${package.getAlarmReason().name} (${package.getAlarmNumber()})');
-        global.protocolPage.addAlarm('${DateTime.now().toString().substring(0, 19)} Device #${package.getSender()} '
-            'Alarm: ${package.getAlarmType().name} ${package.getAlarmReason().name} (${package.getAlarmNumber()})');
-        global.protocolPage.createNotification('Alarm from device #${package.getSender()}',
-            '${DateTime.now().toString().substring(0, 19)} ${package.getAlarmReason().name}', package.getSender());
+            '$alarmType $alarmReason (${package.getAlarmNumber()})');
+
+        global.eventsMan.addEvent(event, _page.context);
+        /*global.protocolPage.addEvent('${DateTime.now().toString().substring(0, 19)} ${AppLocalizations.of(_page.context)!.alarmFromDevice(package.getSender())} '
+            '$alarmType $alarmReason (${package.getAlarmNumber()})');*/
+        global.protocolPage.createNotification(AppLocalizations.of(_page.context)!.alarmFromDevice(package.getSender()),
+            '${DateTime.now().toString().substring(0, 19)} $alarmReason $alarmType', package.getSender());
       }
     }
   }
@@ -181,6 +202,10 @@ class DeviceParametersPage extends StatefulWidget with global.TIDManagement {
   void addProtocolLine(String line) {
     array.add(line);
     _page.checkNewIdDevice();
+  }
+
+  void changeTheme(Color color){
+    _page.defaultColor = color;
   }
 
   @override
@@ -215,7 +240,17 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
   void initState() {
     super.initState();
     Timer.periodic(Duration.zero, (_) {
-      setState(() {});
+      setState(() {
+        var r = AppLocalizations.of(context)!;
+        global.critFilter = [
+          r.oneOfThree,
+          r.twoOfThree,
+          r.threeOfThree,
+          r.twoOfFour,
+          r.threeOfFour,
+          r.fourOfFour,
+        ];
+      });
     });
   }
 
@@ -244,17 +279,16 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
   //Main settings
 
   void checkDevID(int newId, int oldId) {
-    print('$newId  $oldId');
     setState(() {
       var listIdsBuf = global.itemsMan.getAllIds();
       if (oldId == newId) return;
       if (listIdsBuf.contains(newId)) {
-        showError('This ID already exists');
+        showError(AppLocalizations.of(context)!.idExist);
         widget._cloneItem.id = oldId;
         return;
       }
       if (newId < 0 && newId > 256) {
-        showError("Invalid ID \n ID can be from 1 to 255");
+        showError(AppLocalizations.of(context)!.invalidId);
         widget._cloneItem.id = oldId;
         return;
       }
@@ -271,7 +305,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         return;
       }
       if (newType == STD.Name() && global.flagCheckSPPU == true) {
-        showError('STD is already on the map');
+        showError(AppLocalizations.of(context)!.stdOnMap);
         return;
       }
       if (newType != STD.Name() && oldType == STD.Name() && global.flagCheckSPPU == true) {
@@ -367,14 +401,14 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Allowed hops'),
+          title: Text(AppLocalizations.of(context)!.allowedHops),
           content: Text(global.itemsMan.getSelected<RT>()!.allowedHops.toString()),
           actions: [
-            TextButton(
+            OutlinedButton(
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: const Text('Ok'))
+                child: Text(AppLocalizations.of(context)!.buttonAccept))
           ],
         );
       },
@@ -397,14 +431,14 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Unallowed hops'),
+          title: Text(AppLocalizations.of(context)!.unallowedHops),
           content: Text(global.itemsMan.getSelected<RT>()!.unallowedHops.toString()),
           actions: [
-            TextButton(
+            OutlinedButton(
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: const Text('Ok'))
+                child: Text(AppLocalizations.of(context)!.buttonAccept))
           ],
         );
       },
@@ -436,27 +470,6 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     });
   }
 
-/*  void takePriorityClick(int devId) {
-    setState(() {
-      BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.GET_ALLOWED_HOPS);
-      var tid = global.postManager.sendPackage(getInfo);
-      widget.tits.add(tid);
-    });
-  }
-
-  void setPriorityClick(int devId, bool priority) {
-    setState(() {
-      HopsPackage hopsPackage = HopsPackage();
-      hopsPackage.setReceiver(devId);
-      hopsPackage.setSender(RoutesManager.getLaptopAddress());
-      hopsPackage.addHop(priority ? RoutesManager.getRtAllHop() : 0);
-      hopsPackage.addHop(0);
-      var tid = global.postManager.sendPackage(hopsPackage);
-      widget.setRequests[tid] = hopsPackage;
-      widget.tits.add(tid);
-    });
-  }*/
-
   void buttonResetRetransmissionClick(int devId) {
     setState(() {
       BasePackage getInfo = BasePackage.makeBaseRequest(devId, PackageType.SET_DEFAULT_NETWORK);
@@ -466,7 +479,6 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
   }
 
   // Save/Reset settings
-  //TODO Защита от дурня строка 7к в mainwindow.cpp
 
   void rebootDevice(int devId) {
     setState(() {
@@ -859,11 +871,12 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         return AlertDialog(
           title: Text(string!),
           actions: [
-            TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text('Ok'))
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Ok'),
+            ),
           ],
         );
       },
@@ -1000,15 +1013,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       children: [
         Row(
           children: [
-            const Expanded(
-              flex: 1,
+            Expanded(
+              flex: 2,
               child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text('ID:'),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text('${AppLocalizations.of(context)!.id}:'),
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: TextField(
                 controller: _controllerId,
                 keyboardType: TextInputType.number,
@@ -1018,27 +1031,35 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 ],
               ),
             ),
+            const Expanded(
+              flex: 1,
+              child: Center(),
+            ),
             Expanded(
               flex: 1,
-              child: IconButton(
-                onPressed: () => checkDevID(nd.id, global.itemsMan.getSelected<NetDevice>()!.id),
-                icon: const Icon(Icons.check),
-                color: Colors.green,
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => checkDevID(nd.id, global.itemsMan.getSelected<NetDevice>()!.id),
+                  child: const Icon(
+                    Icons.check,
+                    color: Colors.green,
+                  ),
+                ),
               ),
             ),
           ],
         ),
         Row(
           children: [
-            const Expanded(
-              flex: 1,
+            Expanded(
+              flex: 2,
               child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text('Type:'),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text('${AppLocalizations.of(context)!.type}:'),
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: DropdownButton<String>(
                 alignment: AlignmentDirectional.topCenter,
                 onChanged: (String? value) {
@@ -1050,32 +1071,50 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 items: global.deviceTypeList.map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
-                    child: Text(value),
+                    child: value == STD.Name()
+                        ? Text(AppLocalizations.of(context)!.stdName)
+                        : value == CSD.Name()
+                            ? Text(AppLocalizations.of(context)!.csdName)
+                            : value == MCD.Name()
+                                ? Text(AppLocalizations.of(context)!.mcdName)
+                                : value == AIRS.Name()
+                                    ? Text(AppLocalizations.of(context)!.airsName)
+                                    : value == CPD.Name()
+                                        ? Text(AppLocalizations.of(context)!.cpdName)
+                                        : Text(AppLocalizations.of(context)!.rtName),
                   );
                 }).toList(),
               ),
             ),
+            const Expanded(
+              flex: 1,
+              child: Center(),
+            ),
             Expanded(
               flex: 1,
-              child: IconButton(
-                onPressed: () => checkDevType(nd.id, nd.typeName(), bufferDeviceType!),
-                icon: const Icon(Icons.check),
-                color: Colors.green,
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => checkDevType(nd.id, nd.typeName(), bufferDeviceType!),
+                  child: const Icon(
+                    Icons.check,
+                    color: Colors.green,
+                  ),
+                ),
               ),
             ),
           ],
         ),
         Row(
           children: [
-            const Expanded(
-              flex: 1,
+            Expanded(
+              flex: 2,
               child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text('Date/time:'),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(AppLocalizations.of(context)!.dateTime),
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: Container(
                 color: global.sendingState[nd.id]?[global.ParametersGroup.dateTime] == global.SendingState.notAnswerState
                     ? notSend
@@ -1087,42 +1126,44 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
             Expanded(
               flex: 1,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    onPressed: () => takeTimeClick(nd.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => takeTimeClick(nd.id),
+                  child: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () => setTimeClick(nd.id),
-                    icon: const Icon(
-                      Icons.access_time,
-                      color: Colors.green,
-                    ),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => setTimeClick(nd.id),
+                  child: const Icon(
+                    Icons.access_time,
+                    color: Colors.green,
                   ),
-                ],
+                ),
               ),
             ),
           ],
         ),
         Row(
           children: [
-            const Expanded(
-              flex: 1,
+            Expanded(
+              flex: 2,
               child: SizedBox(
                 width: 100,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
-                  child: Text('Firmware version:'),
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(AppLocalizations.of(context)!.firmwareVersion),
                 ),
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: Container(
                 color: global.sendingState[nd.id]?[global.ParametersGroup.firmwareVersion] == global.SendingState.notAnswerState
                     ? notSend
@@ -1134,13 +1175,19 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
             Expanded(
               flex: 1,
-              child: IconButton(
-                onPressed: () => takeVersionClick(nd.id),
-                icon: const Icon(
-                  Icons.refresh,
-                  color: Colors.blue,
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => takeVersionClick(nd.id),
+                  child: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
+                  ),
                 ),
               ),
+            ),
+            const Expanded(
+              flex: 1,
+              child: Center(),
             ),
           ],
         ),
@@ -1159,15 +1206,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       children: [
         Row(
           children: [
-            const Expanded(
-              flex: 1,
+            Expanded(
+              flex: 2,
               child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text('Latitude:'),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(AppLocalizations.of(context)!.latitude),
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: Container(
                 color: global.sendingState[nd.id]?[global.ParametersGroup.coordinates] == global.SendingState.notAnswerState
                     ? notSend
@@ -1183,24 +1230,30 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
             Expanded(
               flex: 1,
-              child: IconButton(
-                onPressed: () => setMyCordsForDevice(),
-                icon: const Icon(Icons.navigation),
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => setMyCordsForDevice(),
+                  child: const Icon(Icons.navigation),
+                ),
               ),
+            ),
+            const Expanded(
+              flex: 1,
+              child: Center(),
             ),
           ],
         ),
         Row(
           children: [
-            const Expanded(
-              flex: 1,
+            Expanded(
+              flex: 2,
               child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text('Longitude:'),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(AppLocalizations.of(context)!.longitude),
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: Container(
                 color: global.sendingState[nd.id]?[global.ParametersGroup.coordinates] == global.SendingState.notAnswerState
                     ? notSend
@@ -1216,24 +1269,26 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
             Expanded(
               flex: 1,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    onPressed: () => takeCordClick(nd.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => takeCordClick(nd.id),
+                  child: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () => setCordClick(nd.id, nd.latitude, nd.longitude),
-                    icon: const Icon(
-                      Icons.check,
-                      color: Colors.green,
-                    ),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => setCordClick(nd.id, nd.latitude, nd.longitude),
+                  child: const Icon(
+                    Icons.check,
+                    color: Colors.green,
                   ),
-                ],
+                ),
               ),
             ),
           ],
@@ -1253,15 +1308,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       children: [
         Row(
           children: [
-            const Expanded(
-              flex: 1,
+            Expanded(
+              flex: 2,
               child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text('Signal strength:'),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(AppLocalizations.of(context)!.signalStrength),
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: Container(
                 color: global.sendingState[rt.id]?[global.ParametersGroup.signalStrength] == global.SendingState.notAnswerState
                     ? notSend
@@ -1273,91 +1328,109 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
             Expanded(
               flex: 1,
-              child: IconButton(
-                onPressed: () => takeSignalStrengthClick(rt.id),
-                icon: const Icon(
-                  Icons.refresh,
-                  color: Colors.blue,
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => takeSignalStrengthClick(rt.id),
+                  child: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
+                  ),
                 ),
               ),
+            ),
+            const Expanded(
+              flex: 1,
+              child: Center(),
             ),
           ],
         ),
         Row(
           children: [
-            const Expanded(
-              flex: 1,
+            Expanded(
+              flex: 2,
               child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text('Allowed hops:'),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text('${AppLocalizations.of(context)!.allowedHops}:'),
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: Container(
                 color: global.sendingState[rt.id]?[global.ParametersGroup.allowedHops] == global.SendingState.notAnswerState
                     ? notSend
                     : global.sendingState[rt.id]?[global.ParametersGroup.allowedHops] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
-                child: Text(''),
+                child: const Text(''),
               ),
             ),
             Expanded(
               flex: 1,
-              child: IconButton(
-                onPressed: () => takeAllowedHopsClick(rt.id),
-                icon: const Icon(
-                  Icons.refresh,
-                  color: Colors.blue,
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => takeAllowedHopsClick(rt.id),
+                  child: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
+                  ),
                 ),
               ),
+            ),
+            const Expanded(
+              flex: 1,
+              child: Center(),
             ),
           ],
         ),
         Row(
           children: [
-            const Expanded(
-              flex: 1,
+            Expanded(
+              flex: 2,
               child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text('Unallowed hops:'),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text('${AppLocalizations.of(context)!.unallowedHops}:'),
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: Container(
                 color: global.sendingState[rt.id]?[global.ParametersGroup.unallowedHops] == global.SendingState.notAnswerState
                     ? notSend
                     : global.sendingState[rt.id]?[global.ParametersGroup.unallowedHops] == global.SendingState.sendingState
                         ? trySend
                         : defaultColor,
-                child: Text(''),
+                child: const Text(''),
               ),
             ),
             Expanded(
               flex: 1,
-              child: IconButton(
-                onPressed: () => takeUnallowedHopsClick(rt.id),
-                icon: const Icon(
-                  Icons.refresh,
-                  color: Colors.blue,
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => takeUnallowedHopsClick(rt.id),
+                  child: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
+                  ),
                 ),
               ),
+            ),
+            const Expanded(
+              flex: 1,
+              child: Center(),
             ),
           ],
         ),
         Row(
           children: [
-            const Expanded(
-              flex: 1,
+            Expanded(
+              flex: 2,
               child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text("Rebroadcast to everyone:"),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(AppLocalizations.of(context)!.rebroadcastToEveryone),
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: Container(
                 color: global.sendingState[rt.id]?[global.ParametersGroup.rebroadcastToEveryone] == global.SendingState.notAnswerState
                     ? notSend
@@ -1379,22 +1452,26 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
             Expanded(
               flex: 1,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    onPressed: () => takeRetransmissionAllClick(rt.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => takeRetransmissionAllClick(rt.id),
+                  child: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () => setRetransmissionAllClick(rt.id, rt.allowedHops[0] == 65535),
-                    icon: const Icon(Icons.check),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => setRetransmissionAllClick(rt.id, rt.allowedHops[0] == 65535),
+                  child: const Icon(
+                    Icons.check,
                     color: Colors.green,
                   ),
-                ],
+                ),
               ),
             ),
           ],
@@ -1404,7 +1481,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           children: [
             OutlinedButton(
               onPressed: () => buttonResetRetransmissionClick(rt.id),
-              child: const Text('Reset retransmission'),
+              child: Text(AppLocalizations.of(context)!.resetRetransmission),
             ),
           ],
         ),
@@ -1417,20 +1494,20 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Do you really want to save all settings on selected device?"),
+          title: Text(AppLocalizations.of(context)!.saveAlertDialog),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () {
                 saveDeviceParam(devId);
                 Navigator.pop(context);
               },
-              child: const Text('Accept'),
+              child: Text(AppLocalizations.of(context)!.buttonAccept),
             ),
-            TextButton(
+            OutlinedButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.buttonCancel),
             ),
           ],
         );
@@ -1443,20 +1520,20 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Do you really want to reboot selected device?"),
+          title: Text(AppLocalizations.of(context)!.rebootDeviceDialog),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () {
                 rebootDevice(devId);
                 Navigator.pop(context);
               },
-              child: const Text('Accept'),
+              child: Text(AppLocalizations.of(context)!.buttonAccept),
             ),
-            TextButton(
+            OutlinedButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.buttonCancel),
             ),
           ],
         );
@@ -1469,20 +1546,20 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Do you really want to reset selected device to factory settings?"),
+          title: Text(AppLocalizations.of(context)!.factoryResetDialog),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () {
                 returnDeviceToDefaultParam(devId);
                 Navigator.pop(context);
               },
-              child: const Text('Accept'),
+              child: Text(AppLocalizations.of(context)!.buttonAccept),
             ),
-            TextButton(
+            OutlinedButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.buttonCancel),
             ),
           ],
         );
@@ -1498,37 +1575,87 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     var nd = widget._cloneItem as NetDevice;
 
     return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        OutlinedButton(
-          onPressed: () => checkResetSettingsButton(nd.id),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.restart_alt),
-              Text('Reboot device'),
-            ],
-          ),
+        Row(
+          children: [
+            const Expanded(
+              flex: 1,
+              child: Center(),
+            ),
+            Expanded(
+              flex: 3,
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => checkResetSettingsButton(nd.id),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.restart_alt),
+                      Text(AppLocalizations.of(context)!.rebootDeviceButton),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const Expanded(
+              flex: 1,
+              child: Center(),
+            ),
+          ],
         ),
-        OutlinedButton(
-          onPressed: () => checkSaveSettingsButton(nd.id),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.save),
-              Text('Save settings'),
-            ],
-          ),
+        Row(
+          children: [
+            const Expanded(
+              flex: 1,
+              child: Center(),
+            ),
+            Expanded(
+              flex: 3,
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => checkSaveSettingsButton(nd.id),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.save),
+                      Text(AppLocalizations.of(context)!.saveSettingsButton),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const Expanded(
+              flex: 1,
+              child: Center(),
+            ),
+          ],
         ),
-        OutlinedButton(
-          onPressed: () => checkFactoryResetSettingsButton(nd.id),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.restore),
-              Text('Factory reset'),
-            ],
-          ),
+        Row(
+          children: [
+            const Expanded(
+              flex: 1,
+              child: Center(),
+            ),
+            Expanded(
+              flex: 3,
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => checkFactoryResetSettingsButton(nd.id),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.restore),
+                      Text(AppLocalizations.of(context)!.factoryResetButton),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const Expanded(
+              flex: 1,
+              child: Center(),
+            ),
+          ],
         ),
       ],
     );
@@ -1546,11 +1673,11 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
 
       if (widget._cloneItem is AIRS) {
         children.add(
-          const Row(
+          Row(
             children: [
               Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text("On/Off in. dev.:"),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(AppLocalizations.of(context)!.onOffInDev),
               ),
             ],
           ),
@@ -1558,15 +1685,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         children.add(
           Row(
             children: [
-              const Expanded(
-                flex: 1,
+              Expanded(
+                flex: 2,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
-                  child: Text("In. dev. 1:"),
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(AppLocalizations.of(context)!.inDev1),
                 ),
               ),
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: Container(
                   color: global.sendingState[airs.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
                       ? notSend
@@ -1587,33 +1714,27 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
               Expanded(
                 flex: 1,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      onPressed: () => takeInternalDeviceParamClick(airs.id),
-                      icon: const Icon(
-                        Icons.refresh,
-                        color: Colors.blue,
-                      ),
+                child: Center(
+                  child: OutlinedButton(
+                    onPressed: () => takeInternalDeviceParamClick(airs.id),
+                    child: const Icon(
+                      Icons.refresh,
+                      color: Colors.blue,
                     ),
-                    IconButton(
-                      onPressed: () => setInternalDeviceParamClick(airs.id, airs.stateMask),
-                      icon: const Icon(Icons.check),
-                      color: Colors.green,
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ],
-          ),
-        );
-        children.add(
-          const Row(
-            children: [
-              Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text("Device status:"),
+              Expanded(
+                flex: 1,
+                child: Center(
+                  child: OutlinedButton(
+                    onPressed: () => setInternalDeviceParamClick(airs.id, airs.stateMask),
+                    child: const Icon(
+                      Icons.check,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -1621,15 +1742,25 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         children.add(
           Row(
             children: [
-              const Expanded(
-                flex: 1,
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(AppLocalizations.of(context)!.deviceStatus),
+              ),
+            ],
+          ),
+        );
+        children.add(
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
-                  child: Text("A-IRS:"),
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text('${AppLocalizations.of(context)!.airsName}:'),
                 ),
               ),
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: Container(
                   color: global.sendingState[airs.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
                       ? notSend
@@ -1651,13 +1782,19 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
               Expanded(
                 flex: 1,
-                child: IconButton(
-                  onPressed: () => takeInternalDeviceStateClick(airs.id),
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
+                child: Center(
+                  child: OutlinedButton(
+                    onPressed: () => takeInternalDeviceStateClick(airs.id),
+                    child: const Icon(
+                      Icons.refresh,
+                      color: Colors.blue,
+                    ),
                   ),
                 ),
+              ),
+              const Expanded(
+                flex: 1,
+                child: Center(),
               ),
             ],
           ),
@@ -1669,11 +1806,11 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       var rt = widget._cloneItem as RT;
 
       children.add(
-        const Row(
+        Row(
           children: [
             Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text("On/Off in. dev.:"),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.onOffInDev),
             ),
           ],
         ),
@@ -1683,15 +1820,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         children.add(
           Row(
             children: [
-              const Expanded(
-                flex: 1,
+              Expanded(
+                flex: 2,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
-                  child: Text("Geophone:"),
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(AppLocalizations.of(context)!.geophone),
                 ),
               ),
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: Container(
                   color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
                       ? notSend
@@ -1711,7 +1848,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 ),
               ),
               const Expanded(
-                flex: 1,
+                flex: 2,
                 child: SizedBox(),
               ),
             ],
@@ -1723,15 +1860,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         children.add(
           Row(
             children: [
-              const Expanded(
-                flex: 1,
+              Expanded(
+                flex: 2,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
-                  child: Text("Camera trap:"),
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(AppLocalizations.of(context)!.cameraTrap),
                 ),
               ),
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: Container(
                   color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
                       ? notSend
@@ -1751,7 +1888,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 ),
               ),
               const Expanded(
-                flex: 1,
+                flex: 2,
                 child: SizedBox(),
               ),
             ],
@@ -1762,15 +1899,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       children.add(
         Row(
           children: [
-            const Expanded(
-              flex: 1,
+            Expanded(
+              flex: 2,
               child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text("In. dev. 1:"),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(AppLocalizations.of(context)!.inDev1),
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: Container(
                 color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
                     ? notSend
@@ -1790,7 +1927,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
             ),
             const Expanded(
-              flex: 1,
+              flex: 2,
               child: SizedBox(),
             ),
           ],
@@ -1799,15 +1936,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       children.add(
         Row(
           children: [
-            const Expanded(
-              flex: 1,
+            Expanded(
+              flex: 2,
               child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text("In. dev. 2:"),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(AppLocalizations.of(context)!.inDev2),
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: Container(
                 color: global.sendingState[rt.id]?[global.ParametersGroup.onOffInDev] == global.SendingState.notAnswerState
                     ? notSend
@@ -1828,22 +1965,26 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
             Expanded(
               flex: 1,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    onPressed: () => takeInternalDeviceParamClick(rt.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => takeInternalDeviceParamClick(rt.id),
+                  child: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () => setInternalDeviceParamClick(rt.id, rt.stateMask),
-                    icon: const Icon(Icons.check),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => setInternalDeviceParamClick(rt.id, rt.stateMask),
+                  child: const Icon(
+                    Icons.check,
                     color: Colors.green,
                   ),
-                ],
+                ),
               ),
             ),
           ],
@@ -1852,11 +1993,11 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
 
       if (widget._cloneItem is RT) {
         children.add(
-          const Row(
+          Row(
             children: [
               Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text("Device status:"),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(AppLocalizations.of(context)!.deviceStatus),
               ),
             ],
           ),
@@ -1864,15 +2005,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         children.add(
           Row(
             children: [
-              const Expanded(
-                flex: 1,
+              Expanded(
+                flex: 2,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
-                  child: Text("In. dev. 1:"),
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(AppLocalizations.of(context)!.inDev1),
                 ),
               ),
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: Container(
                   color: global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
                       ? notSend
@@ -1892,7 +2033,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 ),
               ),
               const Expanded(
-                flex: 1,
+                flex: 2,
                 child: SizedBox(),
               ),
             ],
@@ -1901,15 +2042,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         children.add(
           Row(
             children: [
-              const Expanded(
-                flex: 1,
+              Expanded(
+                flex: 2,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
-                  child: Text("In. dev. 2:"),
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(AppLocalizations.of(context)!.inDev2),
                 ),
               ),
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: Container(
                   color: global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
                       ? notSend
@@ -1933,13 +2074,19 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 flex: 1,
                 child: widget._cloneItem is CPD
                     ? const SizedBox()
-                    : IconButton(
-                        onPressed: () => takeInternalDeviceStateClick(rt.id),
-                        icon: const Icon(
-                          Icons.refresh,
-                          color: Colors.blue,
+                    : Center(
+                        child: OutlinedButton(
+                          onPressed: () => takeInternalDeviceStateClick(rt.id),
+                          child: const Icon(
+                            Icons.refresh,
+                            color: Colors.blue,
+                          ),
                         ),
                       ),
+              ),
+              const Expanded(
+                flex: 1,
+                child: SizedBox(),
               ),
             ],
           ),
@@ -1950,15 +2097,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         children.add(
           Row(
             children: [
-              const Expanded(
-                flex: 1,
+              Expanded(
+                flex: 2,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
-                  child: Text("Camera:"),
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text('${AppLocalizations.of(context)!.camera}:'),
                 ),
               ),
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: Container(
                   color: global.sendingState[rt.id]?[global.ParametersGroup.deviceStatus] == global.SendingState.notAnswerState
                       ? notSend
@@ -1980,13 +2127,19 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
               Expanded(
                 flex: 1,
-                child: IconButton(
-                  onPressed: () => takeInternalDeviceStateClick(rt.id),
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
+                child: Center(
+                  child: OutlinedButton(
+                    onPressed: () => takeInternalDeviceStateClick(rt.id),
+                    child: const Icon(
+                      Icons.refresh,
+                      color: Colors.blue,
+                    ),
                   ),
                 ),
+              ),
+              const Expanded(
+                flex: 1,
+                child: SizedBox(),
               ),
             ],
           ),
@@ -2009,15 +2162,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     return Column(children: [
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text("Safety catch:"),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.safetyCatch),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Padding(
               padding: const EdgeInsets.only(left: 4),
               child: Container(
@@ -2038,46 +2191,47 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           ),
           Expanded(
             flex: 1,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () => takeSafetyCatch(rt.id),
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
-                  ),
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => takeSafetyCatch(rt.id),
+                child: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
-                IconButton(
-                  onPressed: () => setSafetyCatch(rt.id, rt.extPowerSafetyCatchState),
-                  icon: const Icon(Icons.check),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => setSafetyCatch(rt.id, rt.extPowerSafetyCatchState),
+                child: const Icon(
+                  Icons.check,
                   color: Colors.green,
                 ),
-              ],
+              ),
             ),
           ),
         ],
       ),
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text('Activation delay:'),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.activationDelay),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: DropdownButton<int>(
               selectedItemBuilder: (BuildContext context) {
                 return global.delayList.map((int value) {
                   return Align(
                     alignment: Alignment.center,
-                    child: Text(
-                      '$value sec',
-                      style: const TextStyle(color: Colors.black),
-                    ),
+                    child: Text(AppLocalizations.of(context)!.activationDelaySec(value.toString())),
                   );
                 }).toList();
               },
@@ -2085,7 +2239,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               items: global.delayList.map<DropdownMenuItem<int>>((int value) {
                 return DropdownMenuItem<int>(
                   value: value,
-                  child: Text('$value sec'),
+                  child: Text(AppLocalizations.of(context)!.activationDelaySec(value.toString())),
                 );
               }).toList(),
               onChanged: rt.extPowerSafetyCatchState
@@ -2098,31 +2252,28 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
           ),
           const Expanded(
-            flex: 1,
+            flex: 2,
             child: SizedBox(),
           ),
         ],
       ),
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text('Pulse duration:'),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.pulseDuration),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: DropdownButton<int>(
               selectedItemBuilder: (BuildContext context) {
                 return global.impulseList.map((int value) {
                   return Align(
                     alignment: Alignment.center,
-                    child: Text(
-                      '$value sec',
-                      style: const TextStyle(color: Colors.black),
-                    ),
+                    child: Text(AppLocalizations.of(context)!.activationDelaySec(value.toString())),
                   );
                 }).toList();
               },
@@ -2130,7 +2281,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               items: global.impulseList.map<DropdownMenuItem<int>>((int value) {
                 return DropdownMenuItem<int>(
                   value: value,
-                  child: Text('$value sec'),
+                  child: Text(AppLocalizations.of(context)!.activationDelaySec(value.toString())),
                 );
               }).toList(),
               onChanged: rt.extPowerSafetyCatchState
@@ -2143,22 +2294,22 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
           ),
           const Expanded(
-            flex: 1,
+            flex: 2,
             child: SizedBox(),
           ),
         ],
       ),
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text("Switching by break:"),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.turnOnDueBreakline),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Container(
               color: global.sendingState[rt.id]?[global.ParametersGroup.switchingBreak] == global.SendingState.notAnswerState
                   ? notSend
@@ -2181,38 +2332,42 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           ),
           Expanded(
             flex: 1,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () => takeAutoExtPower(rt.id),
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
-                  ),
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => takeAutoExtPower(rt.id),
+                child: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
-                IconButton(
-                  onPressed: () =>
-                      setAutoExtPower(rt.id, rt.autoExtPowerState, rt.autoExtPowerActivationDelaySec, rt.extPowerImpulseDurationSec),
-                  icon: const Icon(Icons.check),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () =>
+                    setAutoExtPower(rt.id, rt.autoExtPowerState, rt.autoExtPowerActivationDelaySec, rt.extPowerImpulseDurationSec),
+                child: const Icon(
+                  Icons.check,
                   color: Colors.green,
                 ),
-              ],
+              ),
             ),
           ),
         ],
       ),
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text("Power:"),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.power),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Container(
               color: global.sendingState[rt.id]?[global.ParametersGroup.power] == global.SendingState.notAnswerState
                   ? notSend
@@ -2230,22 +2385,26 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           ),
           Expanded(
             flex: 1,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () => takeExternalPowerClick(rt.id),
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
-                  ),
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => takeExternalPowerClick(rt.id),
+                child: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
-                IconButton(
-                  onPressed: () => setExternalPowerClick(rt.id, rt.extPower),
-                  icon: const Icon(Icons.check),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => setExternalPowerClick(rt.id, rt.extPower),
+                child: const Icon(
+                  Icons.check,
                   color: Colors.green,
                 ),
-              ],
+              ),
             ),
           ),
         ],
@@ -2265,15 +2424,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         children: [
           Row(
             children: [
-              const Expanded(
-                flex: 1,
+              Expanded(
+                flex: 2,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
-                  child: Text('Voltage, V:'),
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(AppLocalizations.of(context)!.voltage),
                 ),
               ),
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: Container(
                   color: global.sendingState[rt.id]?[global.ParametersGroup.powerSupply] == global.SendingState.notAnswerState
                       ? notSend
@@ -2284,22 +2443,22 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 ),
               ),
               const Expanded(
-                flex: 1,
+                flex: 2,
                 child: SizedBox(),
               ),
             ],
           ),
           Row(
             children: [
-              const Expanded(
-                flex: 1,
+              Expanded(
+                flex: 2,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
-                  child: Text('Temperature, °С:'),
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(AppLocalizations.of(context)!.temperature),
                 ),
               ),
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: Container(
                   color: global.sendingState[rt.id]?[global.ParametersGroup.powerSupply] == global.SendingState.notAnswerState
                       ? notSend
@@ -2311,13 +2470,19 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
               Expanded(
                 flex: 1,
-                child: IconButton(
-                  onPressed: () => takeBatteryMonitorClick(rt.id),
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
+                child: Center(
+                  child: OutlinedButton(
+                    onPressed: () => takeBatteryMonitorClick(rt.id),
+                    child: const Icon(
+                      Icons.refresh,
+                      color: Colors.blue,
+                    ),
                   ),
                 ),
+              ),
+              const Expanded(
+                flex: 1,
+                child: SizedBox(),
               ),
             ],
           ),
@@ -2330,15 +2495,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
         children: [
           Row(
             children: [
-              const Expanded(
-                flex: 1,
+              Expanded(
+                flex: 2,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
-                  child: Text('Voltage, V:'),
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(AppLocalizations.of(context)!.voltage),
                 ),
               ),
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: Container(
                   color: global.sendingState[airs.id]?[global.ParametersGroup.powerSupply] == global.SendingState.notAnswerState
                       ? notSend
@@ -2350,13 +2515,19 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
               Expanded(
                 flex: 1,
-                child: IconButton(
-                  onPressed: () => takeBatteryMonitorClick(airs.id),
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
+                child: Center(
+                  child: OutlinedButton(
+                    onPressed: () => takeBatteryMonitorClick(airs.id),
+                    child: const Icon(
+                      Icons.refresh,
+                      color: Colors.blue,
+                    ),
                   ),
                 ),
+              ),
+              const Expanded(
+                flex: 1,
+                child: SizedBox(),
               ),
             ],
           ),
@@ -2375,15 +2546,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     return Column(children: [
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text("Human:"),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.human),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Container(
               color: global.sendingState[csd.id]?[global.ParametersGroup.humanTransport] == global.SendingState.notAnswerState
                   ? notSend
@@ -2403,22 +2574,22 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
           ),
           const Expanded(
-            flex: 1,
+            flex: 2,
             child: SizedBox(),
           ),
         ],
       ),
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text("Transport:"),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.transport),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Container(
               color: global.sendingState[csd.id]?[global.ParametersGroup.humanTransport] == global.SendingState.notAnswerState
                   ? notSend
@@ -2439,37 +2610,41 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           ),
           Expanded(
             flex: 1,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () => takeStateHumanTransportSensitivityClick(csd.id),
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
-                  ),
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => takeStateHumanTransportSensitivityClick(csd.id),
+                child: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
-                IconButton(
-                  onPressed: () => setStateHumanTransportSensitivityClick(csd.id, csd.alarmReasonMask),
-                  icon: const Icon(Icons.check),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => setStateHumanTransportSensitivityClick(csd.id, csd.alarmReasonMask),
+                child: const Icon(
+                  Icons.check,
                   color: Colors.green,
                 ),
-              ],
+              ),
             ),
           ),
         ],
       ),
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text('Signal swing:'),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.signalSwing),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Container(
               color: global.sendingState[csd.id]?[global.ParametersGroup.ratioSign] == global.SendingState.notAnswerState
                   ? notSend
@@ -2481,27 +2656,33 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           ),
           Expanded(
             flex: 1,
-            child: IconButton(
-              onPressed: () => takeSignalSwingClick(csd.id),
-              icon: const Icon(
-                Icons.refresh,
-                color: Colors.blue,
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => takeSignalSwingClick(csd.id),
+                child: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
+                ),
               ),
             ),
+          ),
+          const Expanded(
+            flex: 1,
+            child: SizedBox(),
           ),
         ],
       ),
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text('Human sensitivity: (25-255)'),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.humanSens),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Container(
               color: global.sendingState[csd.id]?[global.ParametersGroup.humSens] == global.SendingState.notAnswerState
                   ? notSend
@@ -2520,44 +2701,48 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           ),
           Expanded(
             flex: 1,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () => takeHumanSensitivityClick(csd.id),
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
-                  ),
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => takeHumanSensitivityClick(csd.id),
+                child: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
-                IconButton(
-                  onPressed: () {
-                    csd.humanSensitivity > 24 && csd.humanSensitivity < 256
-                        ? setHumanSensitivityClick(global.itemsMan.getSelected<CSD>()!.id, csd.humanSensitivity)
-                        : {
-                            showError('Sensitivity from 25 to 255'),
-                            csd.humanSensitivity = global.itemsMan.getSelected<CSD>()!.humanSensitivity,
-                          };
-                  },
-                  icon: const Icon(Icons.check),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () {
+                  csd.humanSensitivity > 24 && csd.humanSensitivity < 256
+                      ? setHumanSensitivityClick(global.itemsMan.getSelected<CSD>()!.id, csd.humanSensitivity)
+                      : {
+                          showError(AppLocalizations.of(context)!.errorSens),
+                          csd.humanSensitivity = global.itemsMan.getSelected<CSD>()!.humanSensitivity,
+                        };
+                },
+                child: const Icon(
+                  Icons.check,
                   color: Colors.green,
                 ),
-              ],
+              ),
             ),
           ),
         ],
       ),
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text('Transport sensitivity: (25-255)'),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.transportSens),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Container(
               color: global.sendingState[csd.id]?[global.ParametersGroup.autoSens] == global.SendingState.notAnswerState
                   ? notSend
@@ -2576,44 +2761,48 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           ),
           Expanded(
             flex: 1,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () => takeTransportSensitivityClick(csd.id),
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
-                  ),
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => takeTransportSensitivityClick(csd.id),
+                child: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
-                IconButton(
-                  onPressed: () {
-                    csd.transportSensitivity > 24 && csd.transportSensitivity < 256
-                        ? setTransportSensitivityClick(csd.id, csd.transportSensitivity)
-                        : {
-                            showError('Sensitivity from 25 to 255'),
-                            csd.transportSensitivity = global.itemsMan.getSelected<CSD>()!.transportSensitivity
-                          };
-                  },
-                  icon: const Icon(Icons.check),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () {
+                  csd.transportSensitivity > 24 && csd.transportSensitivity < 256
+                      ? setTransportSensitivityClick(csd.id, csd.transportSensitivity)
+                      : {
+                          showError(AppLocalizations.of(context)!.errorSens),
+                          csd.transportSensitivity = global.itemsMan.getSelected<CSD>()!.transportSensitivity
+                        };
+                },
+                child: const Icon(
+                  Icons.check,
                   color: Colors.green,
                 ),
-              ],
+              ),
             ),
           ),
         ],
       ),
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text('Criterion filter:'),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.criterionFilter),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Container(
               color: global.sendingState[csd.id]?[global.ParametersGroup.critFilter] == global.SendingState.notAnswerState
                   ? notSend
@@ -2638,37 +2827,41 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           ),
           Expanded(
             flex: 1,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () => takeCriterionFilterClick(csd.id),
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
-                  ),
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => takeCriterionFilterClick(csd.id),
+                child: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
-                IconButton(
-                  onPressed: () => setCriterionFilterClick(csd.id, csd.criterionFilter),
-                  icon: const Icon(Icons.check),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => setCriterionFilterClick(csd.id, csd.criterionFilter),
+                child: const Icon(
+                  Icons.check,
                   color: Colors.green,
                 ),
-              ],
+              ),
             ),
           ),
         ],
       ),
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text('Ratio signal transport/noise: (5-40)'),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.ratioSignal),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Container(
               color: global.sendingState[csd.id]?[global.ParametersGroup.snr] == global.SendingState.notAnswerState
                   ? notSend
@@ -2687,47 +2880,51 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           ),
           Expanded(
             flex: 1,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () => takeSignalToNoiseClick(csd.id),
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
-                  ),
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => takeSignalToNoiseClick(csd.id),
+                child: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
-                IconButton(
-                  onPressed: () {
-                    csd.snr > 4 && csd.snr < 41
-                        ? setSignalToNoiseClick(csd.id, csd.snr)
-                        : {showError('Ratio from 5 to 40'), csd.snr = global.itemsMan.getSelected<CSD>()!.snr};
-                  },
-                  icon: const Icon(Icons.check),
-                  color: Colors.green,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      const Row(children: [
-        Padding(
-          padding: EdgeInsets.only(left: 4),
-          child: Text('Recognition parameters:'),
-        ),
-      ]),
-      Row(
-        children: [
-          const Expanded(
-            flex: 1,
-            child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text("Interference/Person"),
+              ),
             ),
           ),
           Expanded(
             flex: 1,
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () {
+                  csd.snr > 4 && csd.snr < 41
+                      ? setSignalToNoiseClick(csd.id, csd.snr)
+                      : {showError(AppLocalizations.of(context)!.errorRatio), csd.snr = global.itemsMan.getSelected<CSD>()!.snr};
+                },
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.green,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      Row(children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: Text(AppLocalizations.of(context)!.recognitionParam),
+        ),
+      ]),
+      Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.interHum),
+            ),
+          ),
+          Expanded(
+            flex: 2,
             child: Container(
               color: global.sendingState[csd.id]?[global.ParametersGroup.recogParam] == global.SendingState.notAnswerState
                   ? notSend
@@ -2745,22 +2942,22 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
           ),
           const Expanded(
-            flex: 1,
+            flex: 2,
             child: SizedBox(),
           ),
         ],
       ),
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text('Person/Transport'),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.humTrans),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Container(
               color: global.sendingState[csd.id]?[global.ParametersGroup.recogParam] == global.SendingState.notAnswerState
                   ? notSend
@@ -2779,50 +2976,54 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           ),
           Expanded(
             flex: 1,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () => takeCriterionRecognitionClick(csd.id),
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
-                  ),
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => takeCriterionRecognitionClick(csd.id),
+                child: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
-                IconButton(
-                  onPressed: () {
-                    csd.recognitionParameters[0] > -1 &&
-                            csd.recognitionParameters[0] < 256 &&
-                            csd.recognitionParameters[1] > -1 &&
-                            csd.recognitionParameters[1] < 256
-                        ? setCriterionRecognitionClick(csd.id, csd.recognitionParameters.length, csd.recognitionParameters)
-                        : showError('Parameters from 0 to 255');
-                  },
-                  icon: const Icon(Icons.check),
-                  color: Colors.green,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      const Row(children: [
-        Padding(
-          padding: EdgeInsets.only(left: 4),
-          child: Text('Alarm filtering:'),
-        ),
-      ]),
-      Row(
-        children: [
-          const Expanded(
-            flex: 1,
-            child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text("Single(human):"),
+              ),
             ),
           ),
           Expanded(
             flex: 1,
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () {
+                  csd.recognitionParameters[0] > -1 &&
+                          csd.recognitionParameters[0] < 256 &&
+                          csd.recognitionParameters[1] > -1 &&
+                          csd.recognitionParameters[1] < 256
+                      ? setCriterionRecognitionClick(csd.id, csd.recognitionParameters.length, csd.recognitionParameters)
+                      : showError(AppLocalizations.of(context)!.errorParam);
+                },
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.green,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      Row(children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: Text(AppLocalizations.of(context)!.alarmFiltr),
+        ),
+      ]),
+      Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.singleHum),
+            ),
+          ),
+          Expanded(
+            flex: 2,
             child: Container(
               color: global.sendingState[csd.id]?[global.ParametersGroup.alarmFilter] == global.SendingState.notAnswerState
                   ? notSend
@@ -2840,22 +3041,22 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
           ),
           const Expanded(
-            flex: 1,
+            flex: 2,
             child: SizedBox(),
           ),
         ],
       ),
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text("Serial(person):"),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.serialHum),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Container(
               color: global.sendingState[csd.id]?[global.ParametersGroup.alarmFilter] == global.SendingState.notAnswerState
                   ? notSend
@@ -2867,10 +3068,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   return global.serialHuman.map((int value) {
                     return Align(
                       alignment: Alignment.centerLeft,
-                      child: Text(
-                        '$value in ${value}0 sec',
-                        style: const TextStyle(color: Colors.black),
-                      ),
+                      child: Text(AppLocalizations.of(context)!.serialDrop(value.toString())),
                     );
                   }).toList();
                 },
@@ -2878,7 +3076,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 items: global.serialHuman.map<DropdownMenuItem<int>>((int value) {
                   return DropdownMenuItem<int>(
                     value: value,
-                    child: Text('$value in ${value}0 seconds'),
+                    child: Text(AppLocalizations.of(context)!.serialDrop(value.toString())),
                   );
                 }).toList(),
                 onChanged: (int? value) {
@@ -2890,22 +3088,22 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
           ),
           const Expanded(
-            flex: 1,
+            flex: 2,
             child: SizedBox(),
           ),
         ],
       ),
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text("Single(transport):"),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.singleTrans),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Container(
               color: global.sendingState[csd.id]?[global.ParametersGroup.alarmFilter] == global.SendingState.notAnswerState
                   ? notSend
@@ -2923,22 +3121,22 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
           ),
           const Expanded(
-            flex: 1,
+            flex: 2,
             child: SizedBox(),
           ),
         ],
       ),
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text("Serial(transport):"),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.serialTrans),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Container(
               color: global.sendingState[csd.id]?[global.ParametersGroup.alarmFilter] == global.SendingState.notAnswerState
                   ? notSend
@@ -2950,10 +3148,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   return global.serialTransport.map((int value) {
                     return Align(
                       alignment: Alignment.centerLeft,
-                      child: Text(
-                        '$value in ${value}0 sec',
-                        style: const TextStyle(color: Colors.black),
-                      ),
+                      child: Text(AppLocalizations.of(context)!.serialDrop(value.toString())),
                     );
                   }).toList();
                 },
@@ -2961,7 +3156,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 items: global.serialTransport.map<DropdownMenuItem<int>>((int value) {
                   return DropdownMenuItem<int>(
                     value: value,
-                    child: Text('$value in ${value}0 seconds'),
+                    child: Text(AppLocalizations.of(context)!.serialDrop(value.toString())),
                   );
                 }).toList(),
                 onChanged: (int? value) {
@@ -2974,34 +3169,38 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           ),
           Expanded(
             flex: 1,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () => takeEEPROMClick(csd.id),
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
-                  ),
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => takeEEPROMClick(csd.id),
+                child: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
-                IconButton(
-                  onPressed: () {
-                    csd.humanSignalsTreshold > -1 &&
-                            csd.humanSignalsTreshold < 256 &&
-                            csd.transportSignalsTreshold > -1 &&
-                            csd.transportSignalsTreshold < 256
-                        ? {
-                            csd.EEPROMInitialized
-                                ? setEEPROMClick(csd.id, csd.humanSignalsTreshold, csd.transportSignalsTreshold,
-                                    csd.seriesHumanFilterTreshold, csd.seriesTransportFilterTreshold)
-                                : showError('Request data first'),
-                          }
-                        : showError('Parameters from 0 to 255');
-                  },
-                  icon: const Icon(Icons.check),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () {
+                  csd.humanSignalsTreshold > -1 &&
+                          csd.humanSignalsTreshold < 256 &&
+                          csd.transportSignalsTreshold > -1 &&
+                          csd.transportSignalsTreshold < 256
+                      ? {
+                          csd.EEPROMInitialized
+                              ? setEEPROMClick(csd.id, csd.humanSignalsTreshold, csd.transportSignalsTreshold,
+                                  csd.seriesHumanFilterTreshold, csd.seriesTransportFilterTreshold)
+                              : showError(AppLocalizations.of(context)!.requestError),
+                        }
+                      : showError(AppLocalizations.of(context)!.errorParam);
+                },
+                child: const Icon(
+                  Icons.check,
                   color: Colors.green,
                 ),
-              ],
+              ),
             ),
           ),
         ],
@@ -3020,15 +3219,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       children: [
         Row(
           children: [
-            const Expanded(
-              flex: 1,
+            Expanded(
+              flex: 2,
               child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text('Sensitivity:'),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(AppLocalizations.of(context)!.sensitivity),
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: Container(
                 color: global.sendingState[cpd.id]?[global.ParametersGroup.cameraSettings] == global.SendingState.notAnswerState
                     ? notSend
@@ -3046,22 +3245,22 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
               ),
             ),
             const Expanded(
-              flex: 1,
+              flex: 2,
               child: SizedBox(),
             ),
           ],
         ),
         Row(
           children: [
-            const Expanded(
-              flex: 1,
+            Expanded(
+              flex: 2,
               child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text('Photo compression:'),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(AppLocalizations.of(context)!.photoComp),
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: Container(
                 color: global.sendingState[cpd.id]?[global.ParametersGroup.cameraSettings] == global.SendingState.notAnswerState
                     ? notSend
@@ -3084,29 +3283,33 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
             Expanded(
               flex: 1,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    onPressed: () => takePhotoParametersClick(cpd.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => takePhotoParametersClick(cpd.id),
+                  child: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () {
-                      cpd.cameraSensitivity > -1 && cpd.cameraSensitivity < 256
-                          ? setPhotoParametersClick(cpd.id, cpd.cameraSensitivity, cpd.cameraCompression)
-                          : {
-                              showError('Sensitivity from 0 to 255'),
-                              cpd.cameraSensitivity = global.itemsMan.getSelected<CPD>()!.cameraSensitivity
-                            };
-                    },
-                    icon: const Icon(Icons.check),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () {
+                    cpd.cameraSensitivity > -1 && cpd.cameraSensitivity < 256
+                        ? setPhotoParametersClick(cpd.id, cpd.cameraSensitivity, cpd.cameraCompression)
+                        : {
+                            showError(AppLocalizations.of(context)!.errorSens),
+                            cpd.cameraSensitivity = global.itemsMan.getSelected<CPD>()!.cameraSensitivity
+                          };
+                  },
+                  child: const Icon(
+                    Icons.check,
                     color: Colors.green,
                   ),
-                ],
+                ),
               ),
             ),
           ],
@@ -3125,15 +3328,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     return Column(children: [
       Row(
         children: [
-          const Expanded(
-            flex: 1,
+          Expanded(
+            flex: 2,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text("Priority:"),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(AppLocalizations.of(context)!.priority),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Container(
               color: global.sendingState[mcd.id]![global.ParametersGroup.priority] == global.SendingState.notAnswerState
                   ? notSend
@@ -3151,22 +3354,26 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           ),
           Expanded(
             flex: 1,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () => takeRetransmissionAllClick(mcd.id),
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
-                  ),
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => takeRetransmissionAllClick(mcd.id),
+                child: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
-                IconButton(
-                  onPressed: () => setRetransmissionAllClick(mcd.id, mcd.priority),
-                  icon: const Icon(Icons.check),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => setRetransmissionAllClick(mcd.id, mcd.priority),
+                child: const Icon(
+                  Icons.check,
                   color: Colors.green,
                 ),
-              ],
+              ),
             ),
           ),
         ],
@@ -3174,14 +3381,14 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       Row(
         children: [
           const Expanded(
-            flex: 1,
+            flex: 2,
             child: Padding(
               padding: EdgeInsets.only(left: 4),
               child: Text("GPS:"),
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Container(
               color: global.sendingState[mcd.id]![global.ParametersGroup.gps] == global.SendingState.notAnswerState
                   ? notSend
@@ -3199,22 +3406,26 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
           ),
           Expanded(
             flex: 1,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () => takeExternalPowerClick(mcd.id),
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
-                  ),
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => takeExternalPowerClick(mcd.id),
+                child: const Icon(
+                  Icons.refresh,
+                  color: Colors.blue,
                 ),
-                IconButton(
-                  onPressed: () => setExternalPowerClick(mcd.id, mcd.GPSState ? ExternalPower.ON : ExternalPower.OFF),
-                  icon: const Icon(Icons.check),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => setExternalPowerClick(mcd.id, mcd.GPSState ? ExternalPower.ON : ExternalPower.OFF),
+                child: const Icon(
+                  Icons.check,
                   color: Colors.green,
                 ),
-              ],
+              ),
             ),
           ),
         ],
@@ -3233,15 +3444,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       children: [
         Row(
           children: [
-            const Expanded(
-              flex: 1,
+            Expanded(
+              flex: 2,
               child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text('Voltage, V:'),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(AppLocalizations.of(context)!.voltage),
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: Container(
                 color: global.sendingState[mcd.id]![global.ParametersGroup.powerSupply] == global.SendingState.notAnswerState
                     ? notSend
@@ -3253,13 +3464,19 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
             Expanded(
               flex: 1,
-              child: IconButton(
-                onPressed: () => takeBatteryMonitorClick(global.itemsMan.getSelected<NetDevice>()!.id),
-                icon: const Icon(
-                  Icons.refresh,
-                  color: Colors.blue,
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => takeBatteryMonitorClick(global.itemsMan.getSelected<NetDevice>()!.id),
+                  child: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
+                  ),
                 ),
               ),
+            ),
+            const Expanded(
+              flex: 1,
+              child: Center(),
             ),
           ],
         ),
@@ -3278,15 +3495,15 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
       children: [
         Row(
           children: [
-            const Expanded(
-              flex: 1,
+            Expanded(
+              flex: 2,
               child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text('Treshold IRS:'),
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(AppLocalizations.of(context)!.tresholdIRS),
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: Container(
                 color: global.sendingState[airs.id]?[global.ParametersGroup.tresholdIRS] == global.SendingState.notAnswerState
                     ? notSend
@@ -3305,26 +3522,30 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
             ),
             Expanded(
               flex: 1,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    onPressed: () => takeAIRSSensitivityClick(airs.id),
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Colors.blue,
-                    ),
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () => takeAIRSSensitivityClick(airs.id),
+                  child: const Icon(
+                    Icons.refresh,
+                    color: Colors.blue,
                   ),
-                  IconButton(
-                    onPressed: () {
-                      airs.sensitivity > -1 && airs.sensitivity < 256
-                          ? setAIRSSensitivityClick(airs.id, airs.sensitivity)
-                          : showError('Parameters from 0 to 255');
-                    },
-                    icon: const Icon(Icons.check),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Center(
+                child: OutlinedButton(
+                  onPressed: () {
+                    airs.sensitivity > -1 && airs.sensitivity < 256
+                        ? setAIRSSensitivityClick(airs.id, airs.sensitivity)
+                        : showError(AppLocalizations.of(context)!.errorParam);
+                  },
+                  child: const Icon(
+                    Icons.check,
                     color: Colors.green,
                   ),
-                ],
+                ),
               ),
             ),
           ],
@@ -3333,7 +3554,7 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
     );
   }
 
-  final List<bool> _isOpenMain = List.filled(6, false);
+  final List<bool> _isOpenSTD = List.filled(6, false);
   final List<bool> _isOpenCSD = List.filled(8, false);
   final List<bool> _isOpenCFU = List.filled(8, false);
   final List<bool> _isOpenRT = List.filled(7, false);
@@ -3343,101 +3564,77 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 50,
-        actions: <Widget>[
-          DropdownButton<String>(
-            icon: const Icon(Icons.keyboard_double_arrow_down),
-            value: widget.dropdownValue,
-            items: widget.dropdownItems,
-            onChanged: (String? value) {
-              setState(() {
-                widget.dropdownValue = value!;
-                global.pageWithMap.unselectMapMarker();
-                global.itemsMan.setSelected(int.parse(widget.dropdownValue));
-                global.pageWithMap.selectMapMarker(global.itemsMan.getSelected<NetDevice>()!.id);
-                global.mainBottomSelectedDev = TextButton(
-                    onPressed: () => global.goToTablePage(),
-                    child: Text(
-                      '${global.itemsMan.getSelected<NetDevice>()!.typeName()} #${global.itemsMan.getSelected<NetDevice>()!.id}',
-                      textScaleFactor: 1.4,
-                    ));
-              });
-            },
-          ),
-        ],
-      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
             Visibility(
               visible: widget._cloneItem.typeName() == STD.Name(),
               child: ExpansionPanelList(
-                elevation: 2,
+                elevation: 0,
                 expansionCallback: (int index, bool isExpanded) {
                   setState(() {
-                    _isOpenMain[index] = !isExpanded;
+                    _isOpenSTD[index] = !isExpanded;
                   });
                 },
                 children: [
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Main'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.main),
                       );
                     },
                     body: buildMainSettings(context),
-                    isExpanded: _isOpenMain[0],
+                    isExpanded: _isOpenSTD[0],
                     canTapOnHeader: true,
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Coordinates'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.coordinates),
                       );
                     },
                     body: buildCoordSettings(context),
-                    isExpanded: _isOpenMain[1],
+                    isExpanded: _isOpenSTD[1],
                     canTapOnHeader: true,
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Connected devices'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.connectedDevices),
                       );
                     },
                     body: buildConnectedDevices(context),
-                    isExpanded: _isOpenMain[2],
+                    isExpanded: _isOpenSTD[2],
                     canTapOnHeader: true,
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Radio'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.radio),
                       );
                     },
                     body: buildRadioSettings(context),
-                    isExpanded: _isOpenMain[3],
+                    isExpanded: _isOpenSTD[3],
                     canTapOnHeader: true,
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Radio'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.radio),
                       );
                     },
                     body: buildPowerSupply(context),
-                    isExpanded: _isOpenMain[4],
+                    isExpanded: _isOpenSTD[4],
                     canTapOnHeader: true,
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Save/Reset settings'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.saveResetSettings),
                       );
                     },
                     body: buildDeviceSettings(context),
-                    isExpanded: _isOpenMain[5],
+                    isExpanded: _isOpenSTD[5],
                     canTapOnHeader: true,
                   ),
                 ],
@@ -3455,8 +3652,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 children: [
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Main'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.main),
                       );
                     },
                     body: buildMainSettings(context),
@@ -3465,8 +3662,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Coordinates'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.coordinates),
                       );
                     },
                     body: buildCoordSettings(context),
@@ -3475,8 +3672,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Connected devices'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.connectedDevices),
                       );
                     },
                     body: buildConnectedDevices(context),
@@ -3485,8 +3682,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('External power'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.externalPower),
                       );
                     },
                     body: buildExtPower(context),
@@ -3495,8 +3692,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Radio'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.radio),
                       );
                     },
                     body: buildRadioSettings(context),
@@ -3505,8 +3702,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Power supply'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.powerSupply),
                       );
                     },
                     body: buildPowerSupply(context),
@@ -3515,8 +3712,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Save/Reset settings'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.saveResetSettings),
                       );
                     },
                     body: buildDeviceSettings(context),
@@ -3538,8 +3735,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 children: [
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Main'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.main),
                       );
                     },
                     body: buildMainSettings(context),
@@ -3548,8 +3745,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Coordinates'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.coordinates),
                       );
                     },
                     body: buildCoordSettings(context),
@@ -3558,8 +3755,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Connected devices'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.connectedDevices),
                       );
                     },
                     body: buildConnectedDevices(context),
@@ -3568,8 +3765,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('External power'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.externalPower),
                       );
                     },
                     body: buildExtPower(context),
@@ -3578,8 +3775,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Radio'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.radio),
                       );
                     },
                     body: buildRadioSettings(context),
@@ -3588,8 +3785,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Power supply'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.powerSupply),
                       );
                     },
                     body: buildPowerSupply(context),
@@ -3598,8 +3795,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Seismic'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.seismic),
                       );
                     },
                     body: buildSeismicSettings(context),
@@ -3608,8 +3805,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Save/Reset settings'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.saveResetSettings),
                       );
                     },
                     body: buildDeviceSettings(context),
@@ -3631,8 +3828,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 children: [
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Main'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.main),
                       );
                     },
                     body: buildMainSettings(context),
@@ -3641,8 +3838,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Coordinates'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.coordinates),
                       );
                     },
                     body: buildCoordSettings(context),
@@ -3651,8 +3848,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Connected devices'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.connectedDevices),
                       );
                     },
                     body: buildConnectedDevices(context),
@@ -3661,8 +3858,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('External power'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.externalPower),
                       );
                     },
                     body: buildExtPower(context),
@@ -3671,8 +3868,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Radio'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.radio),
                       );
                     },
                     body: buildRadioSettings(context),
@@ -3681,8 +3878,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Power supply'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.powerSupply),
                       );
                     },
                     body: buildPowerSupply(context),
@@ -3691,8 +3888,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Camera'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.camera),
                       );
                     },
                     body: buildCameraSettings(context),
@@ -3701,8 +3898,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Save/Reset settings'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.saveResetSettings),
                       );
                     },
                     body: buildDeviceSettings(context),
@@ -3724,8 +3921,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 children: [
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Main'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.main),
                       );
                     },
                     body: buildMainSettings(context),
@@ -3734,8 +3931,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Coordinates'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.coordinates),
                       );
                     },
                     body: buildCoordSettings(context),
@@ -3744,8 +3941,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Power supply'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.powerSupply),
                       );
                     },
                     body: buildPowerMCD(context),
@@ -3754,8 +3951,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('MCD'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.mcdName),
                       );
                     },
                     body: buildMCDSettings(context),
@@ -3764,8 +3961,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Save/Reset settings'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.saveResetSettings),
                       );
                     },
                     body: buildDeviceSettings(context),
@@ -3787,8 +3984,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                 children: [
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Main'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.main),
                       );
                     },
                     body: buildMainSettings(context),
@@ -3797,8 +3994,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Coordinates'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.coordinates),
                       );
                     },
                     body: buildCoordSettings(context),
@@ -3807,8 +4004,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Connected devices'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.connectedDevices),
                       );
                     },
                     body: buildConnectedDevices(context),
@@ -3817,8 +4014,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Power supply'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.powerSupply),
                       );
                     },
                     body: buildPowerSupply(context),
@@ -3827,8 +4024,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('A-IRS'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.airsName),
                       );
                     },
                     body: buildAIRSSettings(context),
@@ -3837,8 +4034,8 @@ class _DeviceParametersPage extends State<DeviceParametersPage> with AutomaticKe
                   ),
                   ExpansionPanel(
                     headerBuilder: (context, isExpanded) {
-                      return const ListTile(
-                        title: Text('Save/Reset settings'),
+                      return ListTile(
+                        title: Text(AppLocalizations.of(context)!.saveResetSettings),
                       );
                     },
                     body: buildDeviceSettings(context),

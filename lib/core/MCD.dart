@@ -27,13 +27,13 @@ class MCD extends NetDevice {
     return marker;
   }
 
-  static String Name([bool isTr = false]) {
-    return isTr ? "MCD" : "MCD";
+  static String Name() {
+    return "MCD";
   }
 
   @override
-  String typeName([bool isTr = false]) {
-    return MCD.Name(isTr);
+  String typeName() {
+    return MCD.Name();
   }
 
   bool get priority => _priority;

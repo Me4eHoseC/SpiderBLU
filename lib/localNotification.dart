@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:volume_controller/volume_controller.dart';
 import 'global.dart' as global;
 
 class LocalNotificationService {
@@ -8,7 +9,7 @@ class LocalNotificationService {
   Future<void> initialize() async {
     const AndroidInitializationSettings androidInitializationSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    final InitializationSettings settings = InitializationSettings(android: androidInitializationSettings, iOS: null);
+    final InitializationSettings settings = InitializationSettings(android: androidInitializationSettings);
 
     await _localNotificationService.initialize(
       settings,
@@ -26,13 +27,13 @@ class LocalNotificationService {
   }
 
   Future<NotificationDetails> _notificationDetails() async {
-    const AndroidNotificationDetails androidNotificationDetails = AndroidNotificationDetails(
+    AndroidNotificationDetails androidNotificationDetails = AndroidNotificationDetails(
       'channel_id',
       'channel_name',
       channelDescription: 'description',
       importance: Importance.max,
       priority: Priority.max,
-      playSound: true,
+      playSound: global.flagSoundAlarm,
       actions: <AndroidNotificationAction>[
       AndroidNotificationAction(
         'yes_action', // ID of the action
@@ -41,9 +42,8 @@ class LocalNotificationService {
       ),
     ],
     );
-    return const NotificationDetails(
+    return NotificationDetails(
       android: androidNotificationDetails,
-      iOS: null,
     );
   }
 

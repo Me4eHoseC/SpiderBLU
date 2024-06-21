@@ -30,13 +30,13 @@ class CPD extends RT {
     return marker;
   }
 
-  static String Name([bool isTr = false]) {
-    return isTr ? "CPD" : "CPD";
+  static String Name() {
+    return "CPD";
   }
 
   @override
-  String typeName([bool isTr = false]) {
-    return CPD.Name(isTr);
+  String typeName() {
+    return CPD.Name();
   }
 
   int get cameraSensitivity => _cameraSensitivity;

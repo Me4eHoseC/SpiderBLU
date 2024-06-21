@@ -30,13 +30,13 @@ class AIRS extends NetDevice{
     return marker;
   }
 
-  static String Name([bool isTr = false]) {
-    return isTr ? "AIRS" : "AIRS";
+  static String Name() {
+    return "AIRS";
   }
 
   @override
-  String typeName([bool isTr = false]) {
-    return AIRS.Name(isTr);
+  String typeName() {
+    return AIRS.Name();
   }
 
   double get batMonVoltage => _batMonVoltage;

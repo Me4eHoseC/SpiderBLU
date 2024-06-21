@@ -94,11 +94,17 @@ int castFromCompression(PhotoImageCompression compression, PhotoImageSize size) 
 }
 
 PhotoImageCompression castToCompression(int compression) {
-  if (compression <= 40) return PhotoImageCompression.MINIMUM;
-  else if (compression <= 80) return PhotoImageCompression.LOW;
-  else if (compression <= 130) return PhotoImageCompression.MEDIUM;
-  else if (compression <= 180) return PhotoImageCompression.HIGH;
-  else return PhotoImageCompression.MAXIMUM;
+  if (compression <= 40) {
+    return PhotoImageCompression.MINIMUM;
+  } else if (compression <= 80) {
+    return PhotoImageCompression.LOW;
+  } else if (compression <= 130) {
+    return PhotoImageCompression.MEDIUM;
+  } else if (compression <= 180) {
+    return PhotoImageCompression.HIGH;
+  } else {
+    return PhotoImageCompression.MAXIMUM;
+  }
 }
 
 enum CriterionFilter {

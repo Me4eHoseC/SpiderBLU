@@ -49,8 +49,8 @@ abstract class NetDevice extends Marker {
     _firmwareVersion = other._firmwareVersion;
   }
 
-  static String Name([bool isTr = false]) {
-    return isTr ? "NetDevice" : "NetDevice";
+  static String Name() {
+    return "NetDevice";
   }
 
   int get modemFrequency => _modemFrequency;

@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:projects/localizations/app_localizations_ru.dart';
+
+import '../localizations/app_localizations.dart';
 import 'RoutesManager.dart';
 import 'BasePackage.dart';
 import 'NetCommonPackages.dart';
@@ -129,25 +132,30 @@ class PollManager {
   }
 
   void _pollStarted(PollType pollType) {
-    global.deviceParametersPage.addProtocolLine('Poll started: ${pollTypeToName(pollType)}');
+    var loc = AppLocalizations.of(global.deviceParametersPage.getContext())!;
+    global.deviceParametersPage.addProtocolLine('${loc.pollStarted}: ${pollTypeToName(pollType)}');
   }
 
   void _pollFinished(PollType pollType) {
-    global.deviceParametersPage.addProtocolLine('Poll finished: ${pollTypeToName(pollType)}');
+    var loc = AppLocalizations.of(global.deviceParametersPage.getContext())!;
+
+    global.deviceParametersPage.addProtocolLine('${loc.pollFinished}: ${pollTypeToName(pollType)}');
   }
 
   void _deviceStatusChanged(int deviceId, bool isOnline) {
+    var loc = AppLocalizations.of(global.deviceParametersPage.getContext())!;
+
     var device = global.itemsMan.get<NetDevice>(deviceId);
     if (device == null) return;
 
     if (isOnline){
       device.state = NDState.Online;
       global.pageWithMap.activateMapMarker(deviceId);
-      global.deviceParametersPage.addProtocolLine('Device #$deviceId online');
+      global.deviceParametersPage.addProtocolLine('${loc.device} ${loc.numSign(deviceId)} ${loc.statusOnline}');
     } else {
       device.state = NDState.Offline;
       global.pageWithMap.deactivateMapMarker(deviceId);
-      global.deviceParametersPage.addProtocolLine('Device #$deviceId offline');
+      global.deviceParametersPage.addProtocolLine('${loc.device} ${loc.numSign(deviceId)} ${loc.statusOffline}');
     }
   }
 
@@ -324,19 +332,20 @@ enum PollType {
 }
 
 String pollTypeToName(PollType pollType) {
+  var loc = AppLocalizations.of(global.deviceParametersPage.getContext())!;
   switch (pollType) {
     case PollType.RegualrPoll:
-      return "Regular poll";
+      return loc.regularPoll;
     case PollType.InitPoll:
-      return "Init poll";
+      return loc.initPoll;
     case PollType.SavePoll:
-      return "Save poll";
+      return loc.savePoll;
     case PollType.AfterAlarmPoll:
-      return "Alarm poll";
+      return loc.alarmPoll;
     case PollType.OfflineDevicesPoll:
-      return "Offline poll";
+      return loc.offlinePoll;
     case PollType.StdPoll:
-      return "STD poll";
+      return loc.stdPoll;
     default:
       return "";
   }

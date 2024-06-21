@@ -6,6 +6,7 @@ import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:usb_serial/usb_serial.dart';
 
 import '../global.dart' as global;
+import '../localizations/app_localizations.dart';
 
 class SettingsPage extends StatefulWidget {
   final bool start;
@@ -48,7 +49,7 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
     Timer.periodic(const Duration(milliseconds: 200), (timer) => setState(() {}));
   }
 
-  void initAfterLoad(){
+  void initAfterLoad() {
     bluetoothMAC = global.stdConnectionManager.btMacAddress;
     selectedSerialManNameFromFile = global.stdConnectionManager.serialManName;
     selectedSerialVIDFromFile = global.stdConnectionManager.serialVID;
@@ -201,9 +202,9 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
     const double commonTextSize = 16;
 
     var btSettingsCheckBox = CheckboxListTile(
-        title: const Text(
-          "BT STD",
-          style: TextStyle(fontSize: headingTextSize),
+        title: Text(
+          AppLocalizations.of(context)!.checkBTSTD,
+          style: const TextStyle(fontSize: headingTextSize),
         ),
         value: global.stdConnectionManager.isUseBT,
         controlAffinity: ListTileControlAffinity.leading,
@@ -222,9 +223,9 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
         }
 
         return SwitchListTile(
-          title: const Text(
-            'Bluetooth',
-            style: TextStyle(fontSize: commonTextSize),
+          title: Text(
+            AppLocalizations.of(context)!.bluetooth,
+            style: const TextStyle(fontSize: commonTextSize),
           ),
           value: btState,
           onChanged: global.stdConnectionManager.isUseBT
@@ -241,9 +242,9 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
     );
 
     var serialStateCheckBox = CheckboxListTile(
-        title: const Text(
-          "COM STD",
-          style: TextStyle(fontSize: headingTextSize),
+        title: Text(
+          AppLocalizations.of(context)!.checkCOMSTD,
+          style: const TextStyle(fontSize: headingTextSize),
         ),
         value: global.stdConnectionManager.isUseSerial,
         controlAffinity: ListTileControlAffinity.leading,
@@ -255,9 +256,9 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
         });
 
     var tcpStateCheckBox = CheckboxListTile(
-        title: const Text(
-          "TCP STD",
-          style: TextStyle(fontSize: headingTextSize),
+        title: Text(
+          AppLocalizations.of(context)!.checkTCPSTD,
+          style: const TextStyle(fontSize: headingTextSize),
         ),
         value: global.stdConnectionManager.isUseTCP,
         controlAffinity: ListTileControlAffinity.leading,
@@ -280,7 +281,9 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                 ),
                 Expanded(
                   flex: 2,
-                  child: btSettingsCheckBox,
+                  child: Center(
+                    child: btSettingsCheckBox,
+                  ),
                 ),
                 Expanded(
                   flex: 1,
@@ -295,7 +298,7 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                 Padding(
                   padding: const EdgeInsets.only(left: 16, bottom: 10),
                   child: Text(
-                    'Remote BT devices:',
+                    AppLocalizations.of(context)!.remoteBTDevices,
                     style: TextStyle(
                       fontSize: commonTextSize,
                       color: btState && global.stdConnectionManager.isUseBT ? null : Theme.of(context).disabledColor,
@@ -328,7 +331,9 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                       value: dropdownBTValue,
                       items: dropdownBTItems,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      hint: const Text('Select device'),
+                      hint: Text(
+                        AppLocalizations.of(context)!.selectDevice,
+                      ),
                       onChanged: btState
                           ? (String? value) {
                               setState(() {
@@ -344,7 +349,6 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                     child: OutlinedButton(
                       onPressed: btState && global.stdConnectionManager.isUseBT
                           ? () {
-                              //todo save in file bluetooth mac
                               selectedBluetoothMacFromFile = bluetoothMAC;
                               global.stdConnectionManager.btMacAddress = bluetoothMAC;
                               refillDropdownMenuItems();
@@ -368,8 +372,10 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                   child: Container(),
                 ),
                 Expanded(
-                  flex: 3,
-                  child: serialStateCheckBox,
+                  flex: 2,
+                  child: Center(
+                    child: serialStateCheckBox,
+                  ),
                 ),
                 Expanded(
                   flex: 1,
@@ -383,7 +389,7 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                 Padding(
                   padding: const EdgeInsets.only(left: 16, bottom: 10),
                   child: Text(
-                    'Available COM devices:',
+                    AppLocalizations.of(context)!.availableCOMDevices,
                     style: TextStyle(
                       fontSize: commonTextSize,
                       color: global.stdConnectionManager.isUseSerial ? null : Theme.of(context).disabledColor,
@@ -412,7 +418,9 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                       value: usbDevice,
                       items: dropdownSerialItems,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      hint: const Text('Select device'),
+                      hint: Text(
+                        AppLocalizations.of(context)!.selectDevice,
+                      ),
                       onChanged: global.stdConnectionManager.isUseSerial
                           ? (UsbDevice? value) {
                               setState(() {
@@ -455,8 +463,10 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                   child: Container(),
                 ),
                 Expanded(
-                  flex: 3,
-                  child: tcpStateCheckBox,
+                  flex: 2,
+                  child: Center(
+                    child: tcpStateCheckBox,
+                  ),
                 ),
                 Expanded(
                   flex: 1,
@@ -470,7 +480,7 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                 Padding(
                   padding: const EdgeInsets.only(left: 16, bottom: 10),
                   child: Text(
-                    'Enter IPv4 address and port:',
+                    AppLocalizations.of(context)!.enterIpv4,
                     style: TextStyle(
                       fontSize: commonTextSize,
                       color: global.stdConnectionManager.isUseTCP ? null : Theme.of(context).disabledColor,
@@ -492,17 +502,17 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                         controller: _controllerIP,
                         enabled: global.stdConnectionManager.isUseTCP,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
-                        decoration: const InputDecoration(
-                          labelText: 'IPv4',
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.ipv4,
                           hintText: '192.168.1.252',
                         ),
                         validator: (value) {
                           if (value == null) return null;
-                          if (value.isEmpty) return "IPv4 address can't be empty";
+                          if (value.isEmpty) return AppLocalizations.of(context)!.ipv4AddressCanT;
 
                           var match = RegExp(r'^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$').hasMatch(value);
 
-                          if (!match) return "Enter correct IPv4 address";
+                          if (!match) return AppLocalizations.of(context)!.ipv4EnterCorrect;
 
                           return null;
                         },
@@ -532,21 +542,21 @@ class _SettingsPage extends State<SettingsPage> with TickerProviderStateMixin {
                           enabled: global.stdConnectionManager.isUseTCP,
                           controller: _controllerPort,
                           autovalidateMode: AutovalidateMode.onUserInteraction,
-                          decoration: const InputDecoration(
-                            labelText: 'Port',
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(context)!.port,
                             hintText: '20108',
                           ),
                           keyboardType: TextInputType.number,
                           maxLength: 5,
                           validator: (value) {
                             if (value == null) return null;
-                            if (value.isEmpty) return "Port value can't be empty";
+                            if (value.isEmpty) return AppLocalizations.of(context)!.portCanT;
 
                             var portCheck = int.parse(value);
 
                             if (0 < portCheck && portCheck < 65535) return null;
 
-                            return "Enter correct IP port";
+                            return AppLocalizations.of(context)!.portEnterCorrect;
                           },
                           onChanged: (value) => port = value,
                         ),

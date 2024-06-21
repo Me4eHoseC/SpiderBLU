@@ -1,10 +1,14 @@
 import 'dart:async';
 
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:projects/localizations/app_localizations.dart';
 import 'package:projects/radionet/PostManager.dart';
 import 'package:projects/radionet/RoutesManager.dart';
 
+import '../core/AIRS.dart';
+import '../core/CPD.dart';
+import '../core/CSD.dart';
+import '../core/MCD.dart';
 import '../core/Marker.dart';
 import '../core/RT.dart';
 import '../global.dart' as global;
@@ -31,7 +35,7 @@ class ScanPage extends StatefulWidget with global.TIDManagement {
   }
 
   void addFromMap(int id, String type) {
-    if (type == global.deviceTypeList[0]) {
+    if (type == STD.Name()) {
       return;
     }
     ScanDevice item = ScanDevice(id, type, true, true, false);
@@ -87,6 +91,15 @@ class ScanPage extends StatefulWidget with global.TIDManagement {
     }
   }
 
+  void changeLocale(){
+    _page.listDataRow.clear();
+    for (int i = 0; i < 255; i++){
+      if (_page.listIdDevFromScan.keys.contains(i)){
+        _page.addListDataRow(_page.listIdDevFromScan[i]!);
+      }
+    }
+  }
+
   @override
   State createState() {
     _page = _ScanPage();
@@ -114,8 +127,6 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    addScanDevices();
-
     Timer.periodic(Duration.zero, (_) {
       setState(() {});
     });
@@ -253,6 +264,7 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
       typeDrop = DropdownButton<String>(
         alignment: AlignmentDirectional.topCenter,
         onChanged: (String? value) {
+          print (value);
           dev.type = value!;
           dropDownType(dev);
           if (mapScanDev.keys.contains(dev.id!)) {
@@ -273,7 +285,15 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
         items: global.deviceTypeListForScanner.map<DropdownMenuItem<String>>((String value) {
           return DropdownMenuItem<String>(
             value: value,
-            child: Text(value),
+            child: value == CSD.Name()
+                    ? Text(AppLocalizations.of(context)!.csdName)
+                    : value == MCD.Name()
+                        ? Text(AppLocalizations.of(context)!.mcdName)
+                        : value == AIRS.Name()
+                            ? Text(AppLocalizations.of(context)!.airsName)
+                            : value == CPD.Name()
+                                ? Text(AppLocalizations.of(context)!.cpdName)
+                                : Text(AppLocalizations.of(context)!.rtName),
           );
         }).toList(),
       );
@@ -312,13 +332,11 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
           child: Container(),
         ),
         Expanded(
-          child: ElevatedButton(
+          child: OutlinedButton(
             onPressed: () {
               addCheckedDevOnMap();
             },
-            child: const Text(
-              'Apply',
-            ),
+            child: Text(AppLocalizations.of(context)!.apply),
           ),
         ),
       ],
@@ -380,7 +398,8 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
       }
       if (!flag) {
         var dev = global.itemsMan.get<Marker>(i);
-        widget.addFromMap(dev!.id, dev.typeName());
+        var value = dev!.typeName();
+        widget.addFromMap(dev.id, value);
       }
       flag = false;
     }
@@ -409,6 +428,7 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    addScanDevices();
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.centerTop,
       floatingActionButton: Builder(
@@ -416,38 +436,25 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              ElevatedButton(
+              OutlinedButton(
                 onPressed: () {
                   selectAll(flagSelectAll);
                 },
-                child: flagSelectAll
-                    ? const Text(
-                        'Select All',
-                        style: TextStyle(color: Colors.white),
-                      )
-                    : const Text(
-                        'Unselect All',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                child: flagSelectAll ? Text(AppLocalizations.of(context)!.selectAll) : Text(AppLocalizations.of(context)!.unselectAll),
               ),
-              ElevatedButton(
+              OutlinedButton(
                 onPressed: () {
                   clearScanDevices();
                 },
-                child: const Text(
-                  'Clear',
-                  style: TextStyle(color: Colors.white),
-                ),
+                child: Text(AppLocalizations.of(context)!.clear),
               ),
-              ElevatedButton(
+              OutlinedButton(
                 onPressed: flagScanButton
                     ? null
                     : () {
                         scanDevices();
                       },
-                child: const Text(
-                  'Scan',
-                ),
+                child: Text(AppLocalizations.of(context)!.scanButton),
               ),
             ],
           );
@@ -461,8 +468,8 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
               horizontalMargin: 10,
               columnSpacing: 20,
               border: TableBorder.all(width: 1),
-              columns: const [
-                DataColumn(
+              columns: [
+                const DataColumn(
                   label: Expanded(
                     child: Text(
                       '',
@@ -473,7 +480,7 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
                 DataColumn(
                   label: Expanded(
                     child: Text(
-                      'ID',
+                      AppLocalizations.of(context)!.id,
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -481,7 +488,7 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
                 DataColumn(
                   label: Expanded(
                     child: Text(
-                      'Type',
+                      AppLocalizations.of(context)!.type,
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -489,7 +496,7 @@ class _ScanPage extends State<ScanPage> with TickerProviderStateMixin {
                 DataColumn(
                   label: Expanded(
                     child: Text(
-                      'Mapped',
+                      AppLocalizations.of(context)!.mapped,
                       textAlign: TextAlign.center,
                     ),
                   ),

@@ -120,13 +120,13 @@ class RT extends NetDevice {
     return marker;
   }
 
-  static String Name([bool isTr = false]) {
-    return isTr ? "RT" : "RT";
+  static String Name() {
+    return "RT";
   }
 
   @override
-  String typeName([bool isTr = false]) {
-    return RT.Name(isTr);
+  String typeName() {
+    return RT.Name();
   }
 
   int get RSSI => _rssi;
@@ -258,12 +258,12 @@ class STD extends RT {
     return marker;
   }
 
-  static String Name([bool isTr = false]) {
-    return isTr ? "STD" : "STD";
+  static String Name() {
+    return "STD";
   }
 
   @override
-  String typeName([bool isTr = false]) {
-    return STD.Name(isTr);
+  String typeName() {
+    return STD.Name();
   }
 }

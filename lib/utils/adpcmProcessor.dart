@@ -27,7 +27,7 @@ class ADPCMProcessor {
     double coef = _originMaxAmplitude / max;
 
     for (int i = 0; i < unzippedSize; ++i) {
-      unzipped[i] = (unzipped[i] * coef).floor();
+      unzipped[i] = (unzipped[i] * coef).truncate();
     }
 
     return unzipped;
@@ -70,6 +70,8 @@ class ADPCMProcessor {
       samples += 1;
 
       code <<= vdviDecode[j].bits;
+      code = code.toUnsigned(16);
+
       _s.bits -= vdviDecode[j].bits;
     }
 
@@ -90,6 +92,8 @@ class ADPCMProcessor {
       samples += 1;
 
       code <<= vdviDecode[j].bits;
+      code = code.toUnsigned(16);
+
       _s.bits -= vdviDecode[j].bits;
     }
 
@@ -131,8 +135,7 @@ class ADPCMProcessor {
     int max = data[0].abs();
 
     for (int i = 1; i < data.length; ++i) {
-      var value = data[i].abs();
-      if (value > max) max = value;
+      if (data[i].abs() > max.abs()) max = data[i];
     }
 
     return max;
@@ -243,9 +246,9 @@ final List<int> stepAdjustment = [-1, -1, -1, -1, 2, 4, 6, 8];
 class VDVI {
   VDVI(this.code, this.mask, this.bits);
 
-  int code = 0;
-  int mask = 0;
-  int bits = 0;
+  int code = 0; // must be Uint16
+  int mask = 0; // must be Uint16
+  int bits = 0; // must be Uint8
 }
 
 final List<VDVI> vdviDecode = [

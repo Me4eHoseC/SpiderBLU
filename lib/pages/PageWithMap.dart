@@ -10,6 +10,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
 import 'package:projects/core/AIRS.dart';
 
+import '../localizations/app_localizations.dart';
 import '../radionet/PackageTypes.dart';
 import '../radionet/BasePackage.dart';
 import '../radionet/NetPackagesDataTypes.dart';
@@ -238,27 +239,26 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
 
   late _PageWithMap _page;
   String? bufferDeviceType;
-  final player = AudioPlayer();
 
   Widget bottomBarWidget = Container(height: 0);
 
   String setImagePackage(String type) {
-    if (type == STD.Name(global.transLang)) {
+    if (type == STD.Name()) {
       return 'assets/devices/std';
     }
-    if (type == CSD.Name(global.transLang)) {
+    if (type == CSD.Name()) {
       return 'assets/devices/csd';
     }
-    if (type == CPD.Name(global.transLang)) {
+    if (type == CPD.Name()) {
       return 'assets/devices/cpd';
     }
-    if (type == RT.Name(global.transLang)) {
+    if (type == RT.Name()) {
       return 'assets/devices/rt';
     }
-    if (type == MCD.Name(global.transLang)) {
+    if (type == MCD.Name()) {
       return 'assets/devices/mcd';
     }
-    if (type == AIRS.Name(global.transLang)) {
+    if (type == AIRS.Name()) {
       return 'assets/devices/airs';
     } else {
       return '';
@@ -329,7 +329,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     global.stdConnectionManager.setSTDId(id);
     global.stdConnectionManager.startConnectRoutine();
 
-    global.deviceParametersPage.addDeviceInDropdown(id, data.type!);
     selectMapMarker(id);
     saveMapMarkersInFile();
   }
@@ -372,7 +371,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     global.itemsMan.itemAdded = addItem;
     global.itemsMan.selectionChanged = selectedItem;
     global.itemsMan.itemRemoved = itemRemoved;
-    global.deviceParametersPage.addDeviceInDropdown(id, type);
 
     if (_page.flagGetCord) {
       getCordForNewDevice(id);
@@ -386,18 +384,15 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
   }
 
   void addNewDeviceOnMap(LatLng cord) {
-    print('add');
-
     _page.changeBottomBarWidget(0, null, cord);
-    //_page.addNewDeviceOnMap(cord);
   }
 
-  void createMarkerFromScanner(int id, String type, LatLng cord, bool timeFlag, bool cordFlag){
+  void createMarkerFromScanner(int id, String type, LatLng cord, bool timeFlag, bool cordFlag) {
     _page.createNewMapMarker(id, type, cord);
-    if (timeFlag){
+    if (timeFlag) {
       setTimeForNewDevice(id);
     }
-    if (cordFlag){
+    if (cordFlag) {
       getCordForNewDevice(id);
     }
   }
@@ -409,16 +404,14 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
   void selectedItem() {
     if (global.itemsMan.getSelected<NetDevice>() == null) return;
     _page.changeBottomBarWidget(1, global.itemsMan.getSelected<NetDevice>()!.id, null);
+    global.deviceParametersPage.updateDevice();
   }
 
   void addItem(int id) {
     global.devicesTablePage.addDevice(id);
   }
 
-  void itemRemoved(int id) {
-    print('delete device $id');
-    //global.scanPage.clearScanTable();
-  }
+  void itemRemoved(int id) {}
 
   void changeMapMarkerID(int oldId, int newId) {
     if (oldId == newId) return;
@@ -431,7 +424,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
 
     oldDevice?.state = NDState.Offline;
     global.pageWithMap.deactivateMapMarker(oldId);
-    global.deviceParametersPage.addProtocolLine('Device #$oldId offline');
+    _page.addProtocolLine(oldId);
 
     global.itemsMan.changeItemId(oldId, newId);
 
@@ -447,7 +440,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     var localMarker = MapMarker(_page, buf.markerData, buf.markerData.cord!, newId.toString(), buf.markerData.type!, buf.imageTypePackage);
 
     global.listMapMarkers[newId] = localMarker;
-    global.deviceParametersPage.changeDeviceInDropdown(newId, buf.markerData.type!, oldId.toString());
     selectMapMarker(newId);
     global.listMapMarkers.remove(oldId);
 
@@ -499,13 +491,12 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
         global.stdConnectionManager.startConnectRoutine();
       }
 
-      global.deviceParametersPage.changeDeviceInDropdown(id, newType, id.toString());
       saveMapMarkersInFile();
     }
   }
 
-  void updateBottom(int id){
-    if (global.listMapMarkers[id]!.markerData.notifier._alarm){
+  void updateBottom(int id) {
+    if (global.listMapMarkers[id]!.markerData.notifier._alarm) {
       global.listMapMarkers[id]!.markerData.notifier.changeAlarm();
     }
     _page.changeBottomBarWidget(1, id, null);
@@ -529,7 +520,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
 
     global.itemsMan.removeItem(id);
     global.listMapMarkers.remove(id);
-    global.deviceParametersPage.deleteDeviceInDropdown(id);
     saveMapMarkersInFile();
     global.devicesTablePage.ref();
   }
@@ -540,18 +530,26 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
     }
 
     global.itemsMan.setSelected(id);
-    global.deviceParametersPage.selectDeviceInDropdown(id);
 
     if (!global.listMapMarkers[id]!.markerData.notifier.selected) {
       global.listMapMarkers[id]?.markerData.notifier.changeSelected();
     }
 
+    var dev = global.itemsMan.get<NetDevice>(id);
+
     global.mainBottomSelectedDev = TextButton(
       onPressed: () => global.goToTablePage(),
-      child: Text(
-        '${global.listMapMarkers[id]?.markerData.type} #$id',
-        textScaleFactor: 1.4,
-      ),
+      child: dev!.typeName() == STD.Name()
+          ? Text('${AppLocalizations.of(_page.context)!.stdName} #$id', textScaleFactor: 1.4)
+          : dev.typeName() == CSD.Name()
+              ? Text('${AppLocalizations.of(_page.context)!.csdName} #$id', textScaleFactor: 1.4)
+              : dev.typeName() == MCD.Name()
+                  ? Text('${AppLocalizations.of(_page.context)!.mcdName} #$id', textScaleFactor: 1.4)
+                  : dev.typeName() == AIRS.Name()
+                      ? Text('${AppLocalizations.of(_page.context)!.airsName} #$id', textScaleFactor: 1.4)
+                      : dev.typeName() == CPD.Name()
+                          ? Text('${AppLocalizations.of(_page.context)!.cpdName} #$id', textScaleFactor: 1.4)
+                          : Text('${AppLocalizations.of(_page.context)!.rtName} #$id', textScaleFactor: 1.4),
     );
     global.devicesTablePage.ref();
   }
@@ -576,7 +574,12 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
   }
 
   void alarmMapMarker(int id, AlarmReason reason) {
-    player.play(AssetSource('sounds/sirena.wav'), volume: 30);
+    var player = AudioPlayer();
+    player.play(AssetSource('sounds/sirena.wav'), volume: global.flagSoundAlarm ? 1 : 0);
+    player.onPlayerComplete.listen((_) async {
+      player.dispose();
+    });
+
     if (!global.listMapMarkers[id]!.markerData.notifier.alarm) {
       if (reason == AlarmReason.HUMAN) {
         global.listMapMarkers[id]!.markerData.notifier.changeAlarmHuman();
@@ -589,7 +592,7 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
       }
     }
     var item = global.itemsMan.getSelected<NetDevice>();
-    if (item != null && item.id == id){
+    if (item != null && item.id == id) {
       _page.changeBottomBarWidget(1, id, null);
     }
     global.devicesTablePage.ref();
@@ -604,7 +607,6 @@ class PageWithMap extends StatefulWidget with global.TIDManagement {
 
   void deactivateMapMarker(int id) {
     if (!global.listMapMarkers[id]!.markerData.notifier.alarm) {
-      print(global.listMapMarkers[id]!.markerData.notifier._active);
       global.listMapMarkers[id]!.markerData.notifier.activeOff();
     }
     global.devicesTablePage.ref();
@@ -642,6 +644,8 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
 
   Map<String, AddDeviceNotifier> mapSelectedDevices = {};
 
+  StreamSubscription<double>? _subscription;
+
   @override
   void initState() {
     super.initState();
@@ -672,6 +676,16 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
         myLocalPosition = Marker(point: myCords!, builder: (ctx) => const Icon(Icons.navigation));
       });
     });
+  }
+
+  void addProtocolLine(int oldId) {
+    global.deviceParametersPage.addProtocolLine(AppLocalizations.of(context)!.deviceOffline(oldId.toString()));
+  }
+
+  void dispose() {
+    super.dispose();
+
+    _subscription!.cancel();
   }
 
   void changeMapRotation() {
@@ -864,16 +878,8 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
         global.flagCheckSPPU = true;
         print('flag');
       }
-
       global.scanPage.addFromMap(idForCheck, typeForCheck);
       createNewMapMarker(idForCheck, typeForCheck, cord);
-      global.mainBottomSelectedDev = TextButton(
-        onPressed: () => global.goToTablePage(),
-        child: Text(
-          '$typeForCheck #$idForCheck',
-          textScaleFactor: 1.4,
-        ),
-      );
     });
   }
 
@@ -933,6 +939,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
             children: bufListButton,
           ),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Expanded(
                 flex: 2,
@@ -940,6 +947,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                   title: const Icon(Icons.access_time_outlined),
                   value: flagGetTime,
                   controlAffinity: ListTileControlAffinity.leading,
+                  visualDensity: const VisualDensity(horizontal: -5),
                   onChanged: (bool? value) {
                     flagGetTime = value!;
                     addNewDeviceOnMap(pointForNewDevice!);
@@ -952,6 +960,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                   title: const Icon(Icons.location_pin),
                   value: flagGetCord,
                   controlAffinity: ListTileControlAffinity.leading,
+                  visualDensity: const VisualDensity(horizontal: -5),
                   onChanged: (bool? value) {
                     flagGetCord = value!;
                     addNewDeviceOnMap(pointForNewDevice!);
@@ -975,9 +984,14 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                 ),
               ),
               Expanded(
-                child: IconButton(
-                  onPressed: () => checkCorrectIdAndType(bufferId, bufferType, cord),
-                  icon: const Icon(Icons.add),
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 5, left: 5),
+                  child: OutlinedButton(
+                    style: const ButtonStyle(alignment: Alignment.center),
+                    onPressed: () => checkCorrectIdAndType(bufferId, bufferType, cord),
+                    child: const Icon(Icons.add),
+                  ),
                 ),
               ),
             ],
@@ -1001,20 +1015,14 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
       if (counter == 1) {
         var bufMark = global.listMapMarkers[id!];
         if (bufMark == null) return;
-        global.mainBottomSelectedDev = TextButton(
-          onPressed: () => global.goToTablePage(),
-          child: Text(
-            '${bufMark.type} #$id',
-            textScaleFactor: 1.4,
-          ),
-        );
         if (bufMark.markerData.type == STD.Name()) {
           widget.bottomBarWidget = SizedBox(
-            height: 70,
+            height: 45,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                IconButton(
+                OutlinedButton(
                   onPressed: !global.listMapMarkers[id]!.markerData.notifier.alarm
                       ? null
                       : () {
@@ -1022,7 +1030,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                           global.devicesTablePage.ref();
                           changeBottomBarWidget(1, id, null);
                         },
-                  icon: !global.listMapMarkers[id]!.markerData.notifier.alarm
+                  child: !global.listMapMarkers[id]!.markerData.notifier.alarm
                       ? const Icon(Icons.warning_rounded)
                       : const Icon(
                           Icons.warning_rounded,
@@ -1035,11 +1043,12 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
         }
         if (bufMark.markerData.type == RT.Name()) {
           widget.bottomBarWidget = SizedBox(
-            height: 70,
+            height: 45,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                IconButton(
+                OutlinedButton(
                   onPressed: !global.listMapMarkers[id]!.markerData.notifier.alarm
                       ? null
                       : () {
@@ -1047,7 +1056,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                           global.devicesTablePage.ref();
                           changeBottomBarWidget(1, id, null);
                         },
-                  icon: !global.listMapMarkers[id]!.markerData.notifier.alarm
+                  child: !global.listMapMarkers[id]!.markerData.notifier.alarm
                       ? const Icon(Icons.warning_rounded)
                       : const Icon(
                           Icons.warning_rounded,
@@ -1060,11 +1069,12 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
         }
         if (bufMark.markerData.type == MCD.Name()) {
           widget.bottomBarWidget = SizedBox(
-            height: 70,
+            height: 45,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                IconButton(
+                OutlinedButton(
                   onPressed: !global.listMapMarkers[id]!.markerData.notifier.alarm
                       ? null
                       : () {
@@ -1072,7 +1082,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                           global.devicesTablePage.ref();
                           changeBottomBarWidget(1, id, null);
                         },
-                  icon: !global.listMapMarkers[id]!.markerData.notifier.alarm
+                  child: !global.listMapMarkers[id]!.markerData.notifier.alarm
                       ? const Icon(Icons.warning_rounded)
                       : const Icon(
                           Icons.warning_rounded,
@@ -1085,29 +1095,29 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
         }
         if (bufMark.markerData.type == CSD.Name()) {
           widget.bottomBarWidget = SizedBox(
-            height: 70,
+            height: 45,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                IconButton(
+                OutlinedButton(
                   onPressed: () {
                     var success = global.seismicPage.getSeismic();
                     if (success) global.globalKey.currentState?.changePage(5);
                   },
-                  icon: const Icon(Icons.show_chart),
+                  child: const Icon(Icons.show_chart),
                 ),
-                IconButton(
+                OutlinedButton(
                   onPressed: () {
                     var success = global.seismicPage.getLastSeismic();
                     if (success) global.globalKey.currentState?.changePage(5);
                   },
-                  icon: const Icon(
+                  child: const Icon(
                     Icons.show_chart,
                     color: Color.fromARGB(220, 211, 44, 44),
                   ),
                 ),
-                IconButton(
+                OutlinedButton(
                   onPressed: !global.listMapMarkers[id]!.markerData.notifier.alarm
                       ? null
                       : () {
@@ -1115,7 +1125,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                           global.devicesTablePage.ref();
                           changeBottomBarWidget(1, id, null);
                         },
-                  icon: !global.listMapMarkers[id]!.markerData.notifier.alarm
+                  child: !global.listMapMarkers[id]!.markerData.notifier.alarm
                       ? const Icon(Icons.warning_rounded)
                       : const Icon(
                           Icons.warning_rounded,
@@ -1128,40 +1138,40 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
         }
         if (bufMark.markerData.type == CPD.Name()) {
           widget.bottomBarWidget = SizedBox(
-            height: 70,
+            height: 45,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                IconButton(
+                OutlinedButton(
                   onPressed: () {
                     var success = global.imagePage.getPhoto(PhotoImageSize.IMAGE_160X120);
                     if (success) global.globalKey.currentState?.changePage(4);
                   },
-                  icon: const Icon(Icons.photo_size_select_small),
+                  child: const Icon(Icons.photo_size_select_small),
                 ),
-                IconButton(
+                OutlinedButton(
                   onPressed: () {
                     var success = global.imagePage.getPhoto(PhotoImageSize.IMAGE_320X240);
                     if (success) global.globalKey.currentState?.changePage(4);
                   },
-                  icon: const Icon(Icons.photo_size_select_large),
+                  child: const Icon(Icons.photo_size_select_large),
                 ),
-                IconButton(
+                OutlinedButton(
                   onPressed: () {
                     var success = global.imagePage.getPhoto(PhotoImageSize.IMAGE_640X480);
                     if (success) global.globalKey.currentState?.changePage(4);
                   },
-                  icon: const Icon(Icons.photo_size_select_actual),
+                  child: const Icon(Icons.photo_size_select_actual),
                 ),
-                IconButton(
+                OutlinedButton(
                   onPressed: () {
                     global.globalKey.currentState?.changePage(4);
                     global.imagePage.openListFromOther();
                   },
-                  icon: const Icon(Icons.photo_album_outlined),
+                  child: const Icon(Icons.photo_album_outlined),
                 ),
-                IconButton(
+                OutlinedButton(
                   onPressed: !global.listMapMarkers[id]!.markerData.notifier.alarm
                       ? null
                       : () {
@@ -1169,7 +1179,7 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
                           global.devicesTablePage.ref();
                           changeBottomBarWidget(1, id, null);
                         },
-                  icon: !global.listMapMarkers[id]!.markerData.notifier.alarm
+                  child: !global.listMapMarkers[id]!.markerData.notifier.alarm
                       ? const Icon(Icons.warning_rounded)
                       : const Icon(
                           Icons.warning_rounded,
@@ -1347,6 +1357,9 @@ class _PageWithMap extends State<PageWithMap> with AutomaticKeepAliveClientMixin
         );
       }),
       bottomNavigationBar: BottomAppBar(
+        elevation: 0,
+        surfaceTintColor: Colors.white,
+        shadowColor: Colors.white,
         child: widget.bottomBarWidget,
       ),
     );

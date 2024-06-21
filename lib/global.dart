@@ -8,6 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:permission_handler/permission_handler.dart';
+import 'package:projects/events/eventsManager.dart';
 
 import '../std/ISTD.dart';
 import '../std/STDConnectionManager.dart';
@@ -33,6 +34,7 @@ import 'core/ItemsManager.dart';
 import 'core/CPD.dart';
 import 'core/NetDevice.dart';
 
+import 'events/baseEvent.dart';
 import 'main.dart';
 
 abstract class TIDManagement {
@@ -58,6 +60,7 @@ TextButton mainBottomSelectedDev = TextButton(
 Timer? timer;
 
 Widget list = Container();
+bool darkMode = false;
 
 final SettingsPage bluetoothPage = SettingsPage();
 final PageWithMap pageWithMap = PageWithMap();
@@ -162,6 +165,7 @@ FileManager fileManager = FileManager();
 PostManager postManager = PostManager();
 STDConnectionManager stdConnectionManager = STDConnectionManager();
 PollManager pollManager = PollManager();
+EventsManager eventsMan = EventsManager();
 
 ISTD? std;
 StdInfo stdInfo = StdInfo();
@@ -218,6 +222,8 @@ ItemsManager itemsMan = ItemsManager();
 const int baseFrequency = 432999960; // Hz
 const int channelFrequencyStep = 1999946; // Hz
 const int reserveFrequencyOffset = 2999980; // Hz
+
+bool flagSoundAlarm = true;
 
 Directory pathToProject = Directory('/storage/emulated/0/SpiderNet/com.example.projects/files');
 

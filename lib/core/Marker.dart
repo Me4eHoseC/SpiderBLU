@@ -28,12 +28,12 @@ class Marker {
     return marker;
   }
 
-  static String Name([bool isTr = false]){
-    return isTr ? "Marker" : "Marker";
+  static String Name(){
+    return "Marker";
   }
 
-  String typeName([bool isTr = false]){
-    return Marker.Name(isTr);
+  String typeName(){
+    return Marker.Name();
   }
 
   int get id => _id;

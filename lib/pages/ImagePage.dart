@@ -117,7 +117,6 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
       firstImage = Container();
       secondImage = Container();
       bufSecondImage = null;
-      print('CLEAR');
     });
   }
 
@@ -144,7 +143,6 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
     String filePath = '$directoryPath/${_dateLastPhoto!.toLocal().toString().substring(0, 13)}-'
         '${_dateLastPhoto!.toLocal().toString().substring(14, 16)}-${_dateLastPhoto!.toLocal().toString().substring(17, 19)}.jpeg';
     await File(filePath).create().then((file) => file.writeAsBytes(bufSecondImage!.bytes));
-    print(filePath);
   }
 
   void cancelPhotoDownload() {
@@ -199,33 +197,33 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-        title: _dateLastPhoto != null
-            ? Text('# ${global.itemsMan.getSelected<CPD>()!.id} - ${_dateLastPhoto!.toLocal().toString().substring(0, 19)}')
-            : const Text(''),
-      ),
+      appBar: _dateLastPhoto != null
+          ? AppBar(
+              title: Text('# ${global.itemsMan.getSelected<CPD>()!.id} - ${_dateLastPhoto!.toLocal().toString().substring(0, 19)}'),
+            )
+          : null,
       endDrawer: Drawer(
         width: 250,
         child: ListView(
           children: listOfPhotoButton +
               [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    IconButton(
+                    OutlinedButton(
                       onPressed: () => {
                         global.itemsMan.getSelected<CPD>() != null ? {getPhotoList(global.itemsMan.getSelected<CPD>()!.id)} : null,
                       },
-                      icon: const Icon(Icons.refresh),
+                      child: const Icon(Icons.refresh),
                     ),
-                    IconButton(
+                    OutlinedButton(
                       onPressed: () => {
                         global.itemsMan.getSelected<CPD>() != null && _selectDateOfPhoto != null
                             ? {getPhototrapImage(global.itemsMan.getSelected<CPD>()!.id, _selectDateOfPhoto!)}
                             : null,
                       },
-                      icon: const Icon(Icons.check),
+                      child: const Icon(Icons.check),
                     ),
                   ],
                 )
@@ -250,25 +248,25 @@ class _ImagePage extends State<ImagePage> with TickerProviderStateMixin {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          IconButton(
-            onPressed: widget.downloadingCpdId != -1 ? null : ()=> widget.getPhoto(PhotoImageSize.IMAGE_160X120),
-            icon: const Icon(Icons.photo_size_select_small),
+          OutlinedButton(
+            onPressed: widget.downloadingCpdId != -1 ? null : () => widget.getPhoto(PhotoImageSize.IMAGE_160X120),
+            child: const Icon(Icons.photo_size_select_small),
           ),
-          IconButton(
-            onPressed: widget.downloadingCpdId != -1 ? null : ()=> widget.getPhoto(PhotoImageSize.IMAGE_320X240),
-            icon: const Icon(Icons.photo_size_select_large),
+          OutlinedButton(
+            onPressed: widget.downloadingCpdId != -1 ? null : () => widget.getPhoto(PhotoImageSize.IMAGE_320X240),
+            child: const Icon(Icons.photo_size_select_large),
           ),
-          IconButton(
-            onPressed: widget.downloadingCpdId != -1 ? null : ()=> widget.getPhoto(PhotoImageSize.IMAGE_640X480),
-            icon: const Icon(Icons.photo_size_select_actual),
+          OutlinedButton(
+            onPressed: widget.downloadingCpdId != -1 ? null : () => widget.getPhoto(PhotoImageSize.IMAGE_640X480),
+            child: const Icon(Icons.photo_size_select_actual),
           ),
-          IconButton(
+          OutlinedButton(
             onPressed: () => _scaffoldKey.currentState!.openEndDrawer(),
-            icon: const Icon(Icons.photo_album_outlined),
+            child: const Icon(Icons.photo_album_outlined),
           ),
-          IconButton(
+          OutlinedButton(
             onPressed: widget.downloadingCpdId == -1 ? null : cancelPhotoDownload,
-            icon: const Icon(Icons.cancel_outlined),
+            child: const Icon(Icons.cancel_outlined),
           ),
         ],
       ),

@@ -67,13 +67,13 @@ class CSD extends RT {
     return marker;
   }
 
-  static String Name([bool isTr = false]) {
-    return isTr ? "CSD" : "CSD";
+  static String Name() {
+    return "CSD";
   }
 
   @override
-  String typeName([bool isTr = false]) {
-    return CSD.Name(isTr);
+  String typeName() {
+    return CSD.Name();
   }
 
   String criterionFilterName(CriterionFilter filter, bool isTr) {

@@ -22,7 +22,6 @@ class DevicesTablePage extends StatefulWidget with global.TIDManagement {
 
   void selectDevice(int id) {
     global.pageWithMap.selectMapMarker(id);
-    print(global.listMapMarkers[id]!.markerData.notifier.imageSelected);
   }
 
   void deleteDevice(int id) {
@@ -154,7 +153,6 @@ class _DevicesTablePage extends State<DevicesTablePage> with TickerProviderState
     }
     colDev++;
     LatLng coordinates = LatLng(size.northWest.latitude + cordLon * rowDev, size.northWest.longitude - cordLon * colDev);
-    //addNewDevice(coordinates);
     setState(() {});
     return coordinates;
   }

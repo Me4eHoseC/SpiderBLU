@@ -123,7 +123,7 @@ class PackageProcessor {
       global.imagePage.redrawImage();
     } else if (type == PackageType.SEISMIC_WAVE || type == PackageType.ADPCM_SEISMIC_WAVE) {
       global.seismicPage.addSeismicPart(fp.getPartData());
-      global.seismicPage.plot();
+      global.seismicPage.plotSeismic();
     }
   }
 
@@ -363,6 +363,15 @@ class PackageProcessor {
 
     var nd = global.itemsMan.get<NetDevice>(partner);
     if (nd == null) return;
+
+    if (nd.id == global.seismicPage.downloadingCsdId){
+      print('22222222222222222222222222222222222222');
+      global.seismicPage.downloadingCsdId = -1;
+    }
+    if (nd.id == global.imagePage.downloadingCpdId){
+      global.imagePage.downloadingCpdId = -1;
+    }
+
 
     if (pb is VersionPackage || type == PackageType.GET_VERSION) {
       global.sendingState[partner]?[global.ParametersGroup.firmwareVersion] = global.SendingState.notAnswerState;

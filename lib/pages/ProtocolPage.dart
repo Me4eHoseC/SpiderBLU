@@ -1,13 +1,19 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:projects/events/alarmEvents.dart';
+import 'package:projects/events/baseEvent.dart';
+import 'package:projects/events/systemEvents.dart';
+import 'package:projects/events/variosEvents.dart';
 
 import '../global.dart' as global;
 import '../localNotification.dart';
+import '../main.dart';
 
 class ProtocolPage extends StatefulWidget with global.TIDManagement {
   ProtocolPage({super.key});
   Widget protocolList = Container();
-  List<String> alarmArray = [];
+  List<String> listEvents = [];
 
   late _ProtocolPage _page;
 
@@ -17,9 +23,22 @@ class ProtocolPage extends StatefulWidget with global.TIDManagement {
     return _page;
   }
 
-  void addAlarm(String alarm) {
-    alarmArray.add(alarm);
-    _page.checkNewAlarm();
+  void localeEvent(){
+    listEvents = [];
+    for(int i = 0; i < global.eventsMan.events.length; i++){
+      addEvent(global.eventsMan.events[i]);
+    }
+    _page.checkNewEvents();
+  }
+
+  void addEvent(BaseEvent event) {
+    if (event is AlarmEvent){
+      if (event is BreaklineAlarmEvent){
+        listEvents.add('${DateFormat('yMd', MyApp.of(_page.context)!.getLocale().toString()).add_jms().format(event.dateTime)} '
+            '${event.alarmDeviceIdToString(_page.context)} ${event.message(_page.context)}');
+      }
+    }
+    _page.checkNewEvents();
   }
 
   void createNotification(String title, String body, int id){
@@ -50,20 +69,21 @@ class _ProtocolPage extends State<ProtocolPage> with TickerProviderStateMixin {
     check--;
   }
 
-  void checkNewAlarm() {
+  void checkNewEvents() {
     setState(() {
       widget.protocolList = ListView.builder(
           reverse: true,
           controller: _scrollController,
           shrinkWrap: true,
-          itemCount: widget.alarmArray.length,
+          itemCount: //widget.alarmArray.length,
+          widget.listEvents.length,
           itemBuilder: (context, i) {
             return Text(
-              widget.alarmArray[i],
+              widget.listEvents[i],
               textScaleFactor: 1,
             );
           });
-      if (widget.alarmArray.length > 10) {
+      if (widget.listEvents.length > 10) {
         _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       }
     });
@@ -72,9 +92,6 @@ class _ProtocolPage extends State<ProtocolPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Protocol'),
-      ),
       body: widget.protocolList,
     );
   }
